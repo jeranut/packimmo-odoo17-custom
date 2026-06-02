@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="properties_list_slider_template" inherit_id="rental_management.properties_list_template" name="Properties List Modern Dropdown Filters">
+
+        <xpath expr="//form[@action='/properties-list']" position="replace">
+            <form method="get" action="/properties-list" class="property-search-box property-search-dropdown-box shadow-sm">
+                <div class="row g-3 align-items-end">
+
+                    <!-- Search -->
+                    <div class="col-lg-4 col-md-12">
+                        <input type="text" name="search" class="form-control property-input" placeholder="Rechercher par nom, ville, projet..." t-att-value="search"/>
+                    </div>
+
+                    <!-- Vente / Location switch -->
+                    <div class="col-lg-2 col-md-6">
+                        <div class="pack-sale-switch">
+
+                            <input type="radio" id="pack_sale_for_sale" name="sale_lease" value="for_sale" t-att-checked="'checked' if not sale_lease or sale_lease == 'for_sale' else None"/>
+
+                            <label for="pack_sale_for_sale">Vente</label>
+
+                            <input type="radio" id="pack_sale_for_tenancy" name="sale_lease" value="for_tenancy" t-att-checked="'checked' if sale_lease == 'for_tenancy' else None"/>
+
+                            <label for="pack_sale_for_tenancy">Location</label>
+
+                        </div>
+                    </div>
+
+                    <!-- Type -->
+                    <!-- Type du bien -->
+                    <div class="col-lg-2 col-md-6">
+                        <select name="property_type" id="property_type_select" class="form-select property-input">
+                            <option value="" t-att-selected="'selected' if not property_type else None">
+            Type du bien
+                            </option>
+                            <option value="land" t-att-selected="'selected' if property_type == 'land' else None">Terrain</option>
+                            <option value="residential" t-att-selected="'selected' if property_type == 'residential' else None">Résidentiel</option>
+                            <option value="commercial" t-att-selected="'selected' if property_type == 'commercial' else None">Commercial</option>
+                            <option value="industrial" t-att-selected="'selected' if property_type == 'industrial' else None">Industriel</option>
+                        </select>
+                    </div>
+
+                    <!-- Nature du bien -->
+                    <div class="col-lg-2 col-md-6">
+                        <select name="property_subtype_id" id="property_subtype_select" class="form-select property-input" t-att-disabled="'disabled' if not property_type else None">
+
+                            <option value="">
+                                <t t-if="not property_type">Sélectionnez d'abord un type de bien</t>
+                                <t t-else="">Nature du bien</t>
+                            </option>
+
+                            <t t-if="property_type">
+                                <t t-foreach="property_subtypes" t-as="subtype">
+                                    <option t-att-value="subtype.id" t-att-selected="'selected' if str(subtype.id) == str(property_subtype_id) else None">
+                                        <t t-esc="subtype.name"/>
+                                    </option>
+                                </t>
+                            </t>
+                        </select>
+                    </div>
+
+                    <!-- Région -->
+                    <div class="col-lg-2 col-md-6">
+                        <select name="region_id" class="form-select property-input">
+                            <option value="">Région</option>
+                            <t t-foreach="regions" t-as="region">
+                                <option t-att-value="region.id" t-att-selected="'selected' if str(region.id) == str(region_id) else None">
+                                    <t t-esc="region.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <!-- Price dropdown -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="dropdown pack-filter-dropdown">
+                            <button class="form-select property-input text-start pack-dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="pack-dropdown-title">Prix</span>
+                                <span class="pack-dropdown-value">
+                                    <t t-if="min_price or max_price">
+                                        <t t-if="min_price">Min <t t-esc="min_price"/>
+                                        </t>
+                                        <t t-if="min_price and max_price"> - </t>
+                                        <t t-if="max_price">Max <t t-esc="max_price"/>
+                                        </t>
+                                    </t>
+                                </span>
+                            </button>
+
+                            <div class="dropdown-menu p-3 shadow pack-dropdown-menu">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="small text-muted mb-1">Minimum</label>
+                                        <select name="min_price" class="form-select pack-price-select">
+                                            <option value="" t-att-selected="'selected' if not min_price else None">Min</option>
+                                            <t t-foreach="price_options" t-as="option">
+                                                <option t-att-value="option[0]" t-att-selected="'selected' if str(option[0]) == str(min_price) else None">
+                                                    <t t-esc="option[1]"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted mb-1">Maximum</label>
+                                        <select name="max_price" class="form-select pack-price-select">
+                                            <option value="" t-att-selected="'selected' if not max_price else None">Max</option>
+                                            <t t-foreach="price_options" t-as="option">
+                                                <option t-att-value="option[0]" t-att-selected="'selected' if str(option[0]) == str(max_price) else None">
+                                                    <t t-esc="option[1]"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn property-btn w-100">
+                                    Terminé
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Surface dropdown -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="dropdown pack-filter-dropdown">
+                            <button class="form-select property-input text-start pack-dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="pack-dropdown-title">Surface</span>
+                                <span class="pack-dropdown-value">
+                                    <t t-if="min_area or max_area">
+                                        <t t-if="min_area">Min <t t-esc="min_area"/>
+ m²</t>
+                                        <t t-if="min_area and max_area"> - </t>
+                                        <t t-if="max_area">Max <t t-esc="max_area"/>
+ m²</t>
+                                    </t>
+                                </span>
+                            </button>
+
+                            <div class="dropdown-menu p-3 shadow pack-dropdown-menu">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="small text-muted mb-1">Minimum</label>
+                                        <select name="min_area" class="form-select">
+                                            <option value="" t-att-selected="'selected' if not min_area else None">Min</option>
+                                            <t t-foreach="area_options" t-as="option">
+                                                <option t-att-value="option[0]" t-att-selected="'selected' if str(option[0]) == str(min_area) else None">
+                                                    <t t-esc="option[1]"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted mb-1">Maximum</label>
+                                        <select name="max_area" class="form-select">
+                                            <option value="" t-att-selected="'selected' if not max_area else None">Max</option>
+                                            <t t-foreach="area_options" t-as="option">
+                                                <option t-att-value="option[0]" t-att-selected="'selected' if str(option[0]) == str(max_area) else None">
+                                                    <t t-esc="option[1]"/>
+                                                </option>
+                                            </t>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn property-btn w-100">
+                                    Terminé
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search button -->
+                    <div class="col-lg-2 col-md-6">
+                        <button type="submit" class="btn property-btn w-100">
+                            Rechercher
+                        </button>
+                    </div>
+
+                    <!-- Reset -->
+                    <div class="col-lg-2 col-md-6">
+                        <a href="/properties-list" class="btn btn-outline-danger w-100 property-reset-btn">
+                            Réinitialiser
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </xpath>
+
+        <!-- Pagination preserving filters -->
+        <!-- Pagination preserving filters -->
+        <xpath expr="//t[@t-if='total_pages &gt; 1']" position="replace">
+            <t t-if="total_pages &gt; 1">
+                <div class="property-pagination mt-4">
+
+                    <a t-if="page &gt; 1" t-att-href="'/properties-list?page=%s%s' % (page - 1, filter_url or '')" class="page-link-custom">
+                Précédent
+                    </a>
+
+                    <t t-foreach="range(1, total_pages + 1)" t-as="p">
+                        <a t-att-href="'/properties-list?page=%s%s' % (p, filter_url or '')" t-att-class="'page-link-custom active' if p == page else 'page-link-custom'">
+                            <t t-esc="p"/>
+                        </a>
+                    </t>
+
+                    <a t-if="page &lt; total_pages" t-att-href="'/properties-list?page=%s%s' % (page + 1, filter_url or '')" class="page-link-custom">
+                Suivant
+                    </a>
+
+                </div>
+            </t>
+        </xpath>
+
+    </template>
+
+</odoo>

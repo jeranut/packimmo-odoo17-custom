@@ -11,15 +11,12 @@
             <xpath expr="//app[@name='website']" position="inside">
 
                 <block title="Carousel Immobilier" name="packimmo_search_carousel_block">
-                    <setting id="packimmo_search_carousel_setting"
-                             string="Images derrière la barre de recherche"
-                             help="Ajoutez les images affichées en arrière-plan derrière la barre de recherche de la page des biens. Format conseillé : 1920 x 900 px.">
+                    <setting id="packimmo_search_carousel_setting" string="Images derrière la barre de recherche" help="Ajoutez les images affichées en arrière-plan derrière la barre de recherche de la page des biens. Format conseillé : 1920 x 900 px.">
 
-                        <field name="packimmo_search_carousel_image_ids" nolabel="1" colspan="2">
+                        <field name="packimmo_search_carousel_image_ids" nolabel="1" colspan="2" mode="tree,form">
                             <tree editable="bottom">
                                 <field name="sequence" widget="handle"/>
                                 <field name="name"/>
-                                <field name="image" widget="image" options="{'size': [120, 70]}"/>
                                 <field name="active"/>
                             </tree>
                             <form>

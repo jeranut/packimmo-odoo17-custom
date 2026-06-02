@@ -1,54 +1,6 @@
 # -*- coding: utf-8 -*-
-import html
-import re
-from urllib.parse import parse_qs, urlparse
-
 from odoo import api, fields, models
 from odoo.addons.web_editor.tools import get_video_embed_code
-
-class PropertyDetails(models.Model):
-    _inherit = 'property.details'
-
-    brochure_video_url = fields.Char("Lien YouTube brochure")
-
-def _extract_iframe_src(embed_code):
-    if not embed_code:
-        return False
-    match = re.search(r'src=[\"\']([^\"\']+)[\"\']', embed_code)
-    if not match:
-        return False
-    return html.unescape(match.group(1))
-
-
-def _youtube_id_from_url(url):
-    if not url:
-        return False
-    url = html.unescape(url).strip()
-
-    # Direct iframe src or normal YouTube links
-    parsed = urlparse(url if '://' in url else 'https://' + url.lstrip('/'))
-    host = (parsed.netloc or '').lower()
-    path = parsed.path or ''
-
-    if 'youtu.be' in host:
-        return path.strip('/').split('/')[0] or False
-
-    if 'youtube.com' in host:
-        if path == '/watch':
-            return parse_qs(parsed.query).get('v', [False])[0]
-        if '/embed/' in path:
-            return path.split('/embed/', 1)[1].split('/')[0].split('?')[0] or False
-        if '/shorts/' in path:
-            return path.split('/shorts/', 1)[1].split('/')[0].split('?')[0] or False
-
-    return False
-
-
-def _youtube_embed_src_from_url(url):
-    video_id = _youtube_id_from_url(url)
-    if not video_id:
-        return url
-    return 'https://www.youtube-nocookie.com/embed/%s' % video_id
 
 
 class PropertyDetails(models.Model):
@@ -85,14 +37,6 @@ class PropertyDetails(models.Model):
         compute="_compute_brochure_effective_video_embed_code",
         sanitize=False,
     )
-    brochure_effective_video_src = fields.Char(
-        string="URL vidéo brochure effective",
-        compute="_compute_brochure_effective_video_src",
-    )
-    brochure_effective_video_thumbnail = fields.Char(
-        string="Miniature vidéo brochure",
-        compute="_compute_brochure_effective_video_src",
-    )
 
     @api.depends("brochure_video_url")
     def _compute_brochure_video_embed_code(self):
@@ -117,21 +61,3 @@ class PropertyDetails(models.Model):
                 embed_code = floor_video.embed_code if floor_video else False
 
             rec.brochure_effective_video_embed_code = embed_code
-
-    @api.depends("brochure_effective_video_embed_code", "brochure_video_url")
-    def _compute_brochure_effective_video_src(self):
-        for rec in self:
-            src = False
-
-            if rec.brochure_video_url:
-                src = _youtube_embed_src_from_url(rec.brochure_video_url)
-
-            if not src:
-                src = _extract_iframe_src(rec.brochure_effective_video_embed_code)
-
-            video_id = _youtube_id_from_url(src)
-            rec.brochure_effective_video_src = src
-            rec.brochure_effective_video_thumbnail = (
-                'https://img.youtube.com/vi/%s/hqdefault.jpg' % video_id
-                if video_id else False
-            )
