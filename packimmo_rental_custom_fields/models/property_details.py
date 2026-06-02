@@ -151,18 +151,23 @@ class PropertyDetails(models.Model):
                     f"{rate:,.2f} {rec.company_currency_id.name}"
                 )
 
-
-    @api.onchange("foreign_price", "foreign_currency_id")
+    @api.onchange("foreign_price", "foreign_currency_id", "pricing_type")
     def _onchange_foreign_price_currency(self):
         for rec in self:
             if rec.foreign_price and rec.foreign_currency_id and rec.company_currency_id:
-                rec.price = rec.foreign_currency_id._convert(
+                converted_price = rec.foreign_currency_id._convert(
                     rec.foreign_price,
                     rec.company_currency_id,
                     rec.company_id,
                     fields.Date.context_today(rec),
                 )
 
+                rec.price = converted_price
+
+                if rec.pricing_type == "area_wise":
+                    rec.price_per_area = converted_price
+                else:
+                    rec.price_per_area = 0.0
     
     @api.constrains(
         "is_maintenance_service",
