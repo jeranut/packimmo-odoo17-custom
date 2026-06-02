@@ -1,0 +1,115 @@
+#wrapwrap main {
+    padding-top: 0 !important;
+}
+
+.packimmo-properties-page {
+    padding-top: 0 !important;
+}
+
+.packimmo-hero-wrapper {
+    position: relative;
+    width: 100vw;
+    max-width: none;
+    min-height: 560px;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.packimmo-carousel-bg,
+.packimmo-overlay {
+    position: absolute;
+    inset: 0;
+}
+
+.packimmo-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    animation: packimmoFade 18s infinite;
+}
+
+.packimmo-slide:nth-child(1) { animation-delay: 0s; }
+.packimmo-slide:nth-child(2) { animation-delay: 6s; }
+.packimmo-slide:nth-child(3) { animation-delay: 12s; }
+
+.packimmo-overlay {
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 2;
+}
+
+.packimmo-hero-content {
+    position: relative;
+    z-index: 5;
+    min-height: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 30px 170px;
+    text-align: center;
+}
+
+.packimmo-hero-content h1 {
+    color: #fff !important;
+    font-size: 56px;
+    font-weight: 800;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.packimmo-hero-content p {
+    color: #fff !important;
+    font-size: 18px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+.property-search-box.packimmo-search-overlay {
+    position: relative !important;
+    z-index: 20 !important;
+    width: 78% !important;
+    max-width: 1120px !important;
+    margin: -215px auto 80px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-radius: 22px !important;
+    padding: 24px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18) !important;
+}
+
+.property-search-box .form-control,
+.property-search-box .form-select,
+.property-search-box .btn {
+    min-height: 54px;
+    border-radius: 12px;
+}
+
+@keyframes packimmoFade {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    30% { opacity: 1; }
+    40% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+@media (max-width: 991px) {
+    .packimmo-hero-wrapper {
+        min-height: 460px;
+    }
+
+    .packimmo-hero-content {
+        min-height: 460px;
+        padding: 70px 18px 150px;
+    }
+
+    .packimmo-hero-content h1 {
+        font-size: 34px;
+    }
+
+    .property-search-box.packimmo-search-overlay {
+        width: 92% !important;
+       margin: -190px auto 80px !important;
+        padding: 16px !important;
+    }
+}

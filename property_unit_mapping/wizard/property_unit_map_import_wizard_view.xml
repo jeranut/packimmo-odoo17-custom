@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="property_unit_map_import_wizard_view_form" model="ir.ui.view">
+        <field name="name">property.unit.map.import.wizard.form</field>
+        <field name="model">property.unit.map.import.wizard</field>
+
+        <field name="arch" type="xml">
+            <form string="Import Unit Map Image">
+
+                <sheet>
+                    <group>
+
+                        <field name="project_id"
+                               readonly="1"
+                               invisible="context.get('default_subproject_id')"
+                               required="not context.get('default_subproject_id')"/>
+
+                        <field name="subproject_id"
+                               readonly="1"
+                               invisible="not context.get('default_subproject_id')"
+                               required="context.get('default_subproject_id')"/>
+
+                        <field name="map_image"
+                               filename="map_image_name"
+                               widget="image"/>
+
+                        <field name="map_image_name" invisible="1"/>
+
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button string="Import and Open Map"
+                            name="action_import_and_open_map"
+                            type="object"
+                            class="btn-primary"/>
+
+                    <button string="Cancel"
+                            special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="contract_wizard_form_view_inherit_mandate" model="ir.ui.view">
+
+        <field name="name">
+            contract.wizard.form.view.inherit.mandate
+        </field>
+
+        <field name="model">contract.wizard</field>
+
+        <field name="inherit_id" ref="rental_management.contract_wizard_form_view"/>
+
+        <field name="arch" type="xml">
+
+            <!-- Dépôt non modifiable car récupéré depuis le mandat -->
+
+            <xpath expr="//field[@name='is_any_deposit']" position="attributes">
+
+                <attribute name="readonly">1</attribute>
+
+            </xpath>
+
+            <xpath expr="//field[@name='deposit_amount']" position="attributes">
+
+                <attribute name="readonly">1</attribute>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+</odoo>

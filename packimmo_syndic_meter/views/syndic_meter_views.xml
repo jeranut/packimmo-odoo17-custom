@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- TREE -->
+
+    <record id="syndic_meter_tree_view" model="ir.ui.view">
+        <field name="name">syndic.meter.tree</field>
+        <field name="model">syndic.meter</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="active" widget="boolean_toggle" />
+                <field name="name" />
+                <field name="syndic_id" />
+                <field name="property_id" />
+                <field name="meter_type"
+                    widget="badge"
+                    decoration-info="meter_type == 'water'"
+                    decoration-warning="meter_type == 'electricity'" />
+                <field name="meter_number" />
+                <field name="tenant_id" />
+                <field name="initial_index" />
+                <field name="last_index" />
+                <field name="last_reading_date" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- FORM -->
+
+    <record id="syndic_meter_form_view" model="ir.ui.view">
+        <field name="name">syndic.meter.form</field>
+        <field name="model">syndic.meter</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1" />
+                        </h1>
+                    </div>
+
+                    <group>
+
+                        <group>
+
+                            <field name="syndic_id" />
+
+                            <field name="allowed_property_ids"
+                                invisible="1" />
+
+                            <field name="property_id"
+                                domain="[('id', 'in', allowed_property_ids)]" />
+
+                            <field name="meter_type" />
+
+                            <field name="meter_number" />
+
+                            <field name="active" />
+
+                        </group>
+
+                        <group>
+
+                            <field name="owner_id" />
+
+                            <field name="tenant_id" />
+
+                            <field name="initial_index" />
+
+                            <field name="meter_fixed_fee_amount" />
+
+                            <field name="initial_date" />
+
+                            <field name="last_index"
+                                readonly="1" />
+
+                            <field name="last_reading_date"
+                                readonly="1" />
+
+                        </group>
+
+                    </group>
+
+                    <notebook>
+
+                        <page string="Historique relevés">
+
+                            <field name="reading_line_ids"
+                                readonly="1">
+
+                                <tree>
+
+                                    <field name="batch_id" />
+
+                                    <field name="reading_date" />
+
+                                    <field name="previous_index" />
+
+                                    <field name="current_index" />
+
+                                    <field name="consumption" />
+
+                                    <field name="amount" />
+
+                                    <field name="invoice_id" />
+
+                                </tree>
+
+                            </field>
+
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+
+                <chatter />
+
+            </form>
+        </field>
+    </record>
+
+    <!-- SEARCH -->
+
+    <record id="syndic_meter_search_view" model="ir.ui.view">
+        <field name="name">syndic.meter.search</field>
+        <field name="model">syndic.meter</field>
+        <field name="arch" type="xml">
+            <search>
+
+                <field name="name" />
+                <field name="syndic_id" />
+                <field name="property_id" />
+                <field name="tenant_id" />
+
+                <filter name="active"
+                    string="Actifs"
+                    domain="[('active','=',True)]" />
+
+                <filter name="archived"
+                    string="Archivés"
+                    domain="[('active','=',False)]" />
+
+                <group expand="0"
+                    string="Regrouper par">
+
+                    <filter name="group_by_syndic_id"
+                        string="Syndic"
+                        context="{'group_by':'syndic_id'}" />
+
+                    <filter name="group_by_meter_type"
+                        string="Type compteur"
+                        context="{'group_by':'meter_type'}" />
+
+                    <filter name="group_by_property"
+                        string="Bien / lot"
+                        context="{'group_by':'property_id'}" />
+
+                </group>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION -->
+
+    <record id="action_syndic_meter" model="ir.actions.act_window">
+        <field name="name">Compteurs</field>
+        <field name="res_model">syndic.meter</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="syndic_meter_search_view" />
+        <field name="context">
+            {
+            'search_default_group_by_syndic_id': 1,
+            'search_default_group_by_property': 1,
+            'active_test': False
+            }
+        </field>
+    </record>
+
+</odoo>

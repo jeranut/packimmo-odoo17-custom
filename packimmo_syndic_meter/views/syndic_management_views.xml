@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="syndic_management_form_inherit_meter" model="ir.ui.view">
+        <field name="name">syndic.management.form.inherit.meter</field>
+        <field name="model">syndic.management</field>
+        <field name="inherit_id" ref="packimmo_syndic_management.view_syndic_management_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//group" position="inside">
+                <group string="Suivi compteurs">
+                    <field name="track_water_meter"/>
+                    <field name="track_electricity_meter"/>
+                    <field name="water_fixed_fee_amount"/>
+                    <field name="electricity_fixed_fee_amount"/>
+                    <field name="meter_count" readonly="1"/>
+                    <button name="action_refresh_meters"
+                            type="object"
+                            string="Actualiser compteurs"
+                            class="btn-primary"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+
+                <page string="Historique redevances">
+                    <field name="fixed_fee_history_ids" readonly="1">
+                        <tree>
+                            <field name="meter_type" widget="badge" decoration-info="meter_type == 'water'" decoration-warning="meter_type == 'electricity'"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="total_amount"/>
+                            <field name="divisor_count"/>
+                            <field name="part_amount"/>
+                            <field name="invoice_count"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <page string="Compteurs">
+                    <field name="meter_ids" context="{'default_syndic_id': id}">
+                        <tree editable="bottom">
+                            <field name="allowed_property_ids" invisible="1"/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="property_id"/>
+                            <field name="meter_type"/>
+                            <field name="meter_number"/>
+                            <field name="owner_id"/>
+                            <field name="tenant_id"/>
+                            <field name="initial_index"/>
+                            <field name="initial_date"/>
+                            <field name="last_index" readonly="1"/>
+                            <field name="last_reading_date" readonly="1"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

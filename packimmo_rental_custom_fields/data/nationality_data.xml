@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="nat_malagasy" model="res.partner.nationality">
+        <field name="name">Malagasy</field>
+    </record>
+
+    <record id="nat_fr" model="res.partner.nationality">
+        <field name="name">Française</field>
+    </record>
+
+    <record id="nat_us" model="res.partner.nationality">
+        <field name="name">Américaine</field>
+    </record>
+
+    <record id="nat_ca" model="res.partner.nationality">
+        <field name="name">Canadienne</field>
+    </record>
+
+    <record id="nat_cn" model="res.partner.nationality">
+        <field name="name">Chinoise</field>
+    </record>
+
+    <record id="nat_jp" model="res.partner.nationality">
+        <field name="name">Japonaise</field>
+    </record>
+
+    <record id="nat_in" model="res.partner.nationality">
+        <field name="name">Indienne</field>
+    </record>
+
+    <record id="nat_de" model="res.partner.nationality">
+        <field name="name">Allemande</field>
+    </record>
+
+    <record id="nat_it" model="res.partner.nationality">
+        <field name="name">Italienne</field>
+    </record>
+
+    <record id="nat_es" model="res.partner.nationality">
+        <field name="name">Espagnole</field>
+    </record>
+
+    <record id="nat_uk" model="res.partner.nationality">
+        <field name="name">Britannique</field>
+    </record>
+
+    <record id="nat_ch" model="res.partner.nationality">
+        <field name="name">Suisse</field>
+    </record>
+
+    <record id="nat_be" model="res.partner.nationality">
+        <field name="name">Belge</field>
+    </record>
+
+    <record id="nat_mu" model="res.partner.nationality">
+        <field name="name">Mauricienne</field>
+    </record>
+
+    <record id="nat_za" model="res.partner.nationality">
+        <field name="name">Sud-africaine</field>
+    </record>
+
+    <record id="nat_km" model="res.partner.nationality">
+        <field name="name">Comorienne</field>
+    </record>
+
+    <record id="nat_sn" model="res.partner.nationality">
+        <field name="name">Sénégalaise</field>
+    </record>
+
+    <record id="nat_ng" model="res.partner.nationality">
+        <field name="name">Nigériane</field>
+    </record>
+
+    <record id="nat_ma" model="res.partner.nationality">
+        <field name="name">Marocaine</field>
+    </record>
+
+    <record id="nat_tn" model="res.partner.nationality">
+        <field name="name">Tunisienne</field>
+    </record>
+
+    <record id="nat_dz" model="res.partner.nationality">
+        <field name="name">Algérienne</field>
+    </record>
+
+    <record id="nat_ae" model="res.partner.nationality">
+        <field name="name">Émiratie</field>
+    </record>
+
+    <record id="nat_sa" model="res.partner.nationality">
+        <field name="name">Saoudienne</field>
+    </record>
+
+    <record id="nat_tr" model="res.partner.nationality">
+        <field name="name">Turque</field>
+    </record>
+
+    <record id="nat_ru" model="res.partner.nationality">
+        <field name="name">Russe</field>
+    </record>
+
+    <record id="nat_br" model="res.partner.nationality">
+        <field name="name">Brésilienne</field>
+    </record>
+
+    <record id="nat_au" model="res.partner.nationality">
+        <field name="name">Australienne</field>
+    </record>
+
+</odoo>

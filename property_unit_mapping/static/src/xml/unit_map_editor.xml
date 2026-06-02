@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="property_unit_mapping.UnitMapEditor">
+        <div class="o_unit_map_editor">
+            <div class="o_unit_map_toolbar">
+                <select class="form-select o_unit_map_select" t-ref="select">
+                    <option value="">Select unit to draw...</option>
+                    <t t-foreach="state.lines" t-as="line" t-key="line.id">
+                        <option t-att-value="line.id" t-esc="line.label"/>
+                    </t>
+                </select>
+                <button type="button" class="btn btn-primary" t-on-click="savePolygon">Save polygon</button>
+                <button type="button" class="btn btn-secondary" t-on-click="clearDraft">Reset draft</button>
+                <span class="text-muted">Click on the image to add polygon points.</span>
+            </div>
+            <div class="o_unit_map_canvas_wrap" t-ref="wrap">
+                <t t-if="state.projectId">
+                    <img class="o_unit_map_image" t-att-src="state.imageUrl" t-ref="image"/>
+                </t>
+                <svg class="o_unit_map_svg" t-ref="svg" t-on-click="onSvgClick">
+                    <t t-foreach="state.lines" t-as="line" t-key="line.id">
+                        <polygon t-if="line.points" t-att-points="line.points" t-att-fill="line.color" fill-opacity="0.35" t-att-stroke="line.color" stroke-width="2"/>
+                        <text t-if="line.textX" t-att-x="line.textX" t-att-y="line.textY" class="o_unit_map_label" t-esc="line.label"/>
+                    </t>
+                    <polyline t-if="state.draftPoints" t-att-points="state.draftPoints" fill="none" stroke="#111827" stroke-width="2" stroke-dasharray="4 4"/>
+                    <t t-foreach="state.draftDots" t-as="dot" t-key="dot.key">
+                        <circle t-att-cx="dot.x" t-att-cy="dot.y" r="4" fill="#111827"/>
+                    </t>
+                </svg>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="rental_property_details_inherit_brochure_video"
+              inherit_id="rental_management.rental_property_details">
+
+        <!-- Afficher la vidéo avant le plan / ou avant le footer si aucun plan -->
+        <xpath expr="//footer[contains(@class, 'footer')]" position="before">
+
+            <section class="section-padding no-break"
+                     t-if="property_id.brochure_video_embed_code">
+
+                <h3 class="section-header">
+                    Vidéo du bien
+                </h3>
+
+                <div class="card-box no-break">
+                    <div class="property-brochure-video-wrapper">
+                        <t t-raw="property_id.brochure_video_embed_code"/>
+                    </div>
+                </div>
+
+            </section>
+
+            <style>
+                .property-brochure-video-wrapper {
+                    position: relative;
+                    width: 100%;
+                    padding-bottom: 56.25%;
+                    height: 0;
+                    overflow: hidden;
+                    border-radius: 12px;
+                    background: #f5f5f5;
+                }
+                .property-brochure-video-wrapper iframe,
+                .property-brochure-video-wrapper embed,
+                .property-brochure-video-wrapper object {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100% !important;
+                    height: 100% !important;
+                    border: 0;
+                    border-radius: 12px;
+                }
+            </style>
+
+        </xpath>
+    </template>
+</odoo>

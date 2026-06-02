@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tenancy_details_form_view_inherit_syndic_share" model="ir.ui.view">
+        <field name="name">tenancy.details.form.inherit.syndic.share</field>
+        <field name="model">tenancy.details</field>
+        <field name="inherit_id" ref="rental_management.tenancy_details_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_start_date']" position="after">
+                <field name="syndic_share"
+                       required="1"
+                       readonly="contract_type != 'new_contract'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

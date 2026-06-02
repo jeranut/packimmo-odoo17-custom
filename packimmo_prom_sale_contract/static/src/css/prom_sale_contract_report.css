@@ -1,0 +1,364 @@
+/* PACKIMMO - Promesse de vente PDF report */
+.pack-contract-page {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #111111;
+    text-align: justify;
+}
+
+.pack-report-header {
+    text-align: center;
+    margin-top: 35px;
+    margin-bottom: 24px;
+}
+
+.pack-main-title {
+    color: #17375e;
+    font-size: 30px;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.pack-party-label-cell .pack-strong {
+    color: #111111 !important;
+    font-weight: bold;
+}
+
+.pack-strong {
+    color: #111111 !important;
+    font-weight: bold;
+}
+
+.pack-subtitle {
+    margin-top: 24px;
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.pack-title {
+    text-align: center;
+    font-weight: bold;
+    text-decoration: underline;
+    font-size: 16px;
+    margin-bottom: 28px;
+}
+
+.pack-section {
+    font-weight: bold;
+    text-align: center;
+    margin-top: 14px;
+    margin-bottom: 6px;
+}
+
+.pack-section-title {
+    font-size: 24px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 20px;
+    margin-bottom: 35px;
+}
+
+.pack-divider {
+    border: 0;
+    border-top: 1px solid #9c9c9c;
+
+    margin-top: 0;
+    margin-bottom: 22px;
+    /* ← espace entre ligne et paragraphe */
+}
+
+.pack-section-blue {
+    color: #2f75b5;
+
+}
+
+.pack-article {
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+}
+
+.pack-article2 {
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+}
+
+.pack-article2-2 {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.pack-block,
+.pack-price-detail,
+.pack-total-wrapper {
+    page-break-inside: avoid;
+}
+
+.pack-contract-page p {
+    margin: 0 0 7px 0;
+    text-align: justify;
+}
+
+.pack-value {
+    font-weight: bold;
+}
+
+.pack-party-label-table {
+    width: 100%;
+    border: none;
+    margin: 0 0 12px 0;
+}
+
+.pack-party-label-cell {
+    text-align: right;
+    border: none;
+    padding: 0;
+}
+
+.pack-lot-surface-label {
+    margin-left: 30px;
+}
+
+.pack-schedule {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    font-size: 11.5px;
+}
+
+.pack-schedule thead {
+    display: table-header-group;
+}
+
+.pack-schedule tr {
+    page-break-inside: avoid;
+}
+
+.pack-schedule th,
+.pack-schedule td {
+    border: 1px solid #b8c4d1;
+    padding: 8px 6px;
+    !important;
+    vertical-align: middle;
+}
+
+.pack-schedule th {
+    text-align: center;
+    font-weight: bold;
+    background: #2f6fb2;
+    color: #ffffff !important;
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.pack-schedule td {
+    background: #ffffff;
+}
+
+.pack-schedule tbody td:first-child {
+    text-align: center;
+    font-weight: bold;
+    width: 12%;
+}
+
+.pack-schedule tbody td:nth-child(2) {
+    text-align: center;
+    width: 28%;
+}
+
+.pack-schedule tbody td:nth-child(3) {
+    text-align: right;
+    width: 35%;
+}
+
+.pack-col-num {
+    width: 12%;
+}
+
+.pack-w-25 {
+    width: 25%;
+}
+
+.pack-w-15 {
+    width: 15%;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.pack-signature {
+    width: 100%;
+    margin-top: 35px;
+    font-weight: bold;
+}
+
+.pack-signature td {
+    width: 50%;
+    text-align: center;
+    padding-top: 30px;
+}
+
+.pack-total-table {
+    width: 32%;
+    margin-left: auto;
+    margin-top: 18px;
+    margin-bottom: 20px;
+    border-collapse: collapse;
+    font-size: 11.5px;
+}
+
+.pack-total-table td {
+    padding: 3px 6px;
+    vertical-align: top;
+}
+
+.pack-total-wrapper {
+    width: 100%;
+    margin-top: 18px;
+    margin-bottom: 25px;
+}
+
+.pack-right,
+.pack-contract-page p.pack-right {
+    text-align: right !important;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.pack-inline-info {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 12px;
+    border-collapse: collapse;
+}
+
+.pack-inline-info td {
+    padding: 4px 18px 4px 0;
+    vertical-align: top;
+    border: none;
+    font-size: 13px;
+}
+
+.pack-lot-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.pack-lot-table td {
+    border: none;
+    padding: 0;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+.pack-right-cell {
+    text-align: left;
+}
+
+.pack-value {
+    font-weight: bold;
+}
+
+.pack-signature-box {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 45px;
+    table-layout: fixed;
+}
+
+.pack-signature-box td {
+    border: 1px solid #000000;
+    width: 50%;
+    vertical-align: top;
+    text-align: center;
+    padding: 14px 12px;
+}
+
+.pack-sign-title {
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 1.35;
+    min-height: 45px;
+}
+
+.pack-sign-note {
+    margin-top: 14px;
+    font-size: 11px;
+    color: #6f7f95;
+    line-height: 1.4;
+    min-height: 40px;
+}
+
+.pack-sign-space {
+    height: 70px;
+}
+
+.pack-sign-line {
+    border-top: 1px solid #777777;
+    width: 95%;
+    margin: 0 auto;
+    padding-top: 8px;
+    color: #777777;
+    font-size: 14px;
+}
+
+.pack-signature-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-top: 25px;
+}
+
+/* =========================================================
+   HEADER DOCUMENT
+========================================================= */
+
+.pack-doc-header {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.pack-header-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* =========================
+   FOOTER ODOO CLEAN
+========================= */
+
+/* Footer Odoo : garder uniquement pagination */
+.footer img,
+.footer .company_details,
+.footer .o_company_details,
+.footer .o_footer_content>div:first-child {
+    display: none !important;
+}
+
+.footer {
+    border-top: none !important;
+    padding-top: 0 !important;
+}
+
+.footer .text-muted {
+    display: block !important;
+    text-align: center !important;
+}

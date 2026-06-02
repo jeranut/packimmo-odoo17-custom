@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_company_form_inherit_bank_accounts" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.bank.accounts</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form" />
+        <field name="arch" type="xml">
+
+            <xpath expr="//form/sheet" position="inside">
+                <field name="parent_id" invisible="1" />
+            </xpath>
+
+            <xpath expr="//form/sheet/notebook" position="inside">
+                <page string="Comptes bancaires">
+                    <field name="company_bank_account_ids" context="{'default_company_id': id}">
+                        <tree>
+                            <field name="parent_id" invisible="1" />
+
+                            <field name="bank_id" optional="show" />
+                            <field name="agency_name" optional="show" />
+                            <field name="account_holder" optional="show" />
+
+                            <field name="bank_code" optional="show" />
+                            <field name="branch_code" optional="show" />
+                            <field name="acc_number" optional="show" />
+                            <field name="account_key" optional="show" />
+
+                            <field name="currency_id" optional="show" />
+
+                            <field name="account_name" optional="hide" />
+                            <field name="account_type" optional="hide" />
+
+                            <field name="is_main" optional="show" />
+                            <field name="active" optional="hide" />
+                        </tree>
+
+                        <form string="Compte bancaire société">
+                            <sheet>
+                                <group>
+                                    <group string="Banque">
+                                        <field name="company_id" invisible="1" />
+                                        <field name="bank_id" />
+                                        <field name="agency_name" placeholder="Ambondrona" />
+                                        <field name="account_holder"
+                                            placeholder="PACKIMMO S.A." />
+                                        <field name="account_name" placeholder="Compte courant principal" />
+                                        <field name="account_type" placeholder="Type de compte" />
+                                    </group>
+
+                                    <group string="RIB / Coordonnées">
+                                        <field name="bank_code" placeholder="00008" />
+                                        <field name="branch_code"
+                                            placeholder="00015" />
+                                        <field name="acc_number" placeholder="02001009158" />
+                                        <field name="account_key" placeholder="16" />
+                                        <field name="iban" placeholder="IBAN" optional="hide" />
+                                        <field name="bic" placeholder="BIC" optional="hide" />
+                                        <field name="currency_id" placeholder="Devise" />
+                                    </group>
+                                </group>
+
+                                <group string="Utilisation">
+                                    <field name="is_main" />
+                                    <field name="active" />
+                                    <field name="notes" />
+                                </group>
+                            </sheet>
+                        </form>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

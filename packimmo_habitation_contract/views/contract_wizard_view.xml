@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="contract_wizard_form_view_inherit_exchange_mode" model="ir.ui.view">
+        <field name="name">contract.wizard.form.inherit.exchange.mode</field>
+        <field name="model">contract.wizard</field>
+        <field name="inherit_id" ref="rental_management.contract_wizard_form_view" />
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='rent_unit']" position="after">
+
+                <newline />
+
+                <field name="is_foreign_rent" invisible="1" />
+                  <field name="foreign_price"
+                    string="Loyer en devise"
+                    readonly="1"
+                    invisible="not is_foreign_rent"/>
+
+                <field name="rent_exchange_mode"
+                    widget="radio"
+                    invisible="not is_foreign_rent" />
+
+                <field name="fixed_exchange_rate"
+                    string="Taux fixe"
+                    invisible="not is_foreign_rent or rent_exchange_mode != 'fixed'"
+                    readonly="1"
+                    force_save="1" />
+
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

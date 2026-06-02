@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="rental_property_details_inherit_location_esri"
+              inherit_id="rental_management.rental_property_details">
+
+        <xpath expr="//footer[contains(@class, 'footer')]" position="before">
+
+            <section class="section-padding no-break"
+                     t-if="property_id.latitude and property_id.longitude">
+
+                <h3 class="section-header">Emplacement du bien</h3>
+
+                <div class="card-box no-break">
+                    <div class="o_property_brochure_esri_map"
+                         style="width:100%; height:420px; min-height:420px; border-radius:12px; overflow:hidden; border:1px solid #e5e5e5; background:#f6f6f6;"
+                         t-att-data-latitude="property_id.latitude"
+                         t-att-data-longitude="property_id.longitude"
+                         t-att-data-title="property_id.name or 'Localisation du bien'">
+                    </div>
+                </div>
+
+                <!-- Fallback direct pour garantir l'affichage dans la brochure même si les assets frontend sont en cache -->
+                <link rel="stylesheet"
+                      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                <script type="text/javascript"
+                        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+                </script>
+                <script type="text/javascript">
+                    <![CDATA[
+                    (function () {
+                        function initBrochureEsriMaps() {
+                            if (typeof L === 'undefined') {
+                                setTimeout(initBrochureEsriMaps, 300);
+                                return;
+                            }
+
+                            var maps = document.querySelectorAll('.o_property_brochure_esri_map:not([data-map-ready="1"])');
+                            maps.forEach(function (el) {
+                                var lat = parseFloat(el.dataset.latitude || '');
+                                var lng = parseFloat(el.dataset.longitude || '');
+                                var title = el.dataset.title || 'Localisation du bien';
+
+                                if (isNaN(lat) || isNaN(lng)) {
+                                    return;
+                                }
+
+                                el.dataset.mapReady = '1';
+
+                                var map = L.map(el, {
+                                    scrollWheelZoom: false,
+                                    dragging: true,
+                                }).setView([lat, lng], 17);
+
+                                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                                    maxZoom: 19,
+                                    attribution: 'Tiles © Esri',
+                                }).addTo(map);
+
+                                L.marker([lat, lng]).addTo(map).bindPopup(title);
+
+                                setTimeout(function () {
+                                    map.invalidateSize();
+                                }, 500);
+                            });
+                        }
+
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', initBrochureEsriMaps);
+                        } else {
+                            initBrochureEsriMaps();
+                        }
+                        window.addEventListener('load', initBrochureEsriMaps);
+                    })();
+                    ]]>
+                </script>
+
+            </section>
+
+        </xpath>
+    </template>
+</odoo>

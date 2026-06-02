@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Ajouter un onglet Brochure dans la fiche propriété -->
+    <record id="property_details_form_brochure_layout_inherit"
+            model="ir.ui.view">
+
+        <field name="name">
+            property.details.form.brochure.layout.inherit
+        </field>
+
+        <field name="model">property.details</field>
+
+        <field name="inherit_id"
+               ref="rental_management.property_details_form_view"/>
+
+        <field name="arch" type="xml">
+
+            <!-- Ajouter après l'onglet Images -->
+            <xpath expr="//page[@string='Images']"
+                   position="after">
+
+                <page string="Brochure">
+
+                    <group>
+
+                        <group string="Brochure publique">
+
+                            <field name="brocher_access_token"
+                                   readonly="1"/>
+
+                            <field name="brochure_header_image"
+                                   widget="image"
+                                   filename="brochure_header_image_name"/>
+
+                            <field name="brochure_header_image_name"
+                                   invisible="1"/>
+
+                        </group>
+
+                        <group string="Contact brochure">
+
+                            <field name="brochure_contact_title"/>
+
+                            <field name="brochure_contact_note"/>
+
+                        </group>
+
+                    </group>
+
+                    <group string="Lien brochure">
+
+                        <div class="o_row">
+
+                            <span>/property-brochure/</span>
+
+                            <field name="brocher_access_token"
+                                   nolabel="1"
+                                   readonly="1"/>
+
+                        </div>
+
+                    </group>
+
+                </page>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+</odoo>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="legal_form_ei" model="res.partner.legal.form">
+        <field name="name">EI (Entreprise Individuelle)</field>
+    </record>
+    <record id="legal_form_sarl" model="res.partner.legal.form">
+        <field name="name">SARL</field>
+    </record>
+    <record id="legal_form_sarlu" model="res.partner.legal.form">
+        <field name="name">SARLU</field>
+    </record>
+    <record id="legal_form_sa" model="res.partner.legal.form">
+        <field name="name">SA</field>
+    </record>
+    <record id="legal_form_sau" model="res.partner.legal.form">
+        <field name="name">SAU</field>
+    </record>
+</odoo>

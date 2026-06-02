@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="property_project_view_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">property.project.view.form.inherit.custom.fields</field>
+        <field name="model">property.project</field>
+        <field name="inherit_id" ref="rental_management.property_project_view_form" />
+        <field name="arch" type="xml">
+
+            <!-- Champs personnalisés -->
+            <xpath expr="//field[@name='company_id']" position="after">
+
+                <field name="property_land_name" placeholder="TANJONA II" invisible="property_type != 'land'" readonly="status == 'available'" />
+
+                <field name="property_title_number" placeholder="6176-H" invisible="property_type != 'land'" readonly="status == 'available'" />
+
+            </xpath>
+
+            <!-- Cacher Country -->
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher State -->
+            <xpath expr="//field[@name='state_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher Website -->
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <!-- Cacher Valuation Of -->
+            <xpath expr="//field[@name='sale_lease']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='property_land_name']" position="attributes">
+                <attribute name="required">property_type == 'land'</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='property_title_number']" position="attributes">
+                <attribute name="required">property_type == 'land'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='region_id']" position="attributes">
+                <attribute name="options">{'no_create': False, 'no_quick_create': False,
+                    'no_create_edit': False}</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='city_id']" position="attributes">
+                <attribute name="options">{'no_create': False, 'no_quick_create': False,
+                    'no_create_edit': False}</attribute>
+            </xpath>
+
+
+        </field>
+    </record>
+
+    <record id="property_sub_project_view_form_inherit_hide_sale_lease" model="ir.ui.view">
+        <field name="name">property.sub.project.view.form.inherit.hide.sale.lease</field>
+        <field name="model">property.sub.project</field>
+        <field name="inherit_id" ref="rental_management.property_sub_project_view_form" />
+        <field name="arch" type="xml">
+
+            <!-- Cacher Country -->
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher State -->
+            <xpath expr="//field[@name='state_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher Website -->
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher Valuation Of -->
+            <xpath expr="//field[@name='sale_lease']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Readonly adresse -->
+            <xpath expr="//field[@name='region_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='street']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='street2']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='city_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='zip']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+    <record id="property_details_view_form_inherit_hide_address_fields" model="ir.ui.view">
+        <field name="name">property.details.view.form.inherit.hide.address.fields</field>
+        <field name="model">property.details</field>
+        <field name="inherit_id" ref="rental_management.property_details_form_view" />
+        <field name="arch" type="xml">
+
+            <!-- Cacher Country -->
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher State -->
+            <xpath expr="//field[@name='state_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher Website -->
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Readonly adresse -->
+            <xpath expr="//field[@name='region_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='street']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='street2']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='city_id']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='zip']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

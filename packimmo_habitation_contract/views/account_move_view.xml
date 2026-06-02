@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_move_form_inherit_contract_foreign_price" model="ir.ui.view">
+        <field name="name">account.move.form.contract.foreign.price</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//group[@id='header_right_group']/field[@name='currency_id']" position="after">
+
+                <field name="contract_foreign_currency_id" invisible="1"/>
+
+                <label for="contract_foreign_price"
+                       string="Montant contractuel devise"
+                       invisible="not contract_foreign_price"/>
+
+                <div invisible="not contract_foreign_price">
+
+                    <field name="contract_foreign_price"
+                           nolabel="1"
+                           widget="monetary"
+                           options="{'currency_field': 'contract_foreign_currency_id'}"
+                           readonly="1"/>
+
+                    <div class="text-muted mt-1"
+                         invisible="not contract_exchange_rate_label">
+
+                        <i class="fa fa-exchange me-1"/>
+
+                        <field name="contract_exchange_rate_label"
+                               nolabel="1"
+                               readonly="1"/>
+
+                    </div>
+
+                    <div class="text-primary fw-bold mt-1"
+                         invisible="not contract_foreign_amount_mga">
+
+                        Montant contractuel MGA :
+
+                        <field name="contract_foreign_amount_mga"
+                               nolabel="1"
+                               widget="monetary"
+                               options="{'currency_field': 'company_currency_id'}"
+                               readonly="1"/>
+
+                    </div>
+
+                </div>
+
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

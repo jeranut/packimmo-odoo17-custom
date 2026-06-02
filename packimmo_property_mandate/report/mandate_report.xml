@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_property_mandate" model="ir.actions.report">
+        <field name="name">Mandat immobilier</field>
+        <field name="model">property.mandate</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">packimmo_property_mandate.report_property_mandate_document</field>
+        <field name="report_file">packimmo_property_mandate.report_property_mandate_document</field>
+        <field name="binding_model_id" ref="model_property_mandate"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

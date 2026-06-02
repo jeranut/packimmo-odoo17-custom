@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_syndic_management_tree" model="ir.ui.view">
+        <field name="name">syndic.management.tree</field>
+        <field name="model">syndic.management</field>
+        <field name="arch" type="xml">
+            <tree string="Gestion syndic">
+                <field name="name"/>
+                <field name="scope"/>
+                <field name="project_id"/>
+                <field name="subproject_id"/>
+                <field name="total_property_count"/>
+                <field name="total_area"/>
+                <field name="total_share"/>
+                <field name="manager_id"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'active'"
+                       decoration-danger="state == 'closed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_syndic_management_form" model="ir.ui.view">
+        <field name="name">syndic.management.form</field>
+        <field name="model">syndic.management</field>
+        <field name="arch" type="xml">
+            <form string="Gestion syndic">
+                <header>
+                    <button name="action_refresh_properties" type="object" string="Récupérer les lots" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_activate" type="object" string="Activer" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_close" type="object" string="Clôturer" invisible="state != 'active'"/>
+                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Ex: Syndic Résidence Ambatobe"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="scope"/>
+                            <field name="project_id" invisible="scope != 'project'" required="scope == 'project'"/>
+                            <field name="subproject_id" invisible="scope != 'subproject'" required="scope == 'subproject'"/>
+                            <field name="manager_id"/>
+                        </group>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="currency_id" readonly="1"/>
+                            <field name="total_property_count" readonly="1"/>
+                            <field name="total_area" readonly="1"/>
+                            <field name="total_share" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lots / Propriétaires">
+                            <field name="owner_line_ids">
+                                <tree editable="bottom">
+                                    <field name="property_id"/>
+                                    <field name="owner_id"/>
+                                    <field name="tenant_id"/>
+                                    <field name="surface"/>
+                                    <field name="share"/>
+                                    <field name="active"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Biens récupérés">
+                            <field name="property_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="property_project_id"/>
+                                    <field name="subproject_id"/>
+                                    <field name="landlord_id"/>
+                                    <field name="total_area"/>
+                                    <field name="syndic_active"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Charges">
+                            <field name="charge_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="charge_type"/>
+                                    <field name="distribution_method"/>
+                                    <field name="invoice_partner_type"/>
+                                    <field name="amount"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'draft'"
+                                           decoration-warning="state == 'distributed'"
+                                           decoration-success="state == 'invoiced'"
+                                           decoration-danger="state == 'cancelled'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_syndic_management" model="ir.actions.act_window">
+        <field name="name">Gestion syndic</field>
+        <field name="res_model">syndic.management</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_syndic_root"
+              name="Syndic"
+              parent="rental_management.main_menu_rental_management"
+              sequence="6"/>
+
+    <menuitem id="menu_syndic_management"
+              name="Gestion syndic"
+              parent="menu_syndic_root"
+              action="action_syndic_management"
+              sequence="10"/>
+
+    <menuitem id="menu_syndic_charge"
+              name="Charges syndic"
+              parent="menu_syndic_root"
+              action="action_syndic_charge"
+              sequence="20"/>
+
+</odoo>

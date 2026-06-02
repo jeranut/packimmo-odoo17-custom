@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="unit_creation_wizard_view_form_inherit_mapping" model="ir.ui.view">
+        <field name="name">unit.creation.form.inherit.mapping</field>
+        <field name="model">unit.creation</field>
+        <field name="inherit_id" ref="rental_management.unit_creation_wizard_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='property_code_prefix']" position="after">
+                <field name="total_unit_to_create" readonly="1"/>
+                <field name="has_multiple_unit_to_create" invisible="1"/>
+            </xpath>
+            <xpath expr="//footer/button[@name='action_create_property_unit']" position="after">
+                <button string="Import Image / Cartographie"
+                        name="action_import_unit_map_image"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not has_multiple_unit_to_create"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

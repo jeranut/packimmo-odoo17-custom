@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="property_vendor_form_view_inherit_promesse_contract" model="ir.ui.view">
+        <field name="name">property.vendor.form.inherit.promesse.contract</field>
+        <field name="model">property.vendor</field>
+        <field name="inherit_id" ref="rental_management.property_vendor_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_confirm_sale']" position="after">
+                <button name="action_generate_promesse_sale_contract_pdf" type="object" string="Generate Promesse PDF" icon="fa-file-pdf-o" class="btn btn-secondary"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

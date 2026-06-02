@@ -1,0 +1,97 @@
+.page {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #222;
+    line-height: 1.5;
+}
+
+.pack-title h2 {
+    color: #008060 !important;
+    font-size: 23px !important;
+    font-weight: 900 !important;
+    text-decoration: underline !important;
+}
+
+.pk-mandate-type {
+    width: 100%;
+    margin-bottom: 25px;
+    border-collapse: collapse;
+}
+
+.pk-mandate-type td {
+    width: 33%;
+    text-align: center;
+    border: 1px solid #444;
+    padding: 10px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.pk-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.pk-table td {
+    padding: 6px 4px;
+    vertical-align: top;
+}
+
+.pk-section-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #999;
+    padding-bottom: 3px;
+}
+
+.pk-highlight {
+    font-weight: bold;
+}
+
+.pk-signature-section {
+    margin-top: 50px;
+}
+
+.pk-signature-table {
+    width: 100%;
+    margin-top: 40px;
+}
+
+.pk-signature-table td {
+    width: 50%;
+    text-align: center;
+    vertical-align: top;
+}
+
+.pk-sign-title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.pk-sign-note {
+    font-style: italic;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.pk-sign-space {
+    height: 100px;
+}
+
+.pk-text-justify {
+    text-align: justify;
+}
+
+.pk-property-details {
+    font-size: 13px;
+    line-height: 1.7;
+    text-align: justify;
+
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+
+    border-bottom: 1px solid #d9d9d9;
+}

@@ -1,0 +1,24 @@
+.o_property_location_picker_map {
+    width: 100%;
+    height: 560px;
+    min-height: 420px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.o_property_brochure_esri_map {
+    width: 100%;
+    height: 380px;
+    min-height: 320px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+    background: #f6f6f6;
+}
+
+.o_property_location_picker_page .list-group {
+    max-height: 220px;
+    overflow-y: auto;
+}

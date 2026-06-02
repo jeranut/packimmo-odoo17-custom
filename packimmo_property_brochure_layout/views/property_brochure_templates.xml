@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="packimmo_property_brochure_details" name="PACKIMMO Property Brochure Details">
+        <t t-call="website.layout">
+            <div class="pk-brochure-page">
+                <section class="pk-hero">
+                    <t t-if="property_id.brochure_header_image">
+                        <img t-att-src="image_data_uri(property_id.brochure_header_image)" class="pk-hero-img" alt="Image d'entête"/>
+                    </t>
+                    <t t-elif="property_id.image">
+                        <img t-att-src="image_data_uri(property_id.image)" class="pk-hero-img" alt="Image du bien"/>
+                    </t>
+                    <t t-elif="property_id.is_images and property_id.property_images_ids">
+                        <img t-att-src="image_data_uri(property_id.property_images_ids[0].image)" class="pk-hero-img" alt="Image du bien"/>
+                    </t>
+                    <t t-else="">
+                        <div class="pk-hero-placeholder">Property Image</div>
+                    </t>
+
+                    <div class="pk-hero-overlay"/>
+                    <div class="pk-hero-content">
+                        <div class="pk-status-row">
+                            <span class="pk-badge" t-if="property_id.type">
+                                <span t-field="property_id.type"/>
+                            </span>
+                            <span class="pk-badge pk-badge-sale" t-if="property_id.sale_lease">
+                                <span t-field="property_id.sale_lease"/>
+                            </span>
+                        </div>
+                        <h1 t-field="property_id.name"/>
+                        <div class="pk-location" t-if="property_id.city_id or property_id.city or property_id.region_id">
+                            <i class="fa fa-map-marker me-1"/>
+                            <span t-if="property_id.city_id" t-field="property_id.city_id"/>
+                            <span t-elif="property_id.city" t-field="property_id.city"/>
+                            <span t-if="property_id.region_id">, <span t-field="property_id.region_id"/></span>
+                        </div>
+                        <div class="pk-hero-meta">
+                            <span t-if="property_id.unit_type"><i class="fa fa-home"/> <span t-field="property_id.unit_type"/></span>
+                            <span t-if="property_id.total_area"><i class="fa fa-expand"/> <span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></span>
+                            <span t-if="property_id.bed"><i class="fa fa-bed"/> <span t-field="property_id.bed"/> Chambres</span>
+                        </div>
+                    </div>
+                </section>
+
+                <main class="pk-content-wrap">
+                    <div class="pk-main">
+                        <section class="pk-card pk-gallery">
+                            <t t-if="property_id.is_images and property_id.property_images_ids">
+                                <div id="pkPropertyCarousel" class="carousel slide" data-bs-ride="false">
+                                    <div class="carousel-inner">
+                                        <t t-foreach="property_id.property_images_ids" t-as="img">
+                                            <div t-att-class="'carousel-item active' if img_index == 0 else 'carousel-item'">
+                                                <img t-att-src="image_data_uri(img.image)" class="pk-gallery-img" alt="Property Image"/>
+                                            </div>
+                                        </t>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#pkPropertyCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon"/>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#pkPropertyCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon"/>
+                                    </button>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <img t-if="property_id.image" t-att-src="image_data_uri(property_id.image)" class="pk-gallery-img" alt="Property Image"/>
+                                <div t-else="" class="pk-gallery-placeholder">Property Image</div>
+                            </t>
+                        </section>
+
+                        <section class="pk-section">
+                            <h3>À propos de ce bien</h3>
+                            <p t-if="property_id.facilities" t-field="property_id.facilities"/>
+                            <p t-else="">Contactez-nous pour obtenir plus d'informations sur ce bien.</p>
+                        </section>
+
+                        <section class="pk-section">
+                            <h3>Caractéristiques du bien</h3>
+                            <div class="pk-grid">
+                                <div class="pk-info" t-if="property_id.unit_type"><small>Type de bien</small><strong t-field="property_id.unit_type"/></div>
+                                <div class="pk-info" t-if="property_id.sale_lease"><small>Type d'opération</small><strong t-field="property_id.sale_lease"/></div>
+                                <div class="pk-info" t-if="property_id.property_seq"><small>Référence</small><strong t-field="property_id.property_seq"/></div>
+                                <div class="pk-info" t-if="property_id.total_area"><small>Surface totale</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
+                                <div class="pk-info" t-if="property_id.usable_area"><small>Surface habitable</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
+                                <div class="pk-info" t-if="property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>
+                            </div>
+                        </section>
+
+                        <section class="pk-section" t-if="property_id.type == 'residential'">
+                            <h3>Détails résidentiels</h3>
+                            <div class="pk-grid pk-grid-four">
+                                <div class="pk-info"><small>Étages</small><strong t-field="property_id.total_floor"/></div>
+                                <div class="pk-info"><small>Parking</small><strong t-field="property_id.parking"/></div>
+                                <div class="pk-info"><small>Chambres</small><strong t-field="property_id.bed"/></div>
+                                <div class="pk-info"><small>Salles de bain</small><strong t-field="property_id.bathroom"/></div>
+                            </div>
+                        </section>
+
+                        <section class="pk-section" t-if="property_id.latitude and property_id.longitude">
+                            <h3>Emplacement du bien</h3>
+                            <div class="pk-map-box">
+                                <iframe t-att-src="'https://maps.google.com/maps?q=%s,%s&amp;z=16&amp;output=embed' % (property_id.latitude, property_id.longitude)"
+                                        width="100%"
+                                        height="420"
+                                        style="border:0;"
+                                        loading="lazy"
+                                        allowfullscreen="allowfullscreen">
+                                </iframe>
+                            </div>
+                        </section>
+
+                                                <!-- VIDEO -->
+                        <!-- VIDEO -->
+                    <section class="pk-section"
+                            t-if="property_id.brochure_effective_video_embed_code">
+
+                        <h3>Vidéo du bien</h3>
+
+                        <div class="pk-video-box">
+                            <t t-raw="property_id.brochure_effective_video_embed_code"/>
+                        </div>
+
+                    </section>
+                    </div>
+
+                    <aside class="pk-sidebar">
+                        <div class="pk-side-card">
+                            <div class="pk-side-title">Prix</div>
+                            <div class="pk-price">
+                                <span t-if="property_id.sale_lease == 'for_sale'" t-field="property_id.price"/>
+                                <t t-if="property_id.sale_lease == 'for_tenancy'">
+                                    <span t-field="property_id.price"/> / <span t-field="property_id.rent_unit"/>
+                                </t>
+                            </div>
+                        </div>
+
+                        <div class="pk-side-card">
+                            <div class="pk-side-title">Partager ce bien</div>
+                            <div class="pk-share">
+                                <a t-att-href="'https://www.facebook.com/sharer/sharer.php?u=' + request.httprequest.url" target="_blank"><i class="fa fa-facebook"/></a>
+                                <a t-att-href="'https://twitter.com/intent/tweet?url=' + request.httprequest.url" target="_blank"><i class="fa fa-twitter"/></a>
+                                <a t-att-href="'https://www.linkedin.com/sharing/share-offsite/?url=' + request.httprequest.url" target="_blank"><i class="fa fa-linkedin"/></a>
+                            </div>
+                        </div>
+
+                        <div class="pk-side-card">
+                            <div class="pk-side-title">
+                                <span t-esc="property_id.brochure_contact_title or 'Demande d’information'"/>
+                            </div>
+                            <div t-if="success" class="alert alert-success py-2">
+                                Votre demande a été envoyée.
+                            </div>
+                            <p class="pk-contact-note" t-if="property_id.brochure_contact_note" t-field="property_id.brochure_contact_note"/>
+
+                            <form action="/property-brochure/contact" method="post" class="pk-contact-form">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="property_id" t-att-value="property_id.id"/>
+
+                                <input type="text" name="name" required="required" placeholder="Votre nom *"/>
+                                <input type="email" name="email" required="required" placeholder="Adresse email *"/>
+                                <input type="tel" name="phone" placeholder="Téléphone"/>
+                                <textarea name="message" rows="6" placeholder="Information complémentaire"/>
+                                <button type="submit">Envoyer la demande</button>
+                            </form>
+                        </div>
+                    </aside>
+                </main>
+            </div>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="property_vendor_form_inherit_sale_invoice_fields" model="ir.ui.view">
+
+        <field name="name">
+            property.vendor.form.inherit.sale.invoice.fields
+        </field>
+
+        <field name="model">property.vendor</field>
+
+        <field name="inherit_id" ref="rental_management.property_vendor_form_view"/>
+
+        <field name="arch" type="xml">
+
+            <!-- Colonnes dans le treeview des échéances -->
+            <xpath expr="//field[@name='sale_invoice_ids']/tree/field[@name='amount']" position="after">
+
+                <field name="cheque_reference" string="Référence chèque" optional="show" required="1"/>
+
+                <field name="observation" string="Observation" optional="show" required="1"/>
+
+            </xpath>
+
+            <!-- Date signature contrat -->
+            <xpath expr="//field[@name='sold_document']" position="after">
+
+                <field name="contract_signature_date" string="Date de signature contrat"/>
+
+            </xpath>
+
+        </field>
+
+    </record>
+
+</odoo>

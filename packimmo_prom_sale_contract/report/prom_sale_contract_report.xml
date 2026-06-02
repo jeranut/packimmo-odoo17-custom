@@ -1,0 +1,612 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_promesse_sale_contract" model="report.paperformat">
+        <field name="name">PACKIMMO Promesse de Vente A4</field>
+        <field name="default" eval="False" />
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">35</field>
+        <field name="margin_bottom">25</field>
+        <field name="margin_left">15</field>
+        <field name="margin_right">15</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">30</field>
+        <field name="dpi">99</field>
+    </record>
+
+    <record id="action_report_promesse_sale_contract_pdf" model="ir.actions.report">
+        <field name="name">Promesse de vente</field>
+        <field name="model">property.vendor</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">packimmo_prom_sale_contract.report_promesse_sale_contract_pdf</field>
+        <field name="report_file">packimmo_prom_sale_contract.report_promesse_sale_contract_pdf</field>
+        <field name="binding_model_id" ref="rental_management.model_property_vendor" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="packimmo_prom_sale_contract.paperformat_promesse_sale_contract" />
+        <field name="print_report_name">'Promesse de vente - %s' % (object.display_name)</field>
+    </record>
+
+    <template id="report_promesse_sale_contract_pdf">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="packimmo_prom_sale_contract.report_promesse_sale_contract_pdf_document" />
+            </t>
+        </t>
+    </template>
+
+    <template id="report_promesse_sale_contract_pdf_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="doc" />
+            <t t-set="company" t-value="doc.company_id if 'company_id' in doc._fields and doc.company_id else res_company" />
+
+            <t t-set="partner" t-value="doc._pack_get_partner()" />
+            <t t-set="property_rec" t-value="doc._pack_get_property()" />
+            <t t-set="schedule_lines" t-value="doc._pack_get_schedule_lines()" />
+
+            <div class="page pack-contract-page">
+
+                <div class="pack-report-header">
+                    <h1 class="pack-main-title"> PROMESSE DE VENTE<br />
+ ET DE BAIL EMPHYTEOTIQUE </h1>
+
+                    <div class="pack-subtitle">
+                        CONTRAT CADRE GENERAL — PRET A COMPLETER
+                    </div>
+                </div>
+
+                <p class="pack-section-title pack-section-blue">
+                    ENTRE LES SOUSSIGNÉES :
+                </p>
+                <hr class="pack-divider" />
+
+
+                <p>
+                    La Société TCM NIF : 10000006205 STAT : 41001 11 1990 0 10003
+                    RCS : 2003B01410, représentée par La société PACKIMMO S.A.,
+                    en vertu de la signature du protocole d'accord en date du 01 Aout 2023,
+                    dont le siège est basé au 1er étage, Immeuble Ranohisoa, Route des Hydrocarbures
+                    à Ankorondrano Antananarivo ; Agence Tamatave situé enceinte Immeuble
+                    STREAMLINER
+                    Tanamakoa, Toamasina. NIF : 20 000 36 020 - Statistique : 702 011 2007 010 653 -
+                    RCS : 2007 B 00645, représentée par Monsieur Richade GOULZARALY, Directeur
+                    Général,
+                    titulaire de la CIN n° 117 151 006 620 délivré le 21 Janvier 1999 à Tanjombato,
+                    ayant tout pouvoir à cet effet, en vertu de la procuration en date du 17 Mai
+                    2024.
+                </p>
+
+                <p>
+                    Monsieur Richade GOULZARALY pourra se faire représenter par Monsieur RAVOMANANA
+                    Paoly,
+                    Directeur Commercial de la société PACKIMMO sise au 1er étage Immeuble RANOHISOA
+                    Ankorondrano Antananarivo, titulaire de la CIN 101 231 102 712 délivrée le
+                    21/06/1991
+                    à Antananarivo V demeurant au Lot VN 83 Ter Antsahabe Antananarivo et par Madame
+                    MASSOUMALY Anjila, Directrice Commerciale de l'Agence PACKIMMO TAMATAVE,
+                    titulaire
+                    de la CIN n° 101 232 134 591 délivrée le 03 Mars 2005 à Antananarivo III,
+                    demeurant à la résidence Streamliner Tanamakoa TOAMASINA, ayant tous deux
+                    pouvoir à cet effet,
+                </p>
+                <br />
+                <table class="pack-party-label-table">
+                    <tr>
+                        <td class="pack-party-label-cell">Dénommés ci-dessus « <strong class="pack-strong">LE PROPRIÉTAIRE VENDEUR</strong> » ou <strong class="pack-strong">« PACKIMMO »</strong>, d'une part, </td>
+                    </tr>
+                </table>
+
+                <div class="pack-section">ET</div>
+
+                <!-- ACQUÉREUR : PERSONNE PHYSIQUE -->
+                <t t-if="partner and partner.company_type == 'person'">
+
+                    <p> Monsieur / Madame / Mademoiselle : <span class="pack-value">
+                        <t t-esc="partner.display_name" />
+                    </span>
+                </p>
+
+                <table class="pack-inline-info">
+                    <tr>
+                        <td> Nationalité : <span class="pack-value">
+                            <t t-esc="partner.nationality_id.name if 'nationality_id' in partner._fields and partner.nationality_id else ''" />
+                        </span>
+                    </td>
+                    <td> Profession : <span class="pack-value">
+                        <t t-esc="partner.function or ''" />
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td> Titulaire de la CIN n° : <span class="pack-value">
+                    <t t-esc="partner.cin if 'cin' in partner._fields else ''" />
+                </span>
+            </td>
+            <td> délivrée le : <span class="pack-value">
+                <t t-esc="partner.cin_delivery_date if 'cin_delivery_date' in partner._fields else ''" />
+            </span>
+        </td>
+        <td> à :            <span class="pack-value">
+                <t t-esc="partner.cin_delivery_place if 'cin_delivery_place' in partner._fields else ''" />
+            </span>
+        </td>
+    </tr>
+</table>
+
+<p> Adresse / Demeurant à : <span class="pack-value">
+    <t t-esc="partner.contact_address or partner.street or ''" />
+</span>
+</p>
+
+<p> Téléphone : <span class="pack-value">
+<t t-esc="partner.phone or partner.mobile or ''" />
+</span>
+</p>
+
+<p> E-mail : <span class="pack-value">
+<t t-esc="partner.email or ''" />
+</span>
+</p>
+
+</t>
+
+<!-- ACQUÉREUR : SOCIÉTÉ -->
+<t t-if="partner and partner.company_type == 'company'">
+
+<p> La Société / Raison Sociale : <span class="pack-value">
+<t t-esc="partner.name or ''" />
+</span>
+</p>
+
+<p> Forme juridique : <span class="pack-value">
+<t t-esc="partner.legal_form_id.name if 'legal_form_id' in partner._fields and partner.legal_form_id else ''" />
+</span>
+</p>
+
+<p> Au capital de : <span class="pack-value">
+<t t-esc="'{:,.0f}'.format(partner.share_capital).replace(',', ' ') if 'share_capital' in partner._fields and partner.share_capital else ''" />
+                        Ar </span>
+</p>
+
+<p> Siège social : <span class="pack-value">
+<t t-esc="partner.contact_address or partner.street or ''" />
+</span>
+</p>
+
+<table class="pack-inline-info">
+<tr>
+<td> NIF : <span class="pack-value">
+<t t-esc="partner.nif if 'nif' in partner._fields else ''" />
+</span>
+</td>
+<td> STAT : <span class="pack-value">
+<t t-esc="partner.stat if 'stat' in partner._fields else ''" />
+</span>
+</td>
+<td> RCS : <span class="pack-value">
+<t t-esc="partner.rcs if 'rcs' in partner._fields else ''" />
+</span>
+</td>
+</tr>
+</table>
+
+<p> Représentée par M. / Mme : <span class="pack-value">
+<t t-esc="partner.representative_id.display_name if 'representative_id' in partner._fields and partner.representative_id else ''" />
+</span>
+</p>
+
+<p> En qualité de : <span class="pack-value">
+<t t-esc="partner.quality_id.name if 'quality_id' in partner._fields and partner.quality_id else ''" />
+</span>
+</p>
+
+</t>
+<br />
+<table class="pack-party-label-table">
+<tr>
+<td class="pack-party-label-cell">Dénommé ci-dessus « <strong class="pack-strong">L'ACQUÉREUR</strong> » 
+</td>
+</tr>
+</table>
+
+<p class="pack-section-title pack-section-blue">IL A ÉTÉ CONVENU ET ARRÊTÉ CE QUI
+                    SUIT</p>
+
+<p class="pack-article">Article 1 : OBJET DU PROGRAMME IMMOBILIER</p>
+
+<p> La société PACKIMMO SA au travers son département « Morcellement », développe le
+                    programme Immobilier dénommé «<span class="pack-value">
+<t t-esc="doc.property_project_id.name or ''" />
+</span>
+                    »,
+<span class="pack-value">
+<t t-esc="doc.subproject_id.name or ''" />
+</span>
+                    composé de <span class="pack-value">
+<t t-esc="doc.subproject_id.unit_count or 0" />
+</span>
+                    parcelles de terrains sur la propriété dite « <span class="pack-value">
+<t t-esc="doc.property_project_id.property_land_name or ''" />
+</span>»
+                    titre n° <span class="pack-value">
+<t t-esc="doc.property_project_id.property_title_number or ''" />
+</span>
+                    d'une contenance de <span class="pack-value">
+<t t-esc="doc.subproject_id.total_area or doc.property_project_id.total_area or ''" />
+</span>
+                    m² sise à <span class="pack-value">
+<t t-esc="'%s %s %s %s' % (
+        doc.property_project_id.street or '',
+        doc.property_project_id.street2 or '',
+        doc.property_project_id.city_id.name if doc.property_project_id.city_id else '',
+        doc.property_project_id.zip or ''
+    )" />
+</span>,
+                    conformément au plan de découpage annexé aux présentes. </p>
+
+<p> Le PROPRIETAIRE VENDEUR accepte de céder, avec toutes les garanties de droit et
+                    de fait, une partie de ladite propriété. <br />
+ LE PROPRIETAIRE VENDEUR et
+                    L'ACQUEREUR conviennent, par les présentes, des conditions de la cession de
+                    s'engager irrévocablement à signer un Acte de Vente Définitif (pour les
+                    personnes de nationalité malagasy) ou un Bail Emphytéotique (pour les personnes
+                    ou sociétés de nationalité étrangère conformément aux lois en vigueur à
+                    Madagascar), dans les délais prévus à l'article 6 à compter de la signature des
+                    présentes. </p>
+
+<div class="pack-article2">Article 2 : DESIGNATION DU LOT ET SUPERFICIE</div>
+
+<p class="pack-article2-2">
+                    Il s'agit d'un lot de terrain situé sur le projet susmentionné :
+</p>
+<table class="pack-lot-table">
+<tr>
+<td> LOT N° : <span class="pack-value">
+<t t-esc="property_rec.unit_map_label if property_rec and 'unit_map_label' in property_rec._fields else property_rec.display_name if property_rec else ''" />
+</span>
+</td>
+
+<td class="pack-right-cell"> SURFACE PROVISOIRE : <span class="pack-value">
+<t t-esc="doc._pack_text(property_rec, ['surface', 'area', 'total_area'], '')" />
+</span>
+                            m² </td>
+</tr>
+</table>
+<p>
+<strong class="pack-strong">Clause de tolérance : </strong> Cette superficie est
+                    stipulée sous réserve d’une marge de tolérance <strong class="pack-strong">de
+                    plus ou moins cinq pour cent<br />
+ (+/- 5%)</strong> après les opérations
+                    définitives de découpage et de bornage contradictoire effectuées par le
+                    géomètre. Le prix global mentionné à l'article 3 sera ajusté de plein droit
+                    proportionnellement à la hausse ou à la baisse sur la base exacte du
+                    Procès-Verbal de bornage définitif, sans que cela n'ouvre droit à une annulation
+                    ou résiliation du présent contrat. L'ACQUEREUR déclare parfaitement connaître la
+                    parcelle pour l'avoir vue et visitée avec PACKIMMO et la prend dans l'état
+                    actuel sans prétendre à aucune modification ultérieure. L'ACQUEREUR atteste en
+                    outre avoir pris parfaite connaissance du Cahier des Charges de la résidence et
+                    s'engage à le respecter entièrement dès la signature des présentes. Un
+                    exemplaire signed lui sera remis au moment de l'acte authentique devant le
+                    Notaire. </p>
+
+<div class="pack-block pack-article3">
+<div class="pack-article2">Article 3 : PRIX DE VENTE ET VENTILATION</div>
+
+
+<t t-set="terrain_price" t-value="property_rec.price_per_area if property_rec and 'price_per_area' in property_rec._fields else 0.0" />
+
+<t t-set="maintenance_price" t-value="property_rec.per_area_maintenance if property_rec and 'per_area_maintenance' in property_rec._fields else 0.0" />
+
+<t t-set="utility_total" t-value="sum(property_rec.extra_service_ids.mapped('price')) if property_rec and 'extra_service_ids' in property_rec._fields else 0.0" />
+
+<t t-set="surface" t-value="property_rec.surface if property_rec and 'surface' in property_rec._fields else 0.0" />
+
+<t t-set="unit_price_global" t-value="terrain_price + maintenance_price" />
+
+<t t-set="total_general" t-value="(unit_price_global * surface) + utility_total" />
+<p class="pack-article2-2">
+                        Le prix de vente au mètre carré (m²) est fixé d'un commun accord à :
+</p>
+<p> PRIX UNITAIRE GLOBAL : <span class="pack-value">
+<t t-esc="doc._pack_format_money(unit_price_global)" />
+</span>
+                        Ariary TTC / m² </p>
+
+<p>
+                        Ce prix correspond à la ventilation suivante :
+</p>
+
+<ul class="pack-bullet-list">
+
+<li>
+<span class="pack-value">
+<t t-esc="doc._pack_format_money(terrain_price)" />
+</span>
+                            Ariary TTC / m² pour le prix du terrain net vendeur. </li>
+
+<li t-if="maintenance_price > 0">
+<span class="pack-value">
+<t t-esc="doc._pack_format_money(maintenance_price)" />
+</span>
+                            Ariary TTC / m² pour les aménagements communs et infrastructures
+                            effectués par le propriétaire vendeur pour le compte de l'acquéreur
+                            conformément au cahier des charges. </li>
+
+</ul>
+
+<t t-if="utility_total > 0">
+
+<p> Services et équipements complémentaires de : <span class="pack-value">
+<t t-esc="doc._pack_format_money(utility_total)" />
+</span>
+                            Ariary TTC </p>
+
+<ul class="pack-bullet-list">
+
+<t t-foreach="property_rec.extra_service_ids" t-as="service">
+
+<li>
+<span class="pack-value">
+<t t-esc="doc._pack_format_money(service.price or 0.0)" />
+</span>
+                                    Ariary TTC <span class="pack-value">
+<t t-esc="service.service_id.display_name if 'service_id' in service._fields and service.service_id else ''" />
+</span>
+</li>
+
+</t>
+
+</ul>
+
+</t>
+
+<t t-set="total_general" t-value="doc.total_sell_amount if 'total_sell_amount' in doc._fields else 0.0" />
+
+<p> MONTANT TOTAL GENERAL : <span class="pack-value">
+<t t-esc="doc._pack_format_money(total_general)" />
+</span>
+                        Ariary TTC </p>
+</div>
+
+<div class="pack-article2">Article 4 : MODALITES DE PAIEMENT ET CLAUSE PENALE</div>
+
+<p>Le paiement s'effectuera de la manière suivante :
+</p>
+
+<p> ACOMPTE INITIAL (à la signature des présentes): <span class="pack-value">
+<t t-esc="doc._pack_format_money(doc.book_price if 'book_price' in doc._fields else 0.0)" />
+</span>
+                    Ariary TTC </p>
+<p> SOLDE RESTANT DÛ : <span class="pack-value">
+<t t-esc="doc._pack_format_money(doc.payable_amount if 'payable_amount' in doc._fields else 0.0)" />
+</span>
+                    Ariary TTC </p>
+<div class="pack-article2"> NOMBRE DE MENSUALITÉS RETENUES ET VALIDÉES : <span class="pack-value">
+<t t-esc="len(schedule_lines) if schedule_lines else 0" />
+</span>
+<strong class="pack-strong"> Mois</strong>
+</div>
+
+<table class="pack-schedule">
+<thead>
+<tr>
+<th class="pack-col-num">N°<br />
+ Échelonnement</th>
+<th>Date d'Exigibilité</th>
+<th>Montant de l'Échéance<br />
+ (Ar TTC)</th>
+<th>Mode de Règlement / Réf. Chèque</th>
+</tr>
+</thead>
+
+<tbody>
+<tr t-if="not schedule_lines">
+<td colspan="4" class="text-center">Aucune échéance définie.</td>
+</tr>
+
+<tr t-foreach="schedule_lines" t-as="line">
+<td class="text-center">
+<t t-esc="'%02d' % (line_index + 1)" />
+</td>
+
+<td class="text-center">
+<t t-esc="doc._pack_format_date(doc._pack_line_value(line, ['invoice_date', 'date', 'due_date', 'payment_date'], False))" />
+</td>
+
+<td class="text-right">
+<t t-esc="doc._pack_format_money(doc._pack_line_value(line, ['amount', 'amount_total', 'total', 'price'], 0.0))" />
+</td>
+
+<td class="text-center">
+<t t-esc="'N° %s %s' % (
+        line.cheque_reference if 'cheque_reference' in line._fields and line.cheque_reference else '',
+        line.observation if 'observation' in line._fields and line.observation else ''
+    )" />
+</td>
+</tr>
+</tbody>
+</table>
+<div class="pack-total-wrapper">
+<table class="pack-total-table">
+
+<tr t-if="doc._pack_get_total(['total_amount', 'amount_total'])">
+<td>
+<strong class="pack-strong">Montant total</strong>
+</td>
+<td class="text-right">
+<strong class="pack-strong">
+<t t-esc="doc._pack_format_money(doc._pack_get_total(['total_amount', 'amount_total']))" />
+</strong>
+</td>
+</tr>
+
+</table>
+</div>
+<p> Pour bénéficier d'une modalité d'échelonnement, l'acquéreur s'engage
+                    formellement à remettre l'intégralité des **chèques de garantie post-datés ou
+                    des traites avalisées** correspondants aux mensualités choisies à l'ordre de <strong class="pack-strong">PACK IMMO SA</strong> dès le jour de la signature des
+                    présentes.<br />
+<strong class="pack-strong">Pénalités :</strong> En cas de
+                    non-respect de cet échéancier, une pénalité de retard de 10% par mois
+                    s'appliquera automatiquement sur la ou les mensualités impayées. Cette pénalité
+                    courra de plein droit à l'expiration d’un délai d’un (1) mois spécifié dans
+                    l'e-mail ou la lettre de mise en demeure envoyée par le service contentieux
+                    restée infructueuse. </p>
+<div class="pack-article2">Article 5 : CONDITIONS SUSPENSIVES ET PROROGATION
+                    ADMINISTRATIVE
+</div>
+
+<p>1- Que ladite propriété en cause soit libre de toute occupation ou hypothèque.</p>
+<p>2- Que tous les documents juridiques et les autorisations y compris le duplicata
+                    du titre foncier soient fournis.</p>
+<p>3- Que l'intégralité des prestations prévues soit terminée au plus tard le <span class="pack-value">
+<t t-esc="property_rec.development_deadline_date.strftime('%d/%m/%Y')
+            if property_rec
+            and 'development_deadline_date' in property_rec._fields
+            and property_rec.development_deadline_date
+            else ''" />
+</span>
+                    .
+</p>
+
+<p>
+<strong class="pack-strong">Clause de sauvegarde administrative :</strong>Il est
+                    expressément convenu que tout retard imputable directement aux services des
+                    administrations publiques compétentes (Service des Domaines, Topographie,
+                    Service Technique de la Municipalité) dans l'instruction du dossier ou la
+                    délivrance des titres individuels sera constitutif d’un retard légitime et d'un
+                    cas de force majeure. Les délais de livraison des travaux d'infrastructures et
+                    de signature notariale seront prorogés de plein droit de la durée équivalente à
+                    ce retard, sans que PACKIMMO ne puisse être tenue pour responsable ni redevable
+                    d’aucune indemnité envers l'ACQUEREUR. Dès la levée de ces conditions
+                    suspensives et paiement complet du solde, la signature se fera à <span class="pack-value">
+<t t-esc="property_rec.notary_id.city if property_rec and 'notary_id' in property_rec._fields and property_rec.notary_id and 'city' in property_rec.notary_id._fields else ''" />
+</span>,au
+                    cabinet du notaire désigné, <span class="pack-value">
+<t t-esc="property_rec.notary_id.name if property_rec and 'notary_id' in property_rec._fields and property_rec.notary_id else ''" />
+</span>,
+                    en charge des formalités d'enregistrement et de mutation foncière. </p>
+<div class="pack-article2">Article 6 : DUREE DE LA PROMESSE</div>
+
+<p>
+                    La présente promesse de vente est consentie et acceptée pour une durée ferme de
+                    30 (TRENTE) mois à compter
+                    du jour de sa signature. Cependant, si toutes les conditions suspensives sont
+                    levées avant le terme, et sous
+                    réserve du règlement intégral de l'échéancier, les parties pourront d'un commun
+                    accord régulariser l'acte
+                    chez le notaire instrumentaire à tout moment.
+
+</p>
+
+<div class="pack-article2">Article 7 : CONDITIONS PARTICULIERES ET INCESSIBILITE</div>
+
+<p> LE PROPRIETAIRE VENDEUR s'interdit irrévocablement la cession ou toute
+                    transaction sur ladite parcelle au profit d'un tiers pendant la validité du
+                    présent contrat, et s'engage à la sécuriser activement contre tout risque de
+                    squattage.<br />
+<strong class="pack-strong">Incessibilité des droits :</strong>
+                    L'ACQUEREUR s'interdit formellement de revendre, transférer ou céder ses droits
+                    issus de la présente promesse à un tiers sans l'accord écrit, préalable et
+                    exprès de la société PACKIMMO SA, sous peine de nullité absolue de la cession.
+                    Tous les frais de mutation, taxes administratives et honoraires de notaire sont
+                    à la charge exclusive de l'ACQUEREUR et seront réglés directement auprès du
+                    cabinet du notaire. </p>
+
+<div class="pack-article2">Article 8 : CLAUSE RESOLUTOIRE ET ACCESSION DES TRAVAUX
+</div>
+
+<p>
+<strong class="pack-strong">Résiliation aux torts de l'ACQUEREUR :</strong> En
+                    cas de retard ou défaut de paiement supérieur à trois (3) mois consécutifs d'une
+                    mensualité, la présente promesse sera résolue de plein droit de manière
+                    unilatérale par le PROPRIETAIRE VENDEUR, après une sommation de payer demeurée
+                    infructueuse. L'intégralité des acomptes et mensualités déjà réglés par
+                    l'ACQUEREUR restera définitivement acquise à PACKIMMO à titre d'indemnité
+                    d'immobilisation forfaitaire et de clause pénale, sans aucun recours. </p>
+<p>En outre, toutes les constructions, clôtures ou améliorations éventuellement
+                    réalisées par l'ACQUEREUR sur la parcelle deviendront immédiatement et de plein
+                    droit la propriété exclusive de PACKIMMO par droit d'accession, sans aucune
+                    indemnité financière.<br />
+<strong class="pack-strong">Résiliation aux torts du
+                    VENDEUR :</strong> Si le PROPRIETAIRE VENDEUR ne respectait pas ses obligations
+                    essentielles en dehors des cas de force majeure ou de prorogations
+                    administratives visés à l'article 5, et après expiration du délai de 30 mois,
+                    l'ACQUEREUR pourra notifier la résiliation du présent contrat. Le VENDEUR sera
+                    tenu de rembourser l'intégralité des sommes effectivement versées par
+                    l'ACQUEREUR, à l'exclusion de toute autre indemnité. </p>
+
+<div class="pack-article2">Article 9 : REGLEMENT DES LITIGES
+</div>
+
+<p> Pour toutes questions, contestations ou litiges éventuels relatifs à cette
+                    transaction, les parties conviennent d'ores et déjà de privilégier une
+                    résolution à l'amiable en saisissant par écrit la Direction Générale de PACKIMMO
+                    SA. Si aucune issue n'est trouvée après la réunion d'une commission d'arbitrage
+                    interne, le litige sera alors porté devant <strong class="pack-strong"> le
+                    Tribunal de Première
+                        Instance d'Antananarivo</strong>, seul compétent en vertu des lois de la
+                    République de Madagascar. </p>
+
+<div class="pack-article-last">
+                    Fait en TROIS (3) exemplaires dont un pour le Propriétaire Vendeur, et un pour
+                    le futur acquéreur.
+</div>
+<div class="pack-signature-section">
+<p> Antananarivo le <span class="pack-value">
+<t t-esc="doc.contract_signature_date.strftime('%d/%m/%Y')
+            if 'contract_signature_date' in doc._fields
+            and doc.contract_signature_date
+            else ''" />
+</span>
+</p>
+<table class="pack-signature-box">
+<tr>
+
+<!-- ACQUÉREUR -->
+<td>
+
+<div class="pack-sign-title">
+                                    Pour L'ACQUÉREUR
+</div>
+
+<div class="pack-sign-note">
+                                    (Précéder de la mention manuscrite
+                                    « Lu et approuvé »)
+</div>
+
+<div class="pack-sign-space"></div>
+
+<div class="pack-sign-line">
+
+</div>
+
+</td>
+
+<!-- VENDEUR -->
+<td>
+
+<div class="pack-sign-title"> Pour LE PROPRIÉTAIRE VENDEUR<br />
+ (<span class="pack-value">PACKIMMO S.A.</span>) 
+</div>
+
+<div class="pack-sign-note">
+                                    (Précéder de la mention manuscrite
+                                    « Lu et approuvé »)
+</div>
+
+<div class="pack-sign-space"></div>
+
+<div class="pack-sign-line">
+                                    —
+</div>
+
+</td>
+
+</tr>
+</table>
+</div>
+
+</div>
+</t>
+</template>
+</odoo>

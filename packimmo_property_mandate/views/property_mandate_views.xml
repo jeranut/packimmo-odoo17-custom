@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_property_mandate_tree" model="ir.ui.view">
+        <field name="name">property.mandate.tree</field>
+        <field name="model">property.mandate</field>
+        <field name="arch" type="xml">
+            <tree string="Mandats">
+                <field name="name" />
+                <field name="owner_id" />
+                <field name="mandate_type" />
+                <field name="operation_type" />
+                <field name="start_date" />
+                <field name="end_date" />
+                <field name="property_count" />
+                <field name="state" widget="badge" decoration-muted="state == 'draft'" decoration-info="state == 'submitted'" decoration-primary="state == 'approved'" decoration-success="state == 'active'" decoration-warning="state == 'completed'" decoration-danger="state in ['expired', 'cancelled']" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_property_mandate_form" model="ir.ui.view">
+        <field name="name">property.mandate.form</field>
+        <field name="model">property.mandate</field>
+        <field name="arch" type="xml">
+            <form string="Mandat immobilier">
+                <header>
+                    <button name="action_submit" type="object" string="Soumettre" class="btn-primary" invisible="state != 'draft'" />
+                    <button name="action_approve" type="object" string="Approuver" class="btn-primary" invisible="state != 'submitted'" />
+                    <button name="action_activate" type="object" string="Activer" class="btn-primary" invisible="state not in ('approved', 'draft')" />
+                    <button name="action_expire" type="object" string="Expirer" invisible="state != 'active'" />
+                    <button name="action_cancel" type="object" string="Annuler" invisible="state in ('cancelled', 'expired')" />
+                    <button name="action_reset_to_draft" type="object" string="Remettre en brouillon" invisible="state == 'draft'" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,active" />
+                    <button name="action_generate_mandate_pdf_to_chatter" type="object" string="Imprimer le mandat" class="btn-primary" icon="fa-file-pdf-o" invisible="state != 'active'" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_properties" type="object" class="oe_stat_button" icon="fa-home">
+                            <field name="property_count" widget="statinfo" string="Biens" />
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Informations générales">
+                            <field name="owner_id" readonly="1" />
+                            <field name="mandate_type" />
+                            <field name="operation_type" />
+
+                            <field name="deposit_type" invisible="operation_type != 'rent'" />
+
+                            <field name="deposit_month_count" invisible="operation_type != 'rent' or deposit_type != 'monthly_multiple'" required="operation_type == 'rent' and deposit_type == 'monthly_multiple'" />
+
+                            <field name="deposit_fixed_amount" invisible="operation_type != 'rent' or deposit_type != 'fixed'" required="operation_type == 'rent' and deposit_type == 'fixed'" />
+
+                            <field name="deposit_percent" invisible="operation_type != 'rent' or deposit_type != 'annual_percent'" required="operation_type == 'rent' and deposit_type == 'annual_percent'" />
+
+                            <field name="deposit_amount" readonly="1" invisible="operation_type != 'rent'" />
+                            <field name="deposit_calculation_label" string="Détail calcul caution" readonly="1" invisible="operation_type != 'rent'" />
+
+                            <field name="billed_to" />
+                        </group>
+                        <group string="Période">
+                            <field name="start_date" readonly="1" />
+                            <field name="duration_months" />
+                            <field name="end_date" />
+                            <field name="tacit_renewal" />
+                        </group>
+                    </group>
+                    <group string="Exclusivité">
+                        <field name="exclusive" />
+                        <field name="priority_processing" />
+                        <field name="commission_due_if_owner_rents" />
+                    </group>
+                    <group string="Honoraires">
+                        <group>
+                            <field name="fee_base_rent" string="Base honoraires location" invisible="operation_type != 'rent'" required="operation_type == 'rent'" />
+
+                            <field name="fee_base_sale" string="Base honoraires vente" invisible="operation_type != 'sale'" required="operation_type == 'sale'" />
+
+                            <field name="commission_percent" />
+                            <field name="tax_percent" />
+                        </group>
+
+                        <group>
+                            <field name="currency_id" invisible="1" />
+                            <field name="fee_month_count" invisible="operation_type != 'rent' or fee_base_rent != 'monthly_multiple'" required="operation_type == 'rent' and fee_base_rent == 'monthly_multiple'" />
+
+                            <field name="fee_base_amount" string="Montant des mois de loyer" readonly="1" invisible="operation_type != 'rent' or fee_base_rent != 'monthly_multiple'" />
+
+                            <field name="fee_base_amount" string="Loyer de référence" readonly="1" invisible="operation_type != 'rent' or fee_base_rent != 'percent_rent'" />
+
+                            <field name="fee_base_amount" string="Montant du prix de vente" readonly="1" invisible="operation_type != 'sale' or fee_base_sale != 'sale_price'" />
+
+                            <field name="fee_base_amount" string="Prix de vente de référence" readonly="1" invisible="operation_type != 'sale' or fee_base_sale != 'percent_sale_price'" />
+
+                            <field name="fixed_amount" string="Montant fixe" invisible="(operation_type == 'rent' and fee_base_rent != 'fixed') or (operation_type == 'sale' and fee_base_sale != 'fixed')" required="(operation_type == 'rent' and fee_base_rent == 'fixed') or (operation_type == 'sale' and fee_base_sale == 'fixed')" />
+
+                            <field name="commission_amount" string="Pourcentage de la base" readonly="1" />
+
+                            <field name="tax_amount" string="Montant taxe" readonly="1" />
+
+                            <field name="total_fee_amount" string="Total honoraires avec taxe" readonly="1" />
+                        </group>
+                        <group colspan="2">
+                            <field name="fee_calculation_label" string="Détail du calcul" readonly="1" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Biens / Unités" name="properties">
+                            <field name="property_ids" context="{'default_mandate_id': id, 'default_landlord_id': owner_id}">
+                                <tree editable="bottom">
+                                    <field name="name" />
+                                    <field name="landlord_id" />
+                                    <field name="sale_lease" />
+                                    <field name="stage" />
+                                </tree>
+                            </field>
+                            <group string="Facturation honoraires">
+                                <field name="invoice_id" readonly="1" />
+                                <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-danger="payment_status == 'not_paid'" decoration-warning="payment_status == 'partial'" decoration-info="payment_status == 'in_payment'" decoration-muted="payment_status == 'reversed'" />
+                            </group>
+                        </page>
+                        <page string="Obligations" name="obligations">
+                            <group>
+                                <field name="owner_obligations" placeholder="Obligations du propriétaire..." />
+                                <field name="agency_obligations" placeholder="Obligations de PACKIMMO..." />
+                            </group>
+                        </page>
+                        <page string="Documents" name="documents">
+                            <field name="attachment_ids" widget="many2many_binary" />
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" />
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="activity_ids" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_property_mandate_search" model="ir.ui.view">
+        <field name="name">property.mandate.search</field>
+        <field name="model">property.mandate</field>
+        <field name="arch" type="xml">
+            <search string="Mandats">
+                <field name="name" />
+                <field name="owner_id" />
+                <filter name="simple" string="Simple" domain="[('mandate_type','=','simple')]" />
+                <filter name="exclusive" string="Exclusif" domain="[('mandate_type','in',('exclusive','exclusive_absolute'))]" />
+                <filter name="active" string="Actif" domain="[('state','=','active')]" />
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_type" string="Type" context="{'group_by':'mandate_type'}" />
+                    <filter name="group_state" string="État" context="{'group_by':'state'}" />
+                    <filter name="group_owner" string="Propriétaire" context="{'group_by':'owner_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_property_mandate" model="ir.actions.act_window">
+        <field name="name">Mandats</field>
+        <field name="res_model">property.mandate</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_property_mandate_search" />
+    </record>
+    <record id="action_property_mandate_rent" model="ir.actions.act_window">
+        <field name="name">Mandats location</field>
+        <field name="res_model">property.mandate</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_property_mandate_tree" />
+        <field name="domain">[('operation_type','=','rent')]</field>
+    </record>
+    <record id="action_property_mandate_sale" model="ir.actions.act_window">
+        <field name="name">Mandats vente</field>
+        <field name="res_model">property.mandate</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_property_mandate_tree" />
+        <field name="domain">[('operation_type','=','sale')]</field>
+    </record>
+
+
+    <menuitem id="menu_rent_property_mandate" name="Mandats" parent="rental_management.menu_tenancy_details" action="action_property_mandate_rent" groups="rental_management.property_rental_manager,rental_management.property_rental_officer" sequence="0" />
+
+    <menuitem id="menu_sale_property_mandate" name="Mandats" parent="rental_management.menu_property_vendor" action="action_property_mandate_sale" groups="rental_management.property_rental_manager,rental_management.property_rental_officer" sequence="0" />
+</odoo>

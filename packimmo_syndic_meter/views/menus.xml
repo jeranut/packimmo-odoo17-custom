@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_syndic_jirama"
+              name="JIRAMA"
+              parent="packimmo_syndic_management.menu_syndic_root"
+              sequence="30"/>
+
+    <menuitem id="menu_syndic_meter"
+              name="Compteurs"
+              parent="menu_syndic_jirama"
+              action="action_syndic_meter"
+              sequence="10"/>
+
+    <menuitem id="menu_syndic_meter_reading"
+              name="Relevés"
+              parent="menu_syndic_jirama"
+              action="action_syndic_meter_reading_batch"
+              sequence="20"/>
+
+</odoo>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="property_location_picker_page" name="Property Location Picker">
+        <t t-call="website.layout">
+            <t t-set="no_header" t-value="True"/>
+            <t t-set="no_footer" t-value="True"/>
+
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+            <div class="container py-4 o_property_location_picker_page"
+                 t-att-data-property-id="property_id.id"
+                 t-att-data-latitude="property_id.latitude or ''"
+                 t-att-data-longitude="property_id.longitude or ''">
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+                    <div>
+                        <h2 class="mb-1">Définir la localisation du bien</h2>
+                        <div class="text-muted">
+                            <span t-field="property_id.name"/>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="window.close();">
+                        Fermer
+                    </button>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <label class="form-label fw-bold">Rechercher une adresse ou un lieu</label>
+                        <div class="input-group">
+                            <input type="text"
+                                   id="o_property_location_search"
+                                   class="form-control"
+                                   placeholder="Ex: Ambatobe, Antananarivo"/>
+                            <button class="btn btn-primary" type="button" id="o_property_location_search_btn">
+                                Rechercher
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            Tu peux aussi cliquer directement sur la carte pour placer le bien.
+                        </div>
+                        <div id="o_property_location_results" class="list-group mt-2"></div>
+                    </div>
+                </div>
+
+                <div id="o_property_location_map" class="o_property_location_picker_map"></div>
+
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">Latitude</label>
+                                <input type="text" id="o_property_location_lat" class="form-control" readonly="readonly"/>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Longitude</label>
+                                <input type="text" id="o_property_location_lng" class="form-control" readonly="readonly"/>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" id="o_property_location_save" class="btn btn-success w-100">
+                                    Enregistrer la localisation
+                                </button>
+                            </div>
+                        </div>
+                        <div id="o_property_location_message" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <script type="text/javascript">
+                (function () {
+                    function initLocationPicker() {
+                        var page = document.querySelector('.o_property_location_picker_page');
+                        if (!page || typeof L === 'undefined') {
+                            return;
+                        }
+
+                        var propertyId = page.dataset.propertyId;
+                        var initialLat = parseFloat(page.dataset.latitude || '');
+                        var initialLng = parseFloat(page.dataset.longitude || '');
+                        var hasCoords = !isNaN(initialLat) &amp;&amp; !isNaN(initialLng);
+                        var defaultLat = hasCoords ? initialLat : -18.8792;
+                        var defaultLng = hasCoords ? initialLng : 47.5079;
+
+                        var latInput = document.getElementById('o_property_location_lat');
+                        var lngInput = document.getElementById('o_property_location_lng');
+                        var messageBox = document.getElementById('o_property_location_message');
+                        var resultsBox = document.getElementById('o_property_location_results');
+
+                        var map = L.map('o_property_location_map').setView([defaultLat, defaultLng], hasCoords ? 17 : 12);
+
+                        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                            maxZoom: 19,
+                            attribution: 'Tiles © Esri'
+                        }).addTo(map);
+
+                        var marker = L.marker([defaultLat, defaultLng], {draggable: true}).addTo(map);
+
+                        function setPosition(lat, lng, zoom) {
+                            lat = parseFloat(lat);
+                            lng = parseFloat(lng);
+                            marker.setLatLng([lat, lng]);
+                            latInput.value = lat.toFixed(8);
+                            lngInput.value = lng.toFixed(8);
+                            if (zoom) {
+                                map.setView([lat, lng], zoom);
+                            }
+                        }
+
+                        setPosition(defaultLat, defaultLng, false);
+
+                        map.on('click', function (ev) {
+                            setPosition(ev.latlng.lat, ev.latlng.lng, false);
+                        });
+
+                        marker.on('dragend', function () {
+                            var pos = marker.getLatLng();
+                            setPosition(pos.lat, pos.lng, false);
+                        });
+
+                        async function searchAddress() {
+                            var query = document.getElementById('o_property_location_search').value.trim();
+                            resultsBox.innerHTML = '';
+                            if (!query) {
+                                return;
+                            }
+                            resultsBox.innerHTML = '<div class="list-group-item text-muted">Recherche en cours...</div>';
+                            try {
+                                var response = await fetch('https://nominatim.openstreetmap.org/search?format=json&amp;limit=5&amp;q=' + encodeURIComponent(query));
+                                var data = await response.json();
+                                resultsBox.innerHTML = '';
+                                if (!data.length) {
+                                    resultsBox.innerHTML = '<div class="list-group-item text-muted">Aucun résultat trouvé.</div>';
+                                    return;
+                                }
+                                data.forEach(function (item) {
+                                    var btn = document.createElement('button');
+                                    btn.type = 'button';
+                                    btn.className = 'list-group-item list-group-item-action';
+                                    btn.textContent = item.display_name;
+                                    btn.addEventListener('click', function () {
+                                        setPosition(item.lat, item.lon, 17);
+                                        resultsBox.innerHTML = '';
+                                    });
+                                    resultsBox.appendChild(btn);
+                                });
+                            } catch (err) {
+                                resultsBox.innerHTML = '<div class="list-group-item text-danger">Erreur pendant la recherche.</div>';
+                            }
+                        }
+
+                        document.getElementById('o_property_location_search_btn').addEventListener('click', searchAddress);
+                        document.getElementById('o_property_location_search').addEventListener('keydown', function (ev) {
+                            if (ev.key === 'Enter') {
+                                ev.preventDefault();
+                                searchAddress();
+                            }
+                        });
+
+                        document.getElementById('o_property_location_save').addEventListener('click', async function () {
+                            messageBox.innerHTML = '<div class="alert alert-info mb-0">Enregistrement en cours...</div>';
+                            try {
+                                var response = await fetch('/property-location-picker/save', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        jsonrpc: '2.0',
+                                        method: 'call',
+                                        params: {
+                                            property_id: propertyId,
+                                            latitude: latInput.value,
+                                            longitude: lngInput.value
+                                        }
+                                    })
+                                });
+                                var payload = await response.json();
+                                var result = payload.result || {};
+                                if (result.success) {
+                                    messageBox.innerHTML = '<div class="alert alert-success mb-0">Localisation enregistrée. Tu peux fermer cette fenêtre puis actualiser la fiche bien.</div>';
+                                } else {
+                                    messageBox.innerHTML = '<div class="alert alert-danger mb-0">' + (result.message || 'Erreur inconnue.') + '</div>';
+                                }
+                            } catch (err) {
+                                messageBox.innerHTML = '<div class="alert alert-danger mb-0">Impossible d’enregistrer la localisation.</div>';
+                            }
+                        });
+
+                        setTimeout(function () { map.invalidateSize(); }, 300);
+                    }
+
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', initLocationPicker);
+                    } else {
+                        initLocationPicker();
+                    }
+                })();
+            </script>
+        </t>
+    </template>
+</odoo>

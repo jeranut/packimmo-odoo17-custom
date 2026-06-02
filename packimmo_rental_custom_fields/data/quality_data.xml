@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="quality_owner_seller" model="res.partner.quality">
+        <field name="name">Propriétaire vendeur</field>
+    </record>
+    <record id="quality_buyer" model="res.partner.quality">
+        <field name="name">Acquéreur</field>
+    </record>
+    <record id="quality_legal_representative" model="res.partner.quality">
+        <field name="name">Représentant légal</field>
+    </record>
+    <record id="quality_general_manager" model="res.partner.quality">
+        <field name="name">Directeur Général</field>
+    </record>
+    <record id="quality_agent" model="res.partner.quality">
+        <field name="name">Mandataire</field>
+    </record>
+    <record id="quality_co_buyer" model="res.partner.quality">
+        <field name="name">Co-acquéreur</field>
+    </record>
+    <record id="quality_lessor" model="res.partner.quality">
+        <field name="name">Bailleur</field>
+    </record>
+    <record id="quality_tenant" model="res.partner.quality">
+        <field name="name">Preneur</field>
+    </record>
+</odoo>

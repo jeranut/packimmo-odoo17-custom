@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="packimmo_properties_list_carousel"
+              inherit_id="rental_management.properties_list_template">
+        <xpath expr="//div[contains(@class, 'container') and contains(@class, 'py-5')]"
+               position="attributes">
+            <attribute name="class">container py-0 packimmo-properties-page</attribute>
+        </xpath>
+
+        <xpath expr="//div[contains(@class, 'text-center') and contains(@class, 'mb-5')]"
+               position="replace">
+
+            <section class="packimmo-hero-wrapper">
+
+                <div class="packimmo-carousel-bg">
+                    <t t-set="carousel_images"
+                       t-value="request.env['packimmo.search.carousel.image'].sudo().search([('active','=',True)], order='sequence asc')"/>
+
+                    <t t-foreach="carousel_images" t-as="img">
+                        <div class="packimmo-slide"
+                             t-attf-style="background-image:url('/web/image/packimmo.search.carousel.image/#{img.id}/image');"/>
+                    </t>
+
+                    <div class="packimmo-overlay"/>
+                </div>
+
+                <div class="packimmo-hero-content">
+
+                    <div class="text-center mb-5">
+                        <h1 class="display-5 fw-bold text-white">
+                            Trouvez le bien idéal
+                        </h1>
+                        <p class="text-white">
+                            Achetez, louez et explorez des biens immobiliers
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </xpath>
+
+        <xpath expr="//form[contains(@class, 'property-search-box')]"
+               position="attributes">
+            <attribute name="class">property-search-box shadow-sm packimmo-search-overlay</attribute>
+        </xpath>
+
+    </template>
+
+</odoo>

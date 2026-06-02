@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="syndic_meter_reading_batch_tree_view" model="ir.ui.view">
+        <field name="name">syndic.meter.reading.batch.tree</field>
+        <field name="model">syndic.meter.reading.batch</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="syndic_id"/>
+                <field name="meter_type" widget="badge" decoration-info="meter_type == 'water'" decoration-warning="meter_type == 'electricity'"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="unit_price"/>
+                <field name="total_consumption"/>
+                <field name="total_amount"/>
+                <field name="fixed_fee_part_amount"/>
+                <field name="total_invoice_amount"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'invoiced'" decoration-warning="state == 'confirmed'" decoration-danger="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="syndic_meter_reading_batch_form_view" model="ir.ui.view">
+        <field name="name">syndic.meter.reading.batch.form</field>
+        <field name="model">syndic.meter.reading.batch</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_generate_lines" type="object" string="Générer les lignes" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_confirm" type="object" string="Confirmer" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_create_invoices" type="object" string="Créer les factures" class="btn-primary" invisible="state not in ('draft', 'confirmed')"/>
+                    <button name="action_view_invoices" type="object" string="Factures" invisible="invoice_count == 0"/>
+                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state == 'draft'"/>
+                    <button name="action_cancel" type="object" string="Annuler" invisible="state == 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,invoiced"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="invoice_count == 0">
+                            <field name="invoice_count" widget="statinfo" string="Factures"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Ex : Relevé électricité Juin 2026"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="syndic_id"/>
+                            <field name="meter_type"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="unit_price"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="total_consumption" readonly="1"/>
+                            <field name="total_amount" readonly="1"/>
+                            <field name="fixed_fee_total_amount" readonly="1"/>
+                            <field name="fixed_fee_divisor_count" readonly="1"/>
+                            <field name="fixed_fee_part_amount" readonly="1"/>
+                            <field name="total_invoice_amount" readonly="1"/>
+                            <field name="fixed_fee_history_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lignes de relevé">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="property_id" readonly="1"/>
+                                    <field name="meter_id" readonly="1"/>
+                                    <field name="tenant_id" readonly="1"/>
+                                    <field name="reading_date"/>
+                                    <field name="previous_index" readonly="1"/>
+                                    <field name="current_index"/>
+                                    <field name="consumption" readonly="1"/>
+                                    <field name="unit_price"/>
+                                    <field name="amount" readonly="1"/>
+                                    <field name="meter_fixed_fee_amount" readonly="1"/>
+                                    <field name="total_amount" readonly="1"/>
+                                    <button name="action_create_invoice" type="object" string="Créer facture" class="btn-primary" invisible="invoice_id or (amount &lt;= 0 and meter_fixed_fee_amount &lt;= 0)"/>
+                                    <button name="action_view_invoice" type="object" string="Voir facture" invisible="not invoice_id"/>
+                                    <field name="invoice_id" readonly="1"/>
+                                    <field name="payment_state" widget="badge"
+                                           decoration-muted="payment_state == 'no_invoice'"
+                                           decoration-info="payment_state == 'draft'"
+                                           decoration-danger="payment_state == 'not_paid'"
+                                           decoration-warning="payment_state in ('partial', 'in_payment')"
+                                           decoration-success="payment_state == 'paid'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_syndic_meter_reading_batch" model="ir.actions.act_window">
+        <field name="name">Relevés compteurs</field>
+        <field name="res_model">syndic.meter.reading.batch</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

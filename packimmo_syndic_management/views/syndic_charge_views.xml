@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_syndic_charge_tree" model="ir.ui.view">
+        <field name="name">syndic.charge.tree</field>
+        <field name="model">syndic.charge</field>
+        <field name="arch" type="xml">
+            <tree string="Charges syndic">
+                <field name="name"/>
+                <field name="syndic_id"/>
+                <field name="date"/>
+                <field name="charge_type"/>
+                <field name="distribution_method"/>
+                <field name="invoice_partner_type"/>
+                <field name="amount"/>
+                <field name="invoice_count"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'distributed'"
+                       decoration-success="state == 'invoiced'"
+                       decoration-danger="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_syndic_charge_form" model="ir.ui.view">
+        <field name="name">syndic.charge.form</field>
+        <field name="model">syndic.charge</field>
+        <field name="arch" type="xml">
+            <form string="Charge syndic">
+                <header>
+                    <button name="action_distribute" type="object" string="Répartir" class="btn-primary" invisible="state not in ('draft', 'distributed')"/>
+                    <button name="action_create_owner_invoices" type="object" string="Créer toutes les factures" class="btn-primary" invisible="state not in ('distributed', 'draft')"/>
+                    <button name="action_view_invoices" type="object" string="Voir factures" invisible="invoice_count == 0"/>
+                    <button name="action_cancel" type="object" string="Annuler" invisible="state == 'cancelled'"/>
+                    <button name="action_draft" type="object" string="Remettre en brouillon" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,distributed,invoiced"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="invoice_count == 0">
+                            <field name="invoice_count" widget="statinfo" string="Factures"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Ex: Charges communes Juin 2026"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="syndic_id"/>
+                            <field name="date"/>
+                            <field name="charge_type"/>
+                        </group>
+                        <group>
+                            <field name="distribution_method"/>
+                            <field name="invoice_partner_type"/>
+                            <field name="amount"/>
+                            <field name="currency_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Répartition et factures">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="property_id"/>
+                                    <field name="owner_id"/>
+                                    <field name="tenant_id"/>
+                                    <field name="invoice_partner_id"/>
+                                    <field name="surface"/>
+                                    <field name="share"/>
+                                    <field name="amount" sum="Total"/>
+                                    <button name="action_create_invoice" type="object" string="Créer facture" icon="fa-money" invisible="invoice_id or amount &lt;= 0"/>
+                                    <field name="invoice_id" readonly="1"/>
+                                    <field name="payment_state" readonly="1" widget="badge"
+                                           decoration-muted="payment_state == 'no_invoice'"
+                                           decoration-info="payment_state == 'draft'"
+                                           decoration-danger="payment_state == 'not_paid'"
+                                           decoration-warning="payment_state in ('partial', 'in_payment')"
+                                           decoration-success="payment_state == 'paid'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_syndic_charge" model="ir.actions.act_window">
+        <field name="name">Charges syndic</field>
+        <field name="res_model">syndic.charge</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

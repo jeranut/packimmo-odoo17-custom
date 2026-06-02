@@ -1,0 +1,223 @@
+/* PACKIMMO - Etat de paiement PDF report */
+.pack-payment-page {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #111;
+    text-align: justify
+}
+
+.pack-payment-page p {
+    margin: 0 0 7px 0;
+    text-align: justify
+}
+
+.pack-report-header {
+    text-align: center;
+    margin-top: 35px;
+    margin-bottom: 24px
+}
+
+.pack-main-title {
+    color: #17375e;
+    font-size: 30px;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1.35;
+    margin: 0
+}
+
+.pack-subtitle {
+    margin-top: 18px;
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase
+}
+
+.pack-section-title {
+    font-size: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 18px;
+    margin-bottom: 10px
+}
+
+.pack-section-blue {
+    color: #2f75b5
+}
+
+.pack-divider {
+    border: 0;
+    border-top: 1px solid #9c9c9c;
+    margin-top: 0;
+    margin-bottom: 18px
+}
+
+.pack-value,
+.pack-strong {
+    font-weight: bold;
+    color: #111 !important
+}
+
+.pack-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    margin-bottom: 16px
+}
+
+.pack-info-table td {
+    border: none;
+    padding: 3px 14px 3px 0;
+    vertical-align: top;
+    font-size: 13.5px
+}
+
+.pack-info-label {
+    font-weight: bold;
+    width: 24%
+}
+
+.pack-two-col {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    margin-bottom: 16px
+}
+
+.pack-two-col td {
+    width: 50%;
+    vertical-align: top;
+    border: none;
+    padding: 0 16px 0 0
+}
+
+.pack-payment-schedule {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    font-size: 11.5px
+}
+
+.pack-payment-schedule thead {
+    display: table-header-group
+}
+
+.pack-payment-schedule tr {
+    page-break-inside: avoid
+}
+
+.pack-payment-schedule th,
+.pack-payment-schedule td {
+    border: 1px solid #b8c4d1;
+    padding: 8px 6px;
+    vertical-align: middle
+}
+
+.pack-payment-schedule th {
+    text-align: center;
+    font-weight: bold;
+    background: #2f6fb2;
+    color: #fff !important;
+    font-size: 12px;
+    line-height: 1.25
+}
+
+.pack-payment-schedule th * {
+    color: #fff !important
+}
+
+.pack-payment-schedule td {
+    background: #fff
+}
+
+.text-center {
+    text-align: center
+}
+
+.text-right {
+    text-align: right
+}
+
+.pack-summary-wrapper {
+    width: 100%;
+    margin-top: 16px;
+    margin-bottom: 25px
+}
+
+.pack-summary-table {
+    width: 42%;
+    margin-left: auto;
+    border-collapse: collapse;
+    font-size: 12px
+}
+
+.pack-summary-table td {
+    padding: 4px 6px;
+    vertical-align: top;
+    border: none
+}
+
+.pack-summary-table tr.pack-total-row td {
+    border-top: 1px solid #000;
+    font-weight: bold
+}
+
+.pack-signature-box {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 45px;
+    table-layout: fixed
+}
+
+.pack-signature-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-top: 25px;
+}
+
+.pack-signature-box td {
+    border: 1px solid #000;
+    width: 50%;
+    vertical-align: top;
+    text-align: center;
+    padding: 14px 12px
+}
+
+.pack-sign-title {
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 1.35;
+    min-height: 35px
+}
+
+.pack-sign-space {
+    height: 70px
+}
+
+.pack-sign-line {
+    border-top: 1px solid #777;
+    width: 95%;
+    margin: 0 auto;
+    padding-top: 8px;
+    color: #777;
+    font-size: 14px
+}
+
+.footer img,
+.footer .company_details,
+.footer .o_company_details,
+.footer .o_footer_content>div:first-child {
+    display: none !important
+}
+
+.footer {
+    border-top: none !important;
+    padding-top: 0 !important
+}
+
+.footer .text-muted {
+    display: block !important;
+    text-align: center !important
+}

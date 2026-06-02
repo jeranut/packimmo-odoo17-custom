@@ -1,0 +1,1076 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="unit_map_designer_template" name="Property Unit Map Designer">
+        <t t-call="website.layout">
+            <t t-set="title">Cartographie - <t t-esc="project.name"/></t>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+
+            <style>
+                html, body {
+                margin:0;
+                padding:0;
+                background:#f3f3f3;
+                overflow:hidden;
+                }
+
+                #unit_map_designer {
+                width: 100%;
+                height: calc(100vh - 230px);
+                min-height: 520px;
+                background:#f3f3f3;
+                border-radius: 10px;
+                }
+
+                .map-wrapper {
+                width: 100%;
+                margin-top: 14px;
+                }
+
+                #preview_unit_map {
+                width: 820px;
+                height: 420px;
+                background:#f3f3f3;
+                border-radius: 10px;
+                }
+
+                .leaflet-container {
+                background:#f3f3f3 !important;
+                }
+
+                .unit-label {
+                background: rgba(255,255,255,0.9);
+                border: 1px solid #333;
+                border-radius: 4px;
+                padding: 2px 6px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #111;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+                }
+
+                .map-toolbar-grid {
+                display: grid;
+                grid-template-columns: minmax(260px, 480px) minmax(260px, 480px) auto;
+                gap: 8px;
+                align-items: end;
+                }
+
+                .phase-info-line {
+                margin-top: 6px;
+                margin-bottom: 0;
+                padding: 7px 10px;
+                min-height: 38px;
+                display: flex;
+                align-items: center;
+                }
+
+                .toolbar-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                align-items: end;
+                padding-bottom: 0;
+                }
+
+                @media (max-width: 992px) {
+                .map-toolbar-grid {
+                grid-template-columns: 1fr;
+                }
+                }
+            </style>
+
+            <div class="container-fluid my-4">
+                <h3><t t-esc="project.name"/> — Cartographie des unités</h3>
+                <div class="toolbar">
+                    <div class="map-toolbar-grid">
+                        <div>
+                            <label class="form-label fw-bold">Dessiner un :</label>
+                            <select id="draw_type" class="form-select">
+                                <option value="phase">Phase</option>
+                                <option value="unit">Lot / Unité</option>
+                            </select>
+
+                            <div class="alert alert-info phase-info-line">
+                                <strong>Phase = </strong>
+                                <span class="ms-1"><t t-esc="project.name"/></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label fw-bold">Unité à dessiner</label>
+                            <select id="unit_select" class="form-select"></select>
+                        </div>
+
+                        <div class="toolbar-actions">
+                            <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier dessin</button>
+                            <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
+                            <button type="button" id="btn_clear_selected" class="btn btn-danger">Effacer dessin</button>
+
+                            <a t-if="map_type == 'subproject'"
+                               t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id"
+                               class="btn btn-dark">Finaliser</a>
+
+                            <a t-else=""
+                               t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id"
+                               class="btn btn-dark">Finaliser</a>
+                        </div>
+                    </div>
+
+                    <div class="text-muted mt-2">
+                        Dessin comme le module morcellement : utilisez les boutons polygone/rectangle à gauche, cliquez sur un lot puis “Modifier dessin” pour ajuster les points, puis “Enregistrer dessin”. Le fond utilisé ici est l’image importée, pas une carte Esri/API.
+                    </div>
+                    <div class="status-line" id="status_line"></div>
+                </div>
+
+                <div class="map-wrapper">
+                    <div id="unit_map_designer"></div>
+                </div>
+            </div>
+
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+            <script>
+                const PROJECT_ID = <t t-esc="project.id"/>;
+                const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
+                const DATA_ROUTE = MAP_TYPE === 'subproject'
+                ? `/property/subproject/unit-map/data/${PROJECT_ID}`
+                : `/property/unit-map/data/${PROJECT_ID}`;
+
+                const map = L.map('unit_map_designer', {crs: L.CRS.Simple, minZoom: -5, maxZoom: 4});
+                const drawnItems = new L.FeatureGroup();
+
+                map.addLayer(drawnItems);
+                setTimeout(() => map.invalidateSize(), 200);
+
+                let units = [];
+                let unitLayers = [];
+                let activeLayer = null;
+                let phaseGeojson = null;
+                let phaseLayer = null;
+
+                const drawControl = new L.Control.Draw({
+                edit: false,
+                draw: {
+                polyline:false,
+                circle:false,
+                circlemarker:false,
+                marker:false,
+                polygon:{allowIntersection:false, showArea:false},
+                rectangle:true
+                }
+                });
+                map.addControl(drawControl);
+
+                function rpc(route, params) {
+                return fetch(route, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                jsonrpc:'2.0',
+                method:'call',
+                params: params || {}
+                })
+                }).then(r =&gt; r.json()).then(r =&gt; r.result || r);
+                }
+
+                function setStatus(msg) {
+                document.getElementById('status_line').innerText = msg || '';
+                }
+
+                function styleFor(unit) {
+                return {
+                color: unit.color || '#6b7280',
+                fillColor: unit.color || '#6b7280',
+                weight: 2,
+                fillOpacity: 0.45
+                };
+                }
+
+                function phaseStyle() {
+                return {
+                color: '#dc2626',
+                fillColor: '#f97316',
+                weight: 3,
+                fillOpacity: 0,
+                dashArray: '8,6'
+                };
+                }
+
+                function unitDisplayLabel(unit) {
+                return unit.label || unit.code || unit.name || 'Lot';
+                }
+
+                function toFeature(geojson) {
+                if (!geojson) return null;
+
+                if (Array.isArray(geojson)) {
+                const ring = geojson.map(p =&gt; [p.x || 0, p.y || 0]);
+                if (
+                ring.length &amp;&amp;
+                (
+                ring[0][0] !== ring[ring.length - 1][0] ||
+                ring[0][1] !== ring[ring.length - 1][1]
+                )
+                ) {
+                ring.push(ring[0]);
+                }
+                return {
+                type:'Feature',
+                properties:{},
+                geometry:{
+                type:'Polygon',
+                coordinates:[ring]
+                }
+                };
+                }
+
+                if (geojson.type === 'Feature') return geojson;
+
+                return {
+                type:'Feature',
+                properties:{},
+                geometry: geojson
+                };
+                }
+
+                function popupHtml(unit) {
+                return `
+                &lt;b&gt;${unitDisplayLabel(unit)}&lt;/b&gt;&lt;br/&gt;
+                Code : ${unit.code || '-'}&lt;br/&gt;
+                Statut : ${unit.stage || '-'}&lt;br/&gt;
+                Surface : ${unit.surface || 0}&lt;br/&gt;
+                Prix : ${unit.price || 0}&lt;br/&gt;&lt;br/&gt;
+                &lt;button type="button" class="btn btn-sm btn-primary js-edit-unit" data-line-id="${unit.line_id}"&gt;Modifier dessin&lt;/button&gt;
+                &lt;button type="button" class="btn btn-sm btn-success js-save-unit" data-line-id="${unit.line_id}"&gt;Enregistrer dessin&lt;/button&gt;
+                `;
+                }
+
+                function findUnit(lineId) {
+                return units.find(u =&gt; String(u.line_id) === String(lineId));
+                }
+
+                function findLayer(lineId) {
+                return unitLayers.find(l =&gt; String((l.meta || {}).line_id) === String(lineId));
+                }
+
+                function refreshLayerText(layer, unit) {
+                layer.unbindTooltip();
+                layer.bindTooltip(unitDisplayLabel(unit), {
+                permanent:true,
+                direction:'center',
+                className:'unit-label'
+                });
+
+                layer.unbindPopup();
+                layer.bindPopup(popupHtml(unit));
+                }
+
+                function registerLayer(layer, unit) {
+                layer.meta = unit;
+                layer.setStyle(styleFor(unit));
+                refreshLayerText(layer, unit);
+
+                drawnItems.addLayer(layer);
+                unitLayers.push(layer);
+                }
+
+                function registerPhaseLayer(layer) {
+                if (phaseLayer &amp;&amp; drawnItems.hasLayer(phaseLayer)) {
+                drawnItems.removeLayer(phaseLayer);
+                }
+
+                phaseLayer = layer;
+                phaseLayer.meta = {type: 'phase'};
+                phaseLayer.setStyle(phaseStyle());
+                phaseLayer.bindTooltip('Phase : ' + (document.querySelector('h3') ? document.querySelector('h3').innerText.split('—')[0].trim() : 'Projet'), {
+                permanent:true,
+                direction:'center',
+                className:'unit-label'
+                });
+                phaseLayer.bindPopup('&lt;b&gt;Phase du projet&lt;/b&gt;&lt;br/&gt;Utilisez “Modifier dessin” puis “Enregistrer dessin” pour ajuster la phase.');
+                drawnItems.addLayer(phaseLayer);
+                }
+
+                function savePhaseLayer(layer) {
+                if (!layer) {
+                alert('Dessinez d’abord la phase.');
+                return;
+                }
+
+                const geometry = layer.toGeoJSON().geometry;
+
+                rpc(`/property/unit-map/save-phase/${PROJECT_ID}`, {
+                geojson: geometry,
+                map_type: MAP_TYPE
+                }).then(res =&gt; {
+                if (res.error) {
+                alert(res.error);
+                return;
+                }
+
+                phaseGeojson = geometry;
+                if (layer.editing) {
+                layer.editing.disable();
+                }
+                activeLayer = null;
+                setStatus('Dessin de la phase enregistré. Vous pouvez maintenant dessiner les lots/unités.');
+                document.getElementById('draw_type').value = 'unit';
+                });
+                }
+
+                function enablePhaseEdit() {
+                if (!phaseLayer) {
+                setStatus('Aucun dessin de phase existant. Dessinez une nouvelle phase.');
+                return;
+                }
+
+                disableEditing(phaseLayer);
+                if (phaseLayer.editing) {
+                phaseLayer.editing.enable();
+                }
+                activeLayer = phaseLayer;
+                setStatus('Mode édition activé pour la phase.');
+                }
+
+                function refreshSelect() {
+                const select = document.getElementById('unit_select');
+
+                select.innerHTML =
+                '<option value="">Sélectionner une unité...</option>';
+
+                units
+                .filter(u => !u.geojson)
+                .forEach(u => {
+
+                const opt = document.createElement('option');
+
+                opt.value = u.line_id;
+
+                opt.textContent =
+                (u.code ? u.code + ' - ' : '') +
+                (unitDisplayLabel(u));
+
+                select.appendChild(opt);
+                });
+                }
+
+                function disableEditing(except) {
+                unitLayers.forEach(l =&gt; {
+                if (l !== except &amp;&amp; l.editing) {
+                l.editing.disable();
+                }
+                });
+
+                if (phaseLayer &amp;&amp; phaseLayer !== except &amp;&amp; phaseLayer.editing) {
+                phaseLayer.editing.disable();
+                }
+                }
+
+                function enableEdit(lineId) {
+                const layer = findLayer(lineId);
+
+                if (!layer) {
+                setStatus('Aucun dessin existant pour cette unité. Dessinez un nouveau polygone.');
+                return;
+                }
+
+                disableEditing(layer);
+
+                if (layer.editing) {
+                layer.editing.enable();
+                }
+
+                activeLayer = layer;
+                document.getElementById('unit_select').value = lineId;
+                layer.closePopup();
+
+                setStatus(
+                'Mode édition activé pour ' +
+                unitDisplayLabel(layer.meta || {}) +
+                '.'
+                );
+                }
+
+                function askUnitLabel(unit) {
+                const currentLabel = unit.label || '';
+                const label = prompt("Introduire le label de l'unité :", currentLabel);
+
+                if (!label || !label.trim()) {
+                alert('Le label est obligatoire.');
+                return false;
+                }
+
+                return label.trim();
+                }
+
+                function saveLayer(layer) {
+                if (!layer) return;
+
+                const unit = layer.meta || findUnit(document.getElementById('unit_select').value);
+
+                if (!unit) {
+                alert('Sélectionnez une unité.');
+                return;
+                }
+
+                let label = unit.label || '';
+
+                if (!label) {
+                label = askUnitLabel(unit);
+                if (!label) return;
+                }
+
+                const geometry = layer.toGeoJSON().geometry;
+
+                rpc(`/property/unit-map/save/${unit.line_id}`, {
+                geojson: geometry,
+                label: label
+                }).then(res =&gt; {
+                if (res.error) {
+                alert(res.error);
+                return;
+                }
+
+                unit.geojson = geometry;
+                unit.label = label;
+                layer.meta = unit;
+                refreshLayerText(layer, unit);
+                refreshSelect();
+
+                if (layer.editing) {
+                layer.editing.disable();
+                }
+
+                activeLayer = null;
+                setStatus('Dessin enregistré pour ' + unitDisplayLabel(unit) + '.');
+                });
+                }
+
+                function saveSelected() {
+                const drawType = document.getElementById('draw_type').value;
+
+                if (drawType === 'phase') {
+                savePhaseLayer(activeLayer || phaseLayer);
+                return;
+                }
+
+                const lineId = document.getElementById('unit_select').value;
+                const layer = activeLayer || findLayer(lineId);
+
+                if (!lineId || !layer) {
+                alert('Sélectionnez une unité avec un dessin.');
+                return;
+                }
+
+                saveLayer(layer);
+                }
+
+                function clearSelected() {
+                const drawType = document.getElementById('draw_type').value;
+
+                if (drawType === 'phase') {
+                if (!confirm('Effacer le dessin de la phase ?')) return;
+                rpc(`/property/unit-map/clear-phase/${PROJECT_ID}`, {map_type: MAP_TYPE}).then(() =&gt; location.reload());
+                return;
+                }
+
+                const lineId = document.getElementById('unit_select').value;
+
+                if (!lineId) {
+                alert('Sélectionnez une unité.');
+                return;
+                }
+
+                if (!confirm('Effacer le dessin de cette unité ?')) return;
+
+                rpc(`/property/unit-map/clear/${lineId}`, {}).then(() =&gt; location.reload());
+                }
+
+                rpc(DATA_ROUTE, {}).then(data =&gt; {
+                if (!data.project.image_url) {
+                setStatus('Veuillez importer une image de fond avant de dessiner.');
+                return;
+                }
+
+                units = data.units || [];
+                phaseGeojson = data.project.phase_polygon_json ? JSON.parse(data.project.phase_polygon_json) : null;
+                document.getElementById('draw_type').value = phaseGeojson ? 'unit' : 'phase';
+                refreshSelect();
+
+                const img = new Image();
+
+                img.onload = function() {
+                const bounds = [[0,0], [img.naturalHeight, img.naturalWidth]];
+
+                L.imageOverlay(data.project.image_url, bounds).addTo(map);
+                map.invalidateSize();
+                map.fitBounds(bounds);
+
+                const phaseFeature = toFeature(phaseGeojson);
+                if (phaseFeature) {
+                L.geoJSON(phaseFeature, {
+                style: phaseStyle(),
+                onEachFeature: function(f, layer) {
+                registerPhaseLayer(layer);
+                }
+                });
+                }
+
+                units.forEach(u =&gt; {
+                const feature = toFeature(u.geojson);
+                if (!feature) return;
+
+                L.geoJSON(feature, {
+                style: styleFor(u),
+                onEachFeature: function(f, layer) {
+                registerLayer(layer, u);
+                }
+                });
+                });
+                };
+
+                img.src = data.project.image_url;
+                });
+
+                map.on(L.Draw.Event.CREATED, function(event) {
+                const drawType = document.getElementById('draw_type').value;
+
+                if (drawType === 'phase') {
+                if (phaseLayer) {
+                alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Effacer dessin”.');
+                drawnItems.removeLayer(event.layer);
+                return;
+                }
+
+                const layer = event.layer;
+                registerPhaseLayer(layer);
+                savePhaseLayer(layer);
+                return;
+                }
+
+                const lineId = document.getElementById('unit_select').value;
+
+                if (!lineId) {
+                alert('Sélectionnez d’abord une unité.');
+                return;
+                }
+
+                const unit = findUnit(lineId);
+
+                if (!unit) return;
+
+                const label = askUnitLabel(unit);
+
+                if (!label) {
+                return;
+                }
+
+                const old = findLayer(lineId);
+
+                if (old) {
+                drawnItems.removeLayer(old);
+                }
+
+                unitLayers = unitLayers.filter(
+                l =&gt; String((l.meta || {}).line_id) !== String(lineId)
+                );
+
+                unit.label = label;
+
+                const layer = event.layer;
+
+                registerLayer(layer, unit);
+                saveLayer(layer);
+                });
+
+                document.getElementById('btn_edit_selected').addEventListener('click', () =&gt; {
+                if (document.getElementById('draw_type').value === 'phase') {
+                enablePhaseEdit();
+                return;
+                }
+                enableEdit(document.getElementById('unit_select').value);
+                });
+
+                document.getElementById('btn_save_selected').addEventListener('click', saveSelected);
+                document.getElementById('btn_clear_selected').addEventListener('click', clearSelected);
+
+                document.addEventListener('click', function(ev) {
+                const edit = ev.target.closest('.js-edit-unit');
+                const save = ev.target.closest('.js-save-unit');
+
+                if (edit) {
+                enableEdit(edit.dataset.lineId);
+                }
+
+                if (save) {
+                saveLayer(findLayer(save.dataset.lineId));
+                }
+                });
+            </script>
+        </t>
+    </template>
+
+    <template id="unit_map_preview_template" name="Aperçu cartographie des unités">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                <style>
+                    html, body {
+                    margin:0;
+                    padding:0;
+                    width:100%;
+                    height:100%;
+                    overflow:hidden;
+                    background:#f3f3f3;
+                    }
+
+                    #preview_unit_map {
+                    height:520px;
+                    width:100%;
+                    background:#f3f3f3;
+                    }
+
+                    .unit-label {
+                    background: rgba(255,255,255,0.9);
+                    border: 1px solid #333;
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: #111;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+                    }
+                </style>
+            </head>
+
+            <body>
+                <div id="preview_unit_map"></div>
+
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <script>
+                    const PROJECT_ID = <t t-esc="project.id"/>;
+                    const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
+                    const DATA_ROUTE = MAP_TYPE === 'subproject'
+                    ? `/property/subproject/unit-map/data/${PROJECT_ID}`
+                    : `/property/unit-map/data/${PROJECT_ID}`;
+
+                    const map = L.map('preview_unit_map', {
+                    crs: L.CRS.Simple,
+                    minZoom: -5,
+                    maxZoom: 4,
+                    zoomControl:true
+                    });
+
+                    function rpc(route, params) {
+                    return fetch(route, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                    jsonrpc:'2.0',
+                    method:'call',
+                    params: params || {}
+                    })
+                    }).then(r =&gt; r.json()).then(r =&gt; r.result || r);
+                    }
+
+                    function toFeature(geojson) {
+                    if (!geojson) return null;
+                    if (geojson.type === 'Feature') return geojson;
+
+                    return {
+                    type:'Feature',
+                    properties:{},
+                    geometry: geojson
+                    };
+                    }
+
+                    function unitDisplayLabel(unit) {
+                    return unit.label || unit.code || unit.name || 'Lot';
+                    }
+
+                    rpc(DATA_ROUTE, {}).then(data =&gt; {
+                    if (!data.project.image_url) return;
+
+                    const img = new Image();
+
+                    img.onload = function() {
+                    const bounds = [[0,0], [img.naturalHeight, img.naturalWidth]];
+
+                    L.imageOverlay(data.project.image_url, bounds).addTo(map);
+                    map.fitBounds(bounds);
+
+                    (data.units || []).forEach(u =&gt; {
+                    const feature = toFeature(u.geojson);
+                    if (!feature) return;
+
+                    L.geoJSON(feature, {
+                    style:{
+                    color:u.color || '#6b7280',
+                    fillColor:u.color || '#6b7280',
+                    weight:2,
+                    fillOpacity:0.45
+                    },
+                    onEachFeature:function(f, layer) {
+                    layer.bindPopup(`
+                    &lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;
+                    Code : ${u.code || '-'}&lt;br/&gt;
+                    Statut : ${u.stage || '-'}&lt;br/&gt;
+                    Surface : ${u.surface || 0}&lt;br/&gt;
+                    Prix : ${u.price || 0}
+                    `);
+
+                    layer.bindTooltip(unitDisplayLabel(u), {
+                    permanent:true,
+                    direction:'center',
+                    className:'unit-label'
+                    });
+
+                    layer.addTo(map);
+                    }
+                    });
+                    });
+                    };
+
+                    img.src = data.project.image_url;
+                    });
+                </script>
+            </body>
+        </html>
+    </template>
+
+    <template id="website_property_unit_map_page" name="Carte publique des unités">
+        <t t-call="website.layout">
+            <t t-set="title"><t t-esc="project.name"/></t>
+
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+            <style>
+                #public_unit_map {
+                height: 80vh;
+                width: 100%;
+                border-radius: 12px;
+                background:#f3f3f3;
+                }
+
+                .unit-label {
+                background: rgba(255,255,255,0.9);
+                border: 1px solid #333;
+                border-radius: 4px;
+                padding: 2px 6px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #111;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+                }
+            </style>
+
+            <div class="container-fluid my-4">
+                <h2><t t-esc="project.name"/></h2>
+                <div id="public_unit_map"></div>
+            </div>
+
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script>
+                const PROJECT_ID = <t t-esc="project.id"/>;
+                const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
+                const DATA_ROUTE = MAP_TYPE === 'subproject'
+                ? `/property/subproject/unit-map/data/${PROJECT_ID}`
+                : `/property/unit-map/data/${PROJECT_ID}`;
+
+                const map = L.map('public_unit_map', {
+                crs: L.CRS.Simple,
+                minZoom: -5,
+                maxZoom: 4
+                });
+
+                const all = new L.FeatureGroup().addTo(map);
+
+                function rpc(route, params) {
+                return fetch(route, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({
+                jsonrpc:'2.0',
+                method:'call',
+                params: params || {}
+                })
+                }).then(r =&gt; r.json()).then(r =&gt; r.result || r);
+                }
+
+                function toFeature(geojson) {
+                if (!geojson) return null;
+                if (geojson.type === 'Feature') return geojson;
+
+                return {
+                type:'Feature',
+                properties:{},
+                geometry: geojson
+                };
+                }
+
+                function unitDisplayLabel(unit) {
+                return unit.label || unit.code || unit.name || 'Lot';
+                }
+
+                rpc(DATA_ROUTE, {}).then(data =&gt; {
+                if (!data.project.image_url) return;
+
+                const img = new Image();
+
+                img.onload = function() {
+                const bounds = [[0,0], [img.naturalHeight, img.naturalWidth]];
+
+                L.imageOverlay(data.project.image_url, bounds).addTo(map);
+                map.fitBounds(bounds);
+
+                (data.units || []).forEach(u =&gt; {
+                const feature = toFeature(u.geojson);
+                if (!feature) return;
+
+                L.geoJSON(feature, {
+                style:{
+                color:u.color || '#6b7280',
+                fillColor:u.color || '#6b7280',
+                weight:2,
+                fillOpacity:0.45
+                },
+                onEachFeature:function(f, layer) {
+                layer.bindPopup(`
+                &lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;
+                Code : ${u.code || '-'}&lt;br/&gt;
+                Statut : ${u.stage || '-'}&lt;br/&gt;
+                Surface : ${u.surface || 0}&lt;br/&gt;
+                Prix : ${u.price || 0}
+                `);
+
+                layer.bindTooltip(unitDisplayLabel(u), {
+                permanent:true,
+                direction:'center',
+                className:'unit-label'
+                });
+
+                layer.on('mouseover', function () {
+                layer.openPopup();
+                });
+
+                layer.on('mouseout', function () {
+                layer.closePopup();
+                });
+
+                layer.on('click', function () {
+                if (u.brocher_access_token) {
+                window.location.href = '/property-brochure/' + u.brocher_access_token;
+                }
+                });
+
+                all.addLayer(layer);
+                }
+                });
+                });
+                };
+
+                img.src = data.project.image_url;
+                });
+            </script>
+        </t>
+    </template>
+    <template id="unit_map_esri_designer_template" name="Property Unit Map Esri Designer">
+        <t t-call="website.layout">
+            <t t-set="title">Cartographie Esri - <t t-esc="project.name"/></t>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+            <style>
+                #unit_map_esri_designer { height: 78vh; width: 100%; border-radius: 12px; background:#f3f3f3; }
+                .toolbar { margin: 15px 0; padding: 12px; background: #f7f7f7; border-radius: 12px; }
+                .search-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+                .search-row input { min-width:280px; }
+                .status-line { margin-top:8px; font-size:13px; font-weight:600; }
+                .unit-label { background: rgba(255,255,255,0.9); border: 1px solid #333; border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 700; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+                .edit-area-box { display:none; position:absolute; top:12px; right:12px; z-index:1000; background:rgba(255,255,255,0.96); border:2px solid #222; border-radius:8px; padding:8px 12px; font-size:14px; font-weight:700; color:#111; box-shadow:0 2px 8px rgba(0,0,0,0.25); pointer-events:none; }
+                .map-wrapper { position:relative; }
+                .map-toolbar-grid { display:grid; grid-template-columns:minmax(260px, 480px) minmax(260px, 480px) auto; gap:8px; align-items:end; }
+                .phase-info-line { margin-top:6px; margin-bottom:0; padding:7px 10px; min-height:38px; display:flex; align-items:center; }
+                .toolbar-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:end; padding-bottom:0; }
+                @media (max-width: 992px) { .map-toolbar-grid { grid-template-columns:1fr; } }
+            </style>
+            <div class="container-fluid my-4">
+                <h3><t t-esc="project.name"/> — Cartographie terrain Esri</h3>
+                <div class="toolbar">
+                    <div class="search-row">
+                        <strong>Recherche terrain :</strong>
+                        <input id="search_place" class="form-control" placeholder="Ex : Ivandry, Antananarivo ou -18.8792,47.5079"/>
+                        <button type="button" id="btn_search_place" class="btn btn-secondary">Rechercher</button>
+                        <button type="button" id="btn_use_position" class="btn btn-outline-secondary">Utiliser la position actuelle</button>
+                    </div>
+                    <div class="map-toolbar-grid">
+                        <div>
+                            <label class="form-label fw-bold">Dessiner un :</label>
+                            <select id="draw_type" class="form-select">
+                                <option value="phase">Phase</option>
+                                <option value="unit">Lot / Unité</option>
+                            </select>
+                            <div class="alert alert-info phase-info-line"><strong>Phase = </strong><span class="ms-1"><t t-esc="project.name"/></span></div>
+                        </div>
+
+                        <div>
+                            <label class="form-label fw-bold">Unité à dessiner</label>
+                            <select id="unit_select" class="form-select"></select>
+                        </div>
+
+                        <div class="toolbar-actions">
+                            <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier dessin</button>
+                            <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
+                            <button type="button" id="btn_rename_selected" class="btn btn-secondary">Renommer</button>
+                            <button type="button" id="btn_clear_selected" class="btn btn-danger">Supprimer dessin</button>
+                            <a t-if="map_type == 'subproject'" t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id" class="btn btn-dark">Finaliser</a>
+                            <a t-else="" t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id" class="btn btn-dark">Finaliser</a>
+                        </div>
+                    </div>
+                    <div class="text-muted mt-2">Fond Esri satellite : dessinez les unités/lots directement sur la carte. Cliquez sur une unité puis “Modifier dessin” pour ajuster les points.</div>
+                    <div class="status-line" id="status_line"></div>
+                </div>
+                <div class="map-wrapper">
+                    <div id="unit_map_esri_designer"></div>
+                    <div id="area_info" class="edit-area-box">Surface dessinée : 0 m²</div>
+                </div>
+            </div>
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+            <script>
+                const PROJECT_ID = <t t-esc="project.id"/>;
+                const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
+                const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
+                const SAVE_ROUTE = (lineId) =&gt; `/property/unit-map/save/${lineId}`;
+                const CLEAR_ROUTE = (lineId) =&gt; `/property/unit-map/clear/${lineId}`;
+
+                const map = L.map('unit_map_esri_designer').setView([-18.8792, 47.5079], 16);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri', maxZoom: 19 }).addTo(map);
+
+                const drawnItems = new L.FeatureGroup();
+                map.addLayer(drawnItems);
+
+                let units = [];
+                let unitLayers = [];
+                let activeLayer = null;
+                let activeEditHandler = null;
+                let phaseGeojson = null;
+                let phaseLayer = null;
+                const areaInfoBox = document.getElementById('area_info');
+
+                const drawControl = new L.Control.Draw({
+                edit: false,
+                draw: { polyline:false, circle:false, circlemarker:false, marker:false, rectangle:true, polygon:{allowIntersection:false, showArea:true} }
+                });
+                map.addControl(drawControl);
+
+                function rpc(route, params) {
+                return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r);
+                }
+                function setStatus(msg) { document.getElementById('status_line').innerText = msg || ''; }
+                function styleFor(unit) { return {color: unit.color || '#6b7280', fillColor: unit.color || '#6b7280', weight:2, fillOpacity:0.45}; }
+                function phaseStyle() { return {color:'#dc2626', fillColor:'#f97316', weight:3, fillOpacity:0, dashArray:'8,6'}; }
+                function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
+                function geometryFeature(geometry) { return {type:'Feature', properties:{}, geometry: geometry}; }
+                function calculateArea(geometry) { try { return Math.round(turf.area(geometryFeature(geometry)) * 100) / 100; } catch(e) { return 0; } }
+                function formatArea(area) { if (!area) return '0 m²'; if (area &gt;= 10000) return (area / 10000).toFixed(4) + ' ha (' + area.toFixed(2) + ' m²)'; return area.toFixed(2) + ' m²'; }
+                function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
+                function findUnit(lineId) { return units.find(u =&gt; String(u.line_id) === String(lineId)); }
+                function findLayer(lineId) { return unitLayers.find(l =&gt; String((l.meta || {}).line_id) === String(lineId)); }
+                function updateEditingAreaDisplay(layer) { if (!layer) return; const geometry = layer.toGeoJSON().geometry; const area = calculateArea(geometry); setStatus('Surface dessinée : ' + formatArea(area)); if (areaInfoBox) { areaInfoBox.innerText = 'Surface dessinée : ' + formatArea(area); areaInfoBox.style.display = 'block'; } }
+                function clearEditingAreaDisplay() { if (areaInfoBox) { areaInfoBox.style.display = 'none'; areaInfoBox.innerText = 'Surface dessinée : 0 m²'; } if (activeLayer &amp;&amp; activeEditHandler) activeLayer.off('edit', activeEditHandler); activeEditHandler = null; }
+                function popupHtml(unit) { return `&lt;b&gt;${unitDisplayLabel(unit)}&lt;/b&gt;&lt;br/&gt;Code : ${unit.code || '-'}&lt;br/&gt;Statut : ${unit.stage || '-'}&lt;br/&gt;Surface fiche : ${unit.surface || 0}&lt;br/&gt;Prix : ${unit.price || 0}&lt;br/&gt;&lt;br/&gt;&lt;button type="button" class="btn btn-sm btn-primary js-edit-unit" data-line-id="${unit.line_id}"&gt;Modifier dessin&lt;/button&gt; &lt;button type="button" class="btn btn-sm btn-success js-save-unit" data-line-id="${unit.line_id}"&gt;Enregistrer dessin&lt;/button&gt; &lt;button type="button" class="btn btn-sm btn-secondary js-rename-unit" data-line-id="${unit.line_id}"&gt;Renommer&lt;/button&gt; &lt;button type="button" class="btn btn-sm btn-danger js-clear-unit" data-line-id="${unit.line_id}"&gt;Supprimer&lt;/button&gt;`; }
+                function refreshLayerText(layer, unit) { layer.unbindTooltip(); layer.bindTooltip(unitDisplayLabel(unit), {permanent:true, direction:'center', className:'unit-label'}); layer.unbindPopup(); layer.bindPopup(popupHtml(unit)); }
+                function registerLayer(layer, unit) { layer.meta = unit; layer.setStyle(styleFor(unit)); refreshLayerText(layer, unit); drawnItems.addLayer(layer); unitLayers.push(layer); }
+                function registerPhaseLayer(layer) { if (phaseLayer &amp;&amp; drawnItems.hasLayer(phaseLayer)) drawnItems.removeLayer(phaseLayer); phaseLayer = layer; phaseLayer.meta = {type:'phase'}; phaseLayer.setStyle(phaseStyle()); phaseLayer.bindTooltip('Phase : ' + (document.querySelector('h3') ? document.querySelector('h3').innerText.split('—')[0].trim() : 'Projet'), {permanent:true, direction:'center', className:'unit-label'}); phaseLayer.bindPopup('&lt;b&gt;Phase du projet&lt;/b&gt;&lt;br/&gt;Utilisez “Modifier dessin” puis “Enregistrer dessin” pour ajuster la phase.'); drawnItems.addLayer(phaseLayer); }
+                function savePhaseLayer(layer) { if (!layer) { alert('Dessinez d’abord la phase.'); return; } const geometry = layer.toGeoJSON().geometry; rpc(`/property/unit-map/save-phase/${PROJECT_ID}`, {geojson: geometry, map_type: MAP_TYPE}).then(res =&gt; { if (res.error) { alert(res.error); return; } phaseGeojson = geometry; if (layer.editing) layer.editing.disable(); clearEditingAreaDisplay(); activeLayer = null; setStatus('Dessin de la phase enregistré. Vous pouvez maintenant dessiner les lots/unités.'); document.getElementById('draw_type').value = 'unit'; }); }
+                function enablePhaseEdit() { if (!phaseLayer) { setStatus('Aucun dessin de phase existant. Dessinez une nouvelle phase.'); return; } disableEditing(phaseLayer); if (phaseLayer.editing) phaseLayer.editing.enable(); activeLayer = phaseLayer; activeEditHandler = function() { updateEditingAreaDisplay(phaseLayer); }; phaseLayer.on('edit', activeEditHandler); updateEditingAreaDisplay(phaseLayer); setStatus('Mode édition activé pour la phase.'); }
+                function refreshSelect() { const select = document.getElementById('unit_select'); select.innerHTML = '&lt;option value=""&gt;Sélectionner une unité...&lt;/option&gt;'; units.filter(u =&gt; !u.geojson).forEach(u =&gt; { const opt = document.createElement('option'); opt.value = u.line_id; opt.textContent = (u.code ? u.code + ' - ' : '') + (unitDisplayLabel(u)); select.appendChild(opt); }); }
+                function askUnitLabel(unit) { const label = prompt("Introduire le label de l'unité :", unit.label || unit.code || unit.name || ''); if (!label || !label.trim()) { alert('Le label est obligatoire.'); return false; } return label.trim(); }
+                function disableEditing(except) { unitLayers.forEach(l =&gt; { if (l !== except &amp;&amp; l.editing) l.editing.disable(); }); if (phaseLayer &amp;&amp; phaseLayer !== except &amp;&amp; phaseLayer.editing) phaseLayer.editing.disable(); clearEditingAreaDisplay(); }
+                function enableEdit(lineId) { const layer = findLayer(lineId); if (!layer) { setStatus('Aucun dessin existant pour cette unité. Dessinez un nouveau polygone.'); return; } disableEditing(layer); if (layer.editing) layer.editing.enable(); activeLayer = layer; document.getElementById('unit_select').value = lineId; layer.closePopup(); activeEditHandler = function() { updateEditingAreaDisplay(layer); }; layer.on('edit', activeEditHandler); updateEditingAreaDisplay(layer); }
+                function saveLayer(layer) { if (!layer) return; const unit = layer.meta || findUnit(document.getElementById('unit_select').value); if (!unit) { alert('Sélectionnez une unité.'); return; } if (!unit.label) { const label = askUnitLabel(unit); if (!label) return; unit.label = label; } const geometry = layer.toGeoJSON().geometry; rpc(SAVE_ROUTE(unit.line_id), {geojson: geometry, label: unit.label}).then(res =&gt; { if (res.error) { alert(res.error); return; } unit.geojson = geometry; layer.meta = unit; refreshLayerText(layer, unit); refreshSelect(); if (layer.editing) layer.editing.disable(); clearEditingAreaDisplay(); activeLayer = null; setStatus('Dessin enregistré pour ' + unitDisplayLabel(unit) + '. Surface dessinée : ' + formatArea(calculateArea(geometry))); }); }
+                function renameUnit(lineId) { const unit = findUnit(lineId); if (!unit) return; const label = askUnitLabel(unit); if (!label) return; unit.label = label; const layer = findLayer(lineId); if (layer) { layer.meta = unit; refreshLayerText(layer, unit); saveLayer(layer); } }
+                function clearUnit(lineId) { if (!lineId) { alert('Sélectionnez une unité.'); return; } if (!confirm('Supprimer le dessin de cette unité ?')) return; rpc(CLEAR_ROUTE(lineId), {}).then(() =&gt; location.reload()); }
+                function clearPhase() { if (!confirm('Effacer le dessin de la phase ?')) return; rpc(`/property/unit-map/clear-phase/${PROJECT_ID}`, {map_type: MAP_TYPE}).then(() =&gt; location.reload()); }
+
+                rpc(DATA_ROUTE, {}).then(data =&gt; {
+                if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16);
+                units = data.units || [];
+                phaseGeojson = data.project.phase_polygon_json ? JSON.parse(data.project.phase_polygon_json) : null;
+                document.getElementById('draw_type').value = phaseGeojson ? 'unit' : 'phase';
+                refreshSelect();
+                const phaseFeature = toFeature(phaseGeojson);
+                if (phaseFeature) L.geoJSON(phaseFeature, {style: phaseStyle(), onEachFeature:function(f, layer) { registerPhaseLayer(layer); }});
+                units.forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style: styleFor(u), onEachFeature:function(f, layer) { registerLayer(layer, u); }}); });
+                if (drawnItems.getLayers().length) map.fitBounds(drawnItems.getBounds(), {padding:[20,20]});
+                });
+
+                document.getElementById('btn_search_place').addEventListener('click', function() { const q = document.getElementById('search_place').value; if (!q) { alert('Veuillez saisir un lieu ou des coordonnées.'); return; } const coords = q.split(',').map(x =&gt; parseFloat(x.trim())); if (coords.length === 2 &amp;&amp; !isNaN(coords[0]) &amp;&amp; !isNaN(coords[1])) { map.setView([coords[0], coords[1]], 18); return; } fetch(`https://nominatim.openstreetmap.org/search?format=json&amp;limit=1&amp;q=${encodeURIComponent(q)}`).then(r =&gt; r.json()).then(results =&gt; { if (!results.length) { alert('Terrain introuvable.'); return; } map.setView([parseFloat(results[0].lat), parseFloat(results[0].lon)], 18); }); });
+                document.getElementById('btn_use_position').addEventListener('click', function() { if (!navigator.geolocation) { alert('Géolocalisation non supportée par ce navigateur.'); return; } navigator.geolocation.getCurrentPosition(function(pos) { map.setView([pos.coords.latitude, pos.coords.longitude], 18); }); });
+
+                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Supprimer dessin”.'); drawnItems.removeLayer(event.layer); return; } const layer = event.layer; registerPhaseLayer(layer); savePhaseLayer(layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord une unité.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; unit.label = label; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); const layer = event.layer; registerLayer(layer, unit); saveLayer(layer); });
+                document.getElementById('btn_edit_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') enablePhaseEdit(); else enableEdit(document.getElementById('unit_select').value); });
+                document.getElementById('btn_save_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') savePhaseLayer(activeLayer || phaseLayer); else saveLayer(activeLayer || findLayer(document.getElementById('unit_select').value)); });
+                document.getElementById('btn_rename_selected').addEventListener('click', () =&gt; renameUnit(document.getElementById('unit_select').value));
+                document.getElementById('btn_clear_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') clearPhase(); else clearUnit(document.getElementById('unit_select').value); });
+                document.addEventListener('click', function(ev) { const edit = ev.target.closest('.js-edit-unit'); const save = ev.target.closest('.js-save-unit'); const rename = ev.target.closest('.js-rename-unit'); const clear = ev.target.closest('.js-clear-unit'); if (edit) enableEdit(edit.dataset.lineId); if (save) saveLayer(findLayer(save.dataset.lineId)); if (rename) renameUnit(rename.dataset.lineId); if (clear) clearUnit(clear.dataset.lineId); });
+            </script>
+        </t>
+    </template>
+
+    <template id="unit_map_esri_preview_template" name="Aperçu cartographie Esri des unités">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                <style>html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#f3f3f3; } #preview_unit_map_esri { height:520px; width:100%; background:#f3f3f3; } .unit-label { background:rgba(255,255,255,0.9); border:1px solid #333; border-radius:4px; padding:2px 6px; font-size:12px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,0.25); }</style>
+            </head>
+            <body>
+                <div id="preview_unit_map_esri"></div>
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <script>
+                    const PROJECT_ID = <t t-esc="project.id"/>;
+                    const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
+                    const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
+                    const map = L.map('preview_unit_map_esri').setView([-18.8792, 47.5079], 16);
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles © Esri', maxZoom:19 }).addTo(map);
+                    const all = new L.FeatureGroup().addTo(map);
+                    function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
+                    function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
+                    function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
+                    rpc(DATA_ROUTE, {}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
+                </script>
+            </body>
+        </html>
+    </template>
+
+    <template id="website_property_unit_map_esri_page" name="Carte publique Esri des unités">
+        <t t-call="website.layout">
+            <t t-set="title"><t t-esc="project.name"/></t>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <style>#public_unit_map_esri { height:80vh; width:100%; border-radius:12px; background:#f3f3f3; } .unit-label { background:rgba(255,255,255,0.9); border:1px solid #333; border-radius:4px; padding:2px 6px; font-size:12px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,0.25); }</style>
+            <div class="container-fluid my-4">
+                <h2><t t-esc="project.name"/></h2>
+                <div id="public_unit_map_esri"></div>
+            </div>
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script>
+                const PROJECT_ID = <t t-esc="project.id"/>;
+                const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
+                const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
+                const map = L.map('public_unit_map_esri').setView([-18.8792, 47.5079], 16);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles © Esri', maxZoom:19 }).addTo(map);
+                const all = new L.FeatureGroup().addTo(map);
+                function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
+                function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
+                function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
+                rpc(DATA_ROUTE, {}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); layer.on('mouseover', function() { layer.openPopup(); }); layer.on('mouseout', function() { layer.closePopup(); }); layer.on('click', function() { if (u.brocher_access_token) window.location.href = '/property-brochure/' + u.brocher_access_token; }); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
+            </script>
+        </t>
+    </template>
+
+</odoo>

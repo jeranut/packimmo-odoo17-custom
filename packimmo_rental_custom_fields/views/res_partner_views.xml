@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_packimmo_cin" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.packimmo.cin</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+
+            <!-- ========================= -->
+            <!-- HIDE FIELDS -->
+            <!-- ========================= -->
+
+            <!-- Cacher Street 2 -->
+            <xpath expr="//field[@name='street2']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher State -->
+            <xpath expr="//field[@name='state_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Cacher Website -->
+            <xpath expr="//field[@name='website']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Renommer Address -->
+            <xpath expr="//label[@for='street']" position="attributes">
+                <attribute name="string">Siège social</attribute>
+            </xpath>
+            <xpath expr="//field[@name='country_id']" position="after">
+
+                <field name="nationality_id" placeholder="Nationalité" nolabel="1" invisible="company_type != 'person'" options="{'no_create_edit': False, 'no_quick_create': False}" />
+
+            </xpath>
+
+            <!-- ========================= -->
+            <!-- REPLACE VAT -->
+            <!-- ========================= -->
+
+            <xpath expr="//field[@name='vat']" position="replace">
+
+                <!-- INDIVIDUAL -->
+                <field name="cin" string="Titulaire de la CIN n°" placeholder="101 123 456 789" invisible="company_type != 'person'" />
+
+                <field name="cin_delivery_date" string="Délivrée le" invisible="company_type != 'person'" required="cin" />
+
+                <field name="cin_delivery_place" string="À" placeholder="Antananarivo VI" invisible="company_type != 'person'" required="cin" />
+
+                <!-- COMPANY -->
+                <field name="nif" string="NIF" placeholder="6001234567" invisible="company_type != 'company'" />
+
+                <field name="stat" string="STAT" placeholder="12345 11 2025 0 00001" invisible="company_type != 'company'" />
+
+                <field name="rcs" string="RCS" placeholder="2025B00001" invisible="company_type != 'company'" />
+
+            </xpath>
+
+            <!-- ========================= -->
+            <!-- COMPANY EXTRA -->
+            <!-- ========================= -->
+
+            <xpath expr="//field[@name='nif']" position="after">
+
+                <field name="legal_form_id" placeholder="EI (Entreprise Individuelle)" options="{'no_create_edit': False, 'no_quick_create': False}" invisible="company_type != 'company'" />
+
+                <label for="share_capital" string="Au capital de" invisible="company_type != 'company'" />
+
+                <div class="o_row" invisible="company_type != 'company'">
+
+                    <field name="share_capital" placeholder="200 000 000" nolabel="1" style="width: 260px;" />
+
+                </div>
+
+            </xpath>
+            <xpath expr="//field[@name='category_id']" position="after">
+
+                <field name="representative_id" string="Représentant" placeholder="Choisir un représentant" domain="[('is_company', '=', False)]" options="{'no_quick_create': True}" invisible="company_type != 'company'" />
+            </xpath>
+            <xpath expr="//field[@name='representative_id']" position="after">
+
+                <field name="quality_id" string="En qualité de" placeholder="En qualité de" options="{'no_create_edit': False, 'no_quick_create': False}" invisible="company_type != 'company'" required="representative_id" />
+
+            </xpath>
+
+            <!-- ========================= -->
+            <!-- NOTEBOOK -->
+            <!-- ========================= -->
+
+            <xpath expr="//page[@name='contact_addresses']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//page[@name='sales_purchases']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//page[@name='accounting']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//page[@name='accounting_disabled']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+        </field>
+    </record>
+    <record id="view_partner_form_packimmo_portal" model="ir.ui.view">
+        <field name="name">res.partner.form.packimmo.portal</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_create_portal_user_packimmo" type="object" string="Créer accès portail" class="oe_stat_button" icon="fa-user" />
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,197 @@
+.property-search-box {
+    background: #fff;
+    padding: 25px;
+    border-radius: 16px;
+}
+
+.property-input {
+    height: 50px;
+    border-radius: 12px;
+}
+
+.property-btn {
+    height: 50px;
+    border-radius: 12px;
+    background: #0d6efd;
+    color: white;
+    border: none;
+}
+
+.property-card {
+    background: white;
+    border-radius: 18px;
+    overflow: hidden;
+    transition: 0.3s;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+}
+
+.property-card:hover {
+    transform: translateY(-5px);
+}
+
+.property-image-wrapper {
+    position: relative;
+}
+
+.property-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.property-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: #0d6efd;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 13px;
+}
+
+.property-content {
+    padding: 20px;
+}
+
+.property-title {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.property-location {
+    color: #777;
+    font-size: 14px;
+}
+
+.property-price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0d6efd;
+    margin: 15px 0;
+}
+
+.property-info {
+    display: flex;
+    justify-content: space-between;
+    color: #555;
+    font-size: 14px;
+}
+
+html,
+body,
+#wrapwrap,
+.o_website_page {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+}
+
+.property-card {
+    margin-bottom: 30px;
+}
+.property-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.page-link-custom {
+    padding: 8px 14px;
+    border: 1px solid #0d6efd;
+    border-radius: 8px;
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.page-link-custom.active,
+.page-link-custom:hover {
+    background: #0d6efd;
+    color: white;
+}
+.property-brochure-carousel {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.property-carousel-img {
+    width: 100%;
+    height: 460px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.property-brochure-carousel .carousel-control-prev,
+.property-brochure-carousel .carousel-control-next {
+    width: 55px;
+}
+
+.property-brochure-carousel .carousel-control-prev-icon,
+.property-brochure-carousel .carousel-control-next-icon {
+    background-color: rgba(13, 110, 253, 0.9);
+    border-radius: 50%;
+    padding: 20px;
+}
+
+.property-brochure-carousel .carousel-indicators {
+    background: rgba(0, 0, 0, 0.25);
+    width: fit-content;
+    margin: auto;
+    padding: 8px 14px;
+    border-radius: 25px;
+    bottom: 18px;
+}
+.property-thumb-carousel {
+    width: 100%;
+}
+
+.property-main-img {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+    display: block;
+}
+
+.property-thumbnails {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    overflow-x: auto;
+}
+
+.property-thumb {
+    border: none;
+    padding: 0;
+    background: transparent;
+    flex: 1;
+    min-width: 110px;
+    height: 80px;
+    cursor: pointer;
+    opacity: 0.75;
+}
+
+.property-thumb.active,
+.property-thumb:hover {
+    opacity: 1;
+}
+
+.property-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.property-thumb-carousel .carousel-control-prev-icon,
+.property-thumb-carousel .carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    padding: 18px;
+}
+.property-reset-btn {
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

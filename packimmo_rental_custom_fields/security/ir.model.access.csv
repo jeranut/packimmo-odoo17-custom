@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_res_partner_legal_form_user,res.partner.legal.form.user,model_res_partner_legal_form,base.group_user,1,1,1,1
+access_res_partner_nationality_user,res.partner.nationality.user,model_res_partner_nationality,base.group_user,1,1,1,1
+access_res_partner_quality_user,res.partner.quality.user,model_res_partner_quality,base.group_user,1,1,1,1
+access_res_company_bank_account_user,res.company.bank.account.user,model_res_company_bank_account,base.group_user,1,1,1,1

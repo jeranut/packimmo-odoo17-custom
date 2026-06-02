@@ -1,0 +1,67 @@
+# Translation of Odoo Server.
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo 17.0\n"
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. module: rental_management
+#: model_terms:ir.ui.view,arch_db:rental_management.property_sub_project_view_form
+msgid "Units"
+msgstr "Biens"
+
+#. module: rental_management
+#: model_terms:ir.ui.view,arch_db:rental_management.property_project_view_form
+#: model_terms:ir.ui.view,arch_db:rental_management.property_sub_project_view_form
+msgid "Available Units"
+msgstr "Biens disponibles"
+
+#. module: rental_management
+#: model:ir.actions.act_window,name:rental_management.unit_creation_action
+#: model_terms:ir.ui.view,arch_db:rental_management.property_project_view_form
+#: model_terms:ir.ui.view,arch_db:rental_management.property_sub_project_view_form
+msgid "Create Units"
+msgstr "Créer des biens"
+
+#. module: rental_management
+#: model_terms:ir.ui.view,arch_db:rental_management.unit_creation_wizard_view_form
+msgid "Create units"
+msgstr "Créer des biens"
+
+#. module: rental_management
+#: model_terms:ir.ui.view,arch_db:rental_management.property_project_view_form
+#: model_terms:ir.ui.view,arch_db:rental_management.property_sub_project_view_form
+msgid "Rent Units"
+msgstr "Biens en location"
+
+#. module: rental_management
+#: model_terms:ir.ui.view,arch_db:rental_management.property_project_view_form
+#: model_terms:ir.ui.view,arch_db:rental_management.property_sub_project_view_form
+msgid "Sold Units"
+msgstr "Biens vendus"
+
+#. module: rental_management
+#: model_terms:ir.ui.view,arch_db:rental_management.unit_creation_wizard_view_form
+msgid "Total Units"
+msgstr "Nombre total de biens"
+
+#. module: rental_management
+msgid "Units Count"
+msgstr "Nombre de biens"
+
+#. module: rental_management
+#: model:ir.model.fields,field_description:rental_management.field_property_project__units_per_floor
+#: model:ir.model.fields,field_description:rental_management.field_property_sub_project__units_per_floor
+#: model:ir.model.fields,field_description:rental_management.field_subproject_creation__units_per_floor
+#: model:ir.model.fields,field_description:rental_management.field_unit_creation__units_per_floor
+msgid "Units per Floor"
+msgstr "Biens par étage/phase"
+
+#. module: rental_management
+#: model:ir.model.fields,field_description:rental_management.field_property_project__units_per_floor
+#: model:ir.model.fields,field_description:rental_management.field_property_sub_project__units_per_floor
+#: model:ir.model.fields,field_description:rental_management.field_subproject_creation__units_per_floor
+#: model:ir.model.fields,field_description:rental_management.field_unit_creation__units_per_floor
+msgid "Unités par étage"
+msgstr "Biens par étage/phase"
+

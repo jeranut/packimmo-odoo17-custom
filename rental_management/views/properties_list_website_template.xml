@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="properties_list_template" name="Properties List">
+
+        <t t-call="website.layout">
+
+            <div class="container py-5">
+
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold">
+                        Trouvez le bien idéal
+                    </h1>
+                    <p class="text-muted">
+                        Achetez, louez et explorez des biens immobiliers
+                    </p>
+                </div>
+                <form method="get" action="/properties-list" class="property-search-box shadow-sm">
+                    <div class="row g-3">
+
+                        <div class="col-lg-4">
+                            <input type="text"
+                                   name="search"
+                                   class="form-control property-input"
+                                   placeholder="Rechercher par nom, ville, projet..."
+                                   t-att-value="search"/>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <select name="sale_lease" class="form-select property-input">
+                                <option value="" t-att-selected="'selected' if not sale_lease else None">Vente / Location</option>
+                                <option value="for_sale" t-att-selected="'selected' if sale_lease == 'for_sale' else None">Vente</option>
+                                <option value="for_tenancy" t-att-selected="'selected' if sale_lease == 'for_tenancy' else None">Location</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <select name="property_type" class="form-select property-input">
+                                <option value="" t-att-selected="'selected' if not property_type else None">Type de bien</option>
+                                <option value="land" t-att-selected="'selected' if property_type == 'land' else None">Terrain</option>
+                                <option value="residential" t-att-selected="'selected' if property_type == 'residential' else None">Résidentiel</option>
+                                <option value="commercial" t-att-selected="'selected' if property_type == 'commercial' else None">Commercial</option>
+                                <option value="industrial" t-att-selected="'selected' if property_type == 'industrial' else None">Industriel</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <select name="region_id" class="form-select property-input">
+                                <option value="">Région</option>
+                                <t t-foreach="regions" t-as="region">
+                                    <option t-att-value="region.id"
+                                            t-att-selected="'selected' if str(region.id) == str(region_id) else None">
+                                        <t t-esc="region.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <select name="project_id" class="form-select property-input">
+                                <option value="">Projet</option>
+                                <t t-foreach="projects" t-as="project">
+                                    <option t-att-value="project.id"
+                                            t-att-selected="'selected' if str(project.id) == str(project_id) else None">
+                                        <t t-esc="project.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <input type="number" name="min_price" class="form-control property-input"
+                                   placeholder="Prix min" t-att-value="min_price"/>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <input type="number" name="max_price" class="form-control property-input"
+                                   placeholder="Prix max" t-att-value="max_price"/>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <input type="number" name="min_area" class="form-control property-input"
+                                   placeholder="Surface min" t-att-value="min_area"/>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <input type="number" name="max_area" class="form-control property-input"
+                                   placeholder="Surface max" t-att-value="max_area"/>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <button type="submit" class="btn property-btn w-100">
+                                Rechercher
+                            </button>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <a href="/properties-list" class="btn btn-outline-secondary w-100 property-reset-btn">
+                                Réinitialiser
+                            </a>
+                        </div>
+
+                    </div>
+                </form>
+
+                <div class="row mt-5">
+
+                    <t t-if="not properties">
+                        <div class="col-12 text-center">
+                            <h4>Aucun bien trouvé</h4>
+                        </div>
+                    </t>
+
+                    <t t-foreach="properties" t-as="property">
+
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="property-card">
+
+                                <div class="property-image-wrapper">
+
+                                    <!-- IMAGE DU SOUS-PROJET -->
+                                    <img t-if="property.subproject_id and property.subproject_id.subproject_image_ids"
+                                         t-att-src="'/web/image/subproject.images.line/%s/image' % property.subproject_id.subproject_image_ids[0].id"
+                                         class="property-image"/>
+                                    <!-- IMAGE DU PROJET -->
+                                    <img t-elif="property.property_project_id and property.property_project_id.project_image_ids"
+                                         t-att-src="'/web/image/project.images.line/%s/image' % property.property_project_id.project_image_ids[0].id"
+                                         class="property-image"/>
+
+                                    <!-- IMAGE DE LA PROPRIÉTÉ -->
+                                    <img t-elif="property.property_images_ids"
+                                         t-att-src="'/web/image/property.images/%s/image' % property.property_images_ids[0].id"
+                                         class="property-image"/>
+
+                                    <!-- IMAGE PRINCIPALE DE LA PROPRIÉTÉ -->
+                                    <img t-elif="property.image"
+                                         t-att-src="'/web/image/property.details/%s/image' % property.id"
+                                         class="property-image"/>
+
+                                    <!-- PLACEHOLDER -->
+                                    <img t-else=""
+                                         src="/web/static/img/placeholder.png"
+                                         class="property-image"/>
+
+                                    <div class="property-badge">
+                                        <t t-if="property.sale_lease == 'for_sale'">EN VENTE</t>
+                                        <t t-if="property.sale_lease == 'for_tenancy'">EN LOCATION</t>
+                                    </div>
+
+                                </div>
+                                <div class="property-content">
+
+                                    <h5 class="property-title">
+                                        <t t-if="property.property_project_id">
+                                            <t t-esc="property.property_project_id.name"/>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-esc="property.name"/>
+                                        </t>
+                                        <t t-if="property.subproject_id">
+                                            <div class="fw-bold text-muted mb-2"
+                                                 style="font-size:17px;">
+                                                <t t-esc="property.subproject_id.name"/>
+                                            </div>
+                                        </t>
+                                    </h5>
+
+                                    <p class="text-muted small mb-2"
+                                       t-if="(property.subproject_id and property.subproject_id.avail_description)
+                                                or
+                                             (property.property_project_id and property.property_project_id.avail_description)">
+
+                                        <i class="fa fa-building"/>
+
+                                        <t t-if="property.subproject_id and property.subproject_id.avail_description">
+                                            <t t-raw="property.subproject_id.description"/>
+                                        </t>
+
+                                        <t t-elif="property.property_project_id and property.property_project_id.avail_description">
+                                            <t t-raw="property.property_project_id.description"/>
+                                        </t>
+
+                                    </p>
+
+                                    <p class="property-location">
+                                        <i class="fa fa-map-marker"/>
+                                        <t t-esc="property.city or ''"/>
+                                    </p>
+
+                                    <div class="property-price">
+
+                                        <t t-set="count"
+                                           t-value="project_property_count.get(property.property_project_id.id, 1) if property.property_project_id else 1"/>
+
+                                        <t t-if="count == 1 and property.price and property.price &gt; 0">
+                                            Prix:
+                                            <t t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')"/>
+                                            Ar
+                                        </t>
+
+                                    </div>
+
+                                    <div class="property-info">
+
+                                        <span>
+                                            <i class="fa fa-home"/>
+                                            <t t-esc="property.type or ''"/>
+                                        </span>
+
+                                        <span>
+                                            <i class="fa fa-expand"/>
+                                            <t t-esc="property.total_area or 0"/>
+                                            m²
+                                        </span>
+
+                                    </div>
+
+                                    <t t-set="subproject_unit_count"
+                                       t-value="project_property_count.get('sub_%s' % property.subproject_id.id, 1)"/>
+
+                                    <t t-set="project_unit_count"
+                                       t-value="project_property_count.get(property.property_project_id.id, 1)"/>
+
+                                    <a t-if="property.type == 'land' and property.property_project_id"
+                                       t-att-href="'/property/land-phase/project/%s/map' % property.property_project_id.id"
+                                       class="btn btn-outline-primary w-100 mt-3">
+                                        Découvrir le bien
+                                    </a>
+
+                                    <a t-elif="property.subproject_id and subproject_unit_count &gt; 1"
+                                       t-att-href="'/property/subproject/%s/unit-map' % property.subproject_id.id"
+                                       class="btn btn-outline-primary w-100 mt-3">
+                                        Découvrir le bien
+                                    </a>
+
+                                    <a t-elif="property.property_project_id and project_unit_count &gt; 1"
+                                       t-att-href="'/property/project/%s/unit-map' % property.property_project_id.id"
+                                       class="btn btn-outline-primary w-100 mt-3">
+                                        Découvrir le bien
+                                    </a>
+
+                                    <a t-elif="property.brocher_access_token"
+                                       t-att-href="'/property-brochure/%s' % property.brocher_access_token"
+                                       class="btn btn-outline-primary w-100 mt-3">
+                                        Découvrir le bien
+                                    </a>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </t>
+
+                </div>
+
+                <t t-if="total_pages &gt; 1">
+
+                    <t t-set="filter_url"
+                       t-value="'&amp;search=%s&amp;sale_lease=%s&amp;property_type=%s&amp;region_id=%s&amp;project_id=%s&amp;min_price=%s&amp;max_price=%s&amp;min_area=%s&amp;max_area=%s' % (
+            search or '',
+            sale_lease or '',
+            property_type or '',
+            region_id or '',
+            project_id or '',
+            min_price or '',
+            max_price or '',
+            min_area or '',
+            max_area or ''
+       )"/>
+
+                    <div class="property-pagination mt-4">
+
+                        <a t-if="page &gt; 1"
+                           t-att-href="'/properties-list?page=%s%s' % (page - 1, filter_url)"
+                           class="page-link-custom">
+                            Précédent
+                        </a>
+
+                        <t t-foreach="range(1, total_pages + 1)" t-as="p">
+                            <a t-att-href="'/properties-list?page=%s%s' % (p, filter_url)"
+                               t-att-class="'page-link-custom active' if p == page else 'page-link-custom'">
+                                <t t-esc="p"/>
+                            </a>
+                        </t>
+
+                        <a t-if="page &lt; total_pages"
+                           t-att-href="'/properties-list?page=%s%s' % (page + 1, filter_url)"
+                           class="page-link-custom">
+                            Suivant
+                        </a>
+
+                    </div>
+                </t>
+
+            </div>
+
+        </t>
+
+    </template>
+
+</odoo>

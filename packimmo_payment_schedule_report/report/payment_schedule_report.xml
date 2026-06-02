@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_payment_schedule_report" model="report.paperformat">
+        <field name="name">PACKIMMO Etat de Paiement A4</field>
+        <field name="default" eval="False" />
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">35</field>
+        <field name="margin_bottom">25</field>
+        <field name="margin_left">15</field>
+        <field name="margin_right">15</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">30</field>
+        <field name="dpi">99</field>
+    </record>
+
+    <record id="action_report_payment_schedule_pdf" model="ir.actions.report">
+        <field name="name">Etat de paiement client</field>
+        <field name="model">property.vendor</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">packimmo_payment_schedule_report.report_payment_schedule_pdf</field>
+        <field name="report_file">packimmo_payment_schedule_report.report_payment_schedule_pdf</field>
+        <field name="binding_model_id" ref="rental_management.model_property_vendor" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="packimmo_payment_schedule_report.paperformat_payment_schedule_report" />
+        <field name="print_report_name">'Etat de paiement - %s' % (object.display_name)</field>
+    </record>
+
+    <template id="report_payment_schedule_pdf">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="packimmo_payment_schedule_report.report_payment_schedule_pdf_document" />
+            </t>
+        </t>
+    </template>
+
+    <template id="report_payment_schedule_pdf_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="doc" />
+            <t t-set="company" t-value="doc.company_id if 'company_id' in doc._fields and doc.company_id else res_company" />
+            <t t-set="partner" t-value="doc._pack_get_partner()" />
+            <t t-set="property_rec" t-value="doc._pack_get_property()" />
+            <t t-set="schedule_lines" t-value="doc._pack_get_schedule_lines()" />
+            <t t-set="total_amount" t-value="doc.total_sell_amount if 'total_sell_amount' in doc._fields else doc._pack_get_total(['total_amount', 'amount_total', 'price_total'])" />
+            <t t-set="deposit_amount" t-value="doc.book_price if 'book_price' in doc._fields else doc._pack_get_total(['deposit_amount', 'advance_amount', 'amount_deposit'])" />
+            <t t-set="remaining_amount" t-value="doc.payable_amount if 'payable_amount' in doc._fields else 0.0" />
+
+            <div class="page pack-payment-page">
+                <div class="pack-report-header">
+                    <h1 class="pack-main-title">ÉTAT DE PAIEMENT CLIENT</h1>
+                    <div class="pack-subtitle">ÉCHÉANCIER ET SUIVI DES FACTURES</div>
+                </div>
+
+                <p class="pack-section-title pack-section-blue">INFORMATIONS CONTRAT</p>
+                <hr class="pack-divider" />
+                <table class="pack-info-table">
+                    <tr>
+                        <td class="pack-info-label">Référence contrat :</td>
+                        <td>
+                            <span class="pack-value">
+                                <t t-esc="doc.display_name if doc else ''" />
+                            </span>
+                        </td>
+                        <td class="pack-info-label">Date du contrat :</td>
+                        <td>
+                            <span class="pack-value">
+                                <t t-esc="doc.contract_signature_date.strftime('%d/%m/%Y') if 'contract_signature_date' in doc._fields and doc.contract_signature_date else doc._pack_format_date(doc._pack_line_value(doc, ['date_order', 'date', 'create_date'], False))" />
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="pack-two-col">
+                    <tr>
+                        <td>
+                            <p class="pack-section-title pack-section-blue">CLIENT</p>
+                            <hr class="pack-divider" />
+                            <table class="pack-info-table">
+                                <tr>
+                                    <td class="pack-info-label">Nom / Raison sociale :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="partner.display_name if partner else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="pack-info-label">Téléphone :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="(partner.phone or partner.mobile or '') if partner else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="pack-info-label">E-mail :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="partner.email or '' if partner else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="pack-info-label">Adresse :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="(partner.contact_address or partner.street or '') if partner else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <p class="pack-section-title pack-section-blue">BIEN / LOT</p>
+                            <hr class="pack-divider" />
+                            <table class="pack-info-table">
+                                <tr>
+                                    <td class="pack-info-label">Projet :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="doc.property_project_id.name if 'property_project_id' in doc._fields and doc.property_project_id else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="pack-info-label">Sous-projet :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="doc.subproject_id.name if 'subproject_id' in doc._fields and doc.subproject_id else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong class="pack-strong">Propriété :</strong>
+                                    </td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="doc.property_project_id.property_land_name or ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <strong class="pack-strong">Titre foncier :</strong>
+                                    </td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="doc.property_project_id.property_title_number or ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="pack-info-label">Lot N° :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="property_rec.unit_map_label if property_rec and 'unit_map_label' in property_rec._fields else property_rec.display_name if property_rec else ''" />
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="pack-info-label">Surface provisoire :</td>
+                                    <td>
+                                        <span class="pack-value">
+                                            <t t-esc="doc._pack_text(property_rec, ['surface', 'area', 'total_area'], '')" />
+                                        </span>
+                                        m²</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <p class="pack-section-title pack-section-blue">SYNTHÈSE FINANCIÈRE</p>
+                <hr class="pack-divider" />
+                <table class="pack-info-table">
+                    <tr>
+                        <td class="pack-info-label">Prix total :</td>
+                        <td>
+                            <span class="pack-value">
+                                <t t-esc="doc._pack_format_money(total_amount)" />
+                            </span>
+                            Ariary TTC</td>
+                        <td class="pack-info-label">Acompte initial :</td>
+                        <td>
+                            <span class="pack-value">
+                                <t t-esc="doc._pack_format_money(deposit_amount)" />
+                            </span>
+                            Ariary TTC</td>
+                    </tr>
+                    <tr>
+                        <td class="pack-info-label">Solde à payer :</td>
+                        <td>
+                            <span class="pack-value">
+                                <t t-esc="doc._pack_format_money(remaining_amount)" />
+                            </span>
+                            Ariary TTC</td>
+                        <td class="pack-info-label">Nombre d'échéances :</td>
+                        <td>
+                            <span class="pack-value">
+                                <t t-esc="len(schedule_lines) if schedule_lines else 0" />
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                <p class="pack-section-title pack-section-blue">TABLEAU DES ÉCHÉANCES</p>
+                <hr class="pack-divider" />
+                <table class="pack-payment-schedule">
+                    <thead>
+                        <tr>
+                            <th style="width:8%;">N°<br />
+ Éch.</th>
+                            <th style="width:14%;">Date d'Exigibilité</th>
+                            <th style="width:20%;">Montant de l'Échéance<br />
+ (Ar TTC)</th>
+                            <th style="width:24%;">Mode de Règlement / Réf. Chèque</th>
+                            <th style="width:17%;">Réf. Facture</th>
+                            <th style="width:17%;">Statut facture</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-if="not schedule_lines">
+                            <td colspan="6" class="text-center">Aucune échéance définie.</td>
+                        </tr>
+                        <tr t-foreach="schedule_lines" t-as="line">
+                            <td class="text-center">
+                                <t t-esc="'%02d' % (line_index + 1)" />
+                            </td>
+                            <td class="text-center">
+                                <t t-esc="doc._pack_format_date(doc._pack_line_value(line, ['invoice_date', 'date', 'due_date', 'payment_date'], False))" />
+                            </td>
+                            <td class="text-right">
+                                <t t-esc="doc._pack_format_money(doc._pack_line_value(line, ['amount', 'amount_total', 'total', 'price'], 0.0))" />
+                            </td>
+                            <td class="text-center">
+                                <t t-esc="'N° %s %s' % (line.cheque_reference if 'cheque_reference' in line._fields and line.cheque_reference else '', line.observation if 'observation' in line._fields and line.observation else '')" />
+                            </td>
+                            <td class="text-center">
+                                <t t-esc="line.invoice_id.name if 'invoice_id' in line._fields and line.invoice_id else ''" />
+                            </td>
+                            <td class="text-center">
+                                <t t-if="'invoice_id' not in line._fields or not line.invoice_id">Facture
+                                    non créée</t>
+                                <t t-elif="line.invoice_id.payment_state == 'paid'">Payée</t>
+                                <t t-elif="line.invoice_id.payment_state == 'partial'">Partiellement
+                                    payée</t>
+                                <t t-elif="line.invoice_id.payment_state == 'in_payment'">En
+                                    paiement</t>
+                                <t t-elif="line.invoice_id.payment_state == 'not_paid'">Non payée</t>
+                                <t t-else="">
+                                    <t t-esc="line.invoice_id.payment_state or ''" />
+                                </t>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- TOTAUX -->
+                <t t-set="total_schedule" t-value="doc.payable_amount if 'payable_amount' in doc._fields else 0.0" />
+
+                <t t-set="paid_total" t-value="
+        sum(
+            schedule_lines.filtered(
+                lambda l:
+                    'invoice_id' in l._fields
+                    and l.invoice_id
+                    and l.invoice_id.payment_state == 'paid'
+            ).mapped('amount')
+        ) if schedule_lines else 0.0
+   " />
+
+                <t t-set="remaining_total" t-value="total_schedule - paid_total" />
+
+                <div class="pack-total-wrapper">
+
+                    <table class="pack-total-table">
+
+                        <tr>
+                            <td>
+                                <strong>Total échéancier :</strong>
+                            </td>
+
+                            <td class="text-right">
+                                <strong>
+                                    <t t-esc="doc._pack_format_money(total_schedule)" />
+ Ar TTC </strong>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>Payé :</strong>
+                            </td>
+
+                            <td class="text-right">
+                                <strong>
+                                    <t t-esc="doc._pack_format_money(paid_total)" />
+ Ar TTC </strong>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <strong>Reste à payer :</strong>
+                            </td>
+
+                            <td class="text-right">
+                                <strong>
+                                    <t t-esc="doc._pack_format_money(remaining_total)" />
+ Ar TTC </strong>
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+                <div class="pack-signature-section">
+
+                    <p>Fait à Antananarivo, le <span class="pack-value">
+                        <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')" />
+                    </span>
+                </p>
+
+                <table class="pack-signature-box">
+                    <tr>
+                        <td>
+                            <div class="pack-sign-title">Signature PACKIMMO</div>
+                            <div class="pack-sign-space"></div>
+                            <div class="pack-sign-line"></div>
+                        </td>
+                        <td>
+                            <div class="pack-sign-title">Signature Client</div>
+                            <div class="pack-sign-space"></div>
+                            <div class="pack-sign-line"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </t>
+</template>
+</odoo>

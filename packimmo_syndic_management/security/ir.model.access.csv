@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_syndic_management_user,access.syndic.management.user,model_syndic_management,base.group_user,1,1,1,1
+access_syndic_owner_line_user,access.syndic.owner.line.user,model_syndic_owner_line,base.group_user,1,1,1,1
+access_syndic_charge_user,access.syndic.charge.user,model_syndic_charge,base.group_user,1,1,1,1
+access_syndic_charge_line_user,access.syndic.charge.line.user,model_syndic_charge_line,base.group_user,1,1,1,1

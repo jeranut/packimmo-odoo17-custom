@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_syndic_meter_user,syndic.meter.user,model_syndic_meter,base.group_user,1,1,1,1
+access_syndic_meter_reading_batch_user,syndic.meter.reading.batch.user,model_syndic_meter_reading_batch,base.group_user,1,1,1,1
+access_syndic_meter_reading_line_user,syndic.meter.reading.line.user,model_syndic_meter_reading_line,base.group_user,1,1,1,1
+
+access_syndic_meter_fixed_fee_history_user,syndic.meter.fixed.fee.history.user,model_syndic_meter_fixed_fee_history,base.group_user,1,1,1,1

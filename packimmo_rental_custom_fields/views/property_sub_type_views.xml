@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="property_sub_type_view_tree_inherit_category" model="ir.ui.view">
+        <field name="name">property.sub.type.view.tree.inherit.category</field>
+        <field name="model">property.sub.type</field>
+        <field name="inherit_id" ref="rental_management.property_sub_type_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='type']" position="after">
+                <field name="category"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="property_sub_type_view_form_inherit_category" model="ir.ui.view">
+        <field name="name">property.sub.type.view.form.inherit.category</field>
+        <field name="model">property.sub.type</field>
+        <field name="inherit_id" ref="rental_management.property_sub_type_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='type']" position="after">
+                <field name="category"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
