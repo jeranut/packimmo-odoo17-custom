@@ -3,16 +3,40 @@
     <record id="tenancy_details_form_view_inherit_rent_bank_account" model="ir.ui.view">
         <field name="name">tenancy.details.form.inherit.rent.bank.account</field>
         <field name="model">tenancy.details</field>
-        <field name="inherit_id" ref="rental_management.tenancy_details_form_view"/>
+        <field name="inherit_id" ref="rental_management.tenancy_details_form_view" />
         <field name="arch" type="xml">
 
-            <xpath expr="//hr[contains(@class, 'mb-3') and contains(@class, 'mt-4')]" position="before">
+            <xpath expr="//hr[contains(@class, 'mb-3') and contains(@class, 'mt-4')]"
+                position="before">
                 <group string="Compte bancaire du loyer">
                     <group>
                         <field name="rent_bank_account_id"
-                               options="{'no_create': True, 'no_create_edit': True}"/>
+                            options="{'no_create': True, 'no_create_edit': True}" />
                     </group>
                 </group>
+            </xpath>
+
+            <xpath expr="//field[@name='agreement_template_id']" position="attributes">
+                <attribute name="string">Charge exclusive du bailleur</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='agreement_template_id']" position="after">
+                <field name="charge_exclusive_preneur_template_id"
+                    options="{'no_quick_create': True, 'no_create_edit': True}" />
+            </xpath>
+
+            <xpath expr="//field[@name='agreement']" position="before">
+                <separator string="Charge exclusive du bailleur" colspan="4" />
+                <field name="charge_exclusive_bailleur_content"
+                    nolabel="1"
+                    colspan="4"
+                    placeholder="Contenu charge exclusive du bailleur..." />
+
+                <separator string="Charge exclusive du preneur" colspan="4" />
+                <field name="charge_exclusive_preneur_content"
+                    nolabel="1"
+                    colspan="4"
+                    placeholder="Contenu charge exclusive du preneur..." />
             </xpath>
 
         </field>

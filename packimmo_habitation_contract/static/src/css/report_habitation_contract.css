@@ -12,6 +12,33 @@
     text-decoration: underline !important;
 }
 
+.pk-small {
+    font-size: 12px;
+}
+
+.pk-highlight {
+    font-weight: bold;
+}
+
+.pk-text-justify {
+    text-align: justify;
+}
+
+.pk-checkbox {
+    font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    margin-right: 5px;
+}
+
+.pk-section-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #999;
+    padding-bottom: 3px;
+}
+
 .pk-mandate-type {
     width: 100%;
     margin-bottom: 25px;
@@ -38,73 +65,19 @@
     vertical-align: top;
 }
 
-.pk-section-title {
-    font-size: 15px;
-    font-weight: bold;
-    margin-top: 22px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #999;
-    padding-bottom: 3px;
-}
-
-.pk-highlight {
-    font-weight: bold;
-}
-
-.pk-signature-section {
-    margin-top: 50px;
-}
-
-.pk-signature-table {
-    width: 100%;
-    margin-top: 40px;
-}
-
-.pk-signature-table td {
-    width: 50%;
-    text-align: center;
-    vertical-align: top;
-}
-
-.pk-sign-title {
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.pk-sign-note {
-    font-style: italic;
-    margin-top: 5px;
-    font-size: 12px;
-}
-
-.pk-sign-space {
-    height: 100px;
-}
-
-.pk-text-justify {
-    text-align: justify;
-}
-
 .pk-property-details {
     font-size: 13px;
     line-height: 1.7;
     text-align: justify;
-
     padding-bottom: 10px;
     margin-bottom: 12px;
-
     border-bottom: 1px solid #d9d9d9;
-}
-
-.pk-checkbox {
-    font-family: DejaVu Sans, Arial, Helvetica, sans-serif;
-    font-size: 13px;
-    margin-right: 5px;
 }
 
 .pk-work-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     margin-top: 8px;
     margin-bottom: 12px;
 }
@@ -122,6 +95,59 @@
     font-weight: bold;
 }
 
-.pk-small {
-    font-size: 12px;
+.pk-work-table p {
+    margin: 0 0 4px 0;
+}
+
+.pk-signature-section {
+    margin-top: 45px;
+    page-break-inside: avoid;
+}
+
+.pk-signature-table {
+    width: 100%;
+    margin-top: 25px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    border: 1px solid #333;
+    background-color: #faf8fb;
+}
+
+.pk-signature-table td {
+    width: 50%;
+    height: 185px;
+    text-align: center;
+    vertical-align: top;
+    border: 1px solid #333;
+    padding: 14px 22px;
+    background-color: #faf8fb;
+}
+
+.pk-sign-title {
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 1.3;
+    margin-bottom: 22px;
+    color: #2f3b4a;
+}
+
+.pk-sign-note {
+    font-style: normal;
+    font-size: 11px;
+    color: #5f7190;
+    margin-top: 0;
+    margin-bottom: 70px;
+}
+
+.pk-sign-space {
+    height: 45px;
+    border-bottom: 1px solid #777;
+    margin-top: 45px;
+}
+
+.pk-sign-space::after {
+    content: "—";
+    display: block;
+    margin-top: 18px;
+    color: #555;
 }

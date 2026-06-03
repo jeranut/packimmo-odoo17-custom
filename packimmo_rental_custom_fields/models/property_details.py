@@ -256,3 +256,11 @@ class PropertyDetails(models.Model):
                 raise ValidationError(_("Veuillez renseigner le prix du bien."))
 
         return super().action_in_available()
+    
+class PropertyRoomMeasurement(models.Model):
+    _inherit = "property.room.measurement"
+
+    length = fields.Float(string="Length")
+    width = fields.Float(string="Width")
+    height = fields.Float(string="Height", default=1.0)
+    carpet_area = fields.Float(string="Total Area", compute="_compute_carpet_area")

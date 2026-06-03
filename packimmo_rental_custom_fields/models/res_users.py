@@ -10,15 +10,16 @@ class ResUsers(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         users = super().create(vals_list)
-        users._check_packimmo_portal_security()
+
+        if not self.env.context.get("install_mode"):
+            users._check_packimmo_portal_security()
+
         return users
 
     def write(self, vals):
         res = super().write(vals)
 
-        # Ne pas bloquer les modifications simples :
-        # langue, nom, timezone, préférences, etc.
-        if "groups_id" in vals:
+        if "groups_id" in vals and not self.env.context.get("install_mode"):
             self._check_packimmo_portal_security()
 
         return res
@@ -48,4 +49,6 @@ class ResUsers(models.Model):
                 )
 
             if portal_group not in user.groups_id:
-                user.sudo().groups_id = [(4, portal_group.id)]
+                user.sudo().write({
+                    "groups_id": [(4, portal_group.id)]
+                })
