@@ -25,6 +25,7 @@ Première personnalisation : ajout du CIN client sur res.partner.
         "views/res_users_views.xml",
         "views/res_company_views.xml",
         "views/portal_templates.xml",
+        "views/tenancy_details_views.xml",
     ],
     "installable": True,
     "application": False,

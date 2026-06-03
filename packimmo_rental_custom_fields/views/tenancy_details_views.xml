@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tenancy_details_form_view_inherit_rent_bank_account" model="ir.ui.view">
+        <field name="name">tenancy.details.form.inherit.rent.bank.account</field>
+        <field name="model">tenancy.details</field>
+        <field name="inherit_id" ref="rental_management.tenancy_details_form_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//hr[contains(@class, 'mb-3') and contains(@class, 'mt-4')]" position="before">
+                <group string="Compte bancaire du loyer">
+                    <group>
+                        <field name="rent_bank_account_id"
+                               options="{'no_create': True, 'no_create_edit': True}"/>
+                    </group>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
