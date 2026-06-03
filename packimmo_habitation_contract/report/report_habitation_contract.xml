@@ -41,7 +41,7 @@
                             <h2>CONTRAT DE LOCATION UNIQUE À USAGE D'HABITATION</h2>
                             <div class="pk-small">
                                 (Régi par les dispositions du Code Civil applicable à Madagascar, du
-                        Code Général des Impôts et des textes réglementaires en vigueur)
+                                Code Général des Impôts et des textes réglementaires en vigueur)
                             </div>
                         </div>
 
@@ -50,7 +50,7 @@
 
                         <p
                             class="pk-highlight">LE PROPRIÉTAIRE (ci-après dénommé « LE BAILLEUR »)
-                        :</p>
+                            :</p>
 
                         <t t-set="partner"
                             t-value="(prop.landlord_id if prop and 'landlord_id' in prop._fields and prop.landlord_id else False)" />
@@ -165,7 +165,7 @@
                                     <td style="width:30%;">
                                         <span
                                             t-esc="'{:,.0f}'.format(partner.share_capital).replace(',', ' ') if 'share_capital' in partner._fields and partner.share_capital else ''" />
-                        Ar </td>
+                                        Ar </td>
                                 </tr>
 
                                 <tr>
@@ -240,16 +240,16 @@
                         <p
                             class="pk-text-justify">
                             <span class="pk-checkbox">[X]</span> Option A : MANDAT DE GESTION
-                        LOCATIVE COMPLÈTE — Le Bailleur est représenté légalement par la Société
-                        PACKIMMO S.A. (siège social au 1er étage Établissement RANOHISOA –
-                        Ankorondrano, Antananarivo). PACKIMMO assure la gestion complète, le suivi
-                        technique et la perception des loyers.</p>
+                            LOCATIVE COMPLÈTE — Le Bailleur est représenté légalement par la Société
+                            PACKIMMO S.A. (siège social au 1er étage Établissement RANOHISOA –
+                            Ankorondrano, Antananarivo). PACKIMMO assure la gestion complète, le
+                            suivi technique et la perception des loyers.</p>
                         <p class="pk-text-justify">
                             <span class="pk-checkbox">[ ]</span> Option B : RÉDACTION D'ACTE
-                        UNIQUEMENT — La société PACKIMMO S.A. intervient exclusivement en qualité de
-                        rédacteur d'acte et intermédiaire de location. La gestion ultérieure et les
-                        relations contractuelles s'effectuent directement entre le Bailleur et le
-                        Preneur, sans mandat de gestion.</p>
+                            UNIQUEMENT — La société PACKIMMO S.A. intervient exclusivement en
+                            qualité de rédacteur d'acte et intermédiaire de location. La gestion
+                            ultérieure et les relations contractuelles s'effectuent directement
+                            entre le Bailleur et le Preneur, sans mandat de gestion.</p>
 
                         <p class="pk-highlight">ET</p>
                         <p
@@ -363,7 +363,7 @@
                                     <td style="width:30%;">
                                         <span
                                             t-esc="'{:,.0f}'.format(tenant.share_capital).replace(',', ' ') if 'share_capital' in tenant._fields and tenant.share_capital else ''" />
-                        Ar </td>
+                                        Ar </td>
                                 </tr>
 
                                 <tr>
@@ -436,17 +436,17 @@
                             class="pk-section-title">ARTICLE 1. OBJET ET DESTINATION</div>
                         <p
                             class="pk-text-justify">Le Bailleur donne en location, pour la durée et
-                        aux conditions définies ci-après, au Preneur qui accepte, le logement
+                            aux conditions définies ci-après, au Preneur qui accepte, le logement
                             dont la consistance est détaillée à l'Article 2. Le bien immobilier
-                        faisant l'objet du présent bail est loué à usage exclusif d’habitation
-                        personnelle et bourgeoise. Tout usage commercial, professionnel,
+                            faisant l'objet du présent bail est loué à usage exclusif d’habitation
+                            personnelle et bourgeoise. Tout usage commercial, professionnel,
                             industriel ou artisanal est strictement interdit.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 2. DÉSIGNATION DU BIEN</div>
                         <p
                             class="pk-text-justify">Le Preneur déclare parfaitement connaître les
-                        lieux pour les avoir vus et visités en vue des présentes, et les trouve
+                            lieux pour les avoir vus et visités en vue des présentes, et les trouve
                             dans les conditions nécessaires à l'usage auquel ils sont destinés.</p>
 
                         <div
@@ -460,9 +460,9 @@
                                 <p>
                                     <span
                                         t-esc="property_rec.property_subtype_id.name if property_rec.property_subtype_id else '[   ]'" />
-                        de type : <span
+                                    de type : <span
                                         t-esc="dict(property_rec._fields['unit_type'].selection).get(property_rec.unit_type, '[   ]')" />
-                        se situant à <span
+                                    se situant à <span
                                         t-esc="' '.join(filter(None, [
                                         property_rec.street or '',
                                         property_rec.street2 or '',
@@ -476,7 +476,7 @@
 
                                     <!-- Chambres -->
                                     <t t-if="'bed' in property_rec._fields and property_rec.bed">
-                        Chambres : <span t-esc="property_rec.bed" />
+                                        Chambres : <span t-esc="property_rec.bed" />
 
         <t
                                             t-set="bed_lines"
@@ -489,13 +489,13 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
 
                                     <!-- Séjour -->
                                     <t
                                         t-if="'living_room_count' in property_rec._fields and property_rec.living_room_count">
-                        / Séjour : <span t-esc="property_rec.living_room_count" />
+                                        / Séjour : <span t-esc="property_rec.living_room_count" />
 
         <t
                                             t-set="living_lines"
@@ -508,13 +508,13 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
 
                                     <!-- Salle de bain -->
                                     <t
                                         t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
-                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
+                                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
 
         <t
                                             t-set="bath_lines"
@@ -527,13 +527,13 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
 
                                     <!-- Parking -->
                                     <t
                                         t-if="'parking' in property_rec._fields and property_rec.parking">
-                        / Parking : <span t-esc="property_rec.parking" />
+                                        / Parking : <span t-esc="property_rec.parking" />
 
         <t
                                             t-set="parking_lines"
@@ -546,7 +546,7 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
                                     <t t-set="garage_lines"
                                         t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.name == 'Garage') if 'room_measurement_ids' in property_rec._fields else False" />
@@ -558,7 +558,7 @@
                                                 t-esc="measure.carpet_area" /> m²<t
                                                 t-if="not measure_last">, </t>
                                         </t>
-                        ) </t>
+                                        ) </t>
                                 </p>
                                 <p>
                                     <t
@@ -581,19 +581,19 @@
                                 <p>
                                     <span
                                         t-esc="property_rec.property_subtype_id.name if property_rec.property_subtype_id else '[   ]'" />
-                        de type : <span
+                                    de type : <span
                                         t-esc="dict(property_rec._fields['unit_type'].selection).get(property_rec.unit_type, '[   ]')" />,
-                        Porte N° <span
+                                    Porte N° <span
                                         t-esc="property_rec.unit_map_label if 'unit_map_label' in property_rec._fields and property_rec.unit_map_label else '[   ]'" />,
-                        situé au <t t-if="property_rec.floor == 0">RDC</t>
+                                    situé au <t t-if="property_rec.floor == 0">RDC</t>
     <t
                                         t-elif="property_rec.floor == 1">1er étage</t>
     <t t-else="">
                                         <t t-esc="str(property_rec.floor) + 'ème étage'" />
                                     </t>
-                        de l'Immeuble / Résidence dénommé(e) : <span
+                                    de l'Immeuble / Résidence dénommé(e) : <span
                                         t-esc="property_rec.property_project_id.name if property_rec.property_project_id else '__________________'" />
-                        sis <span
+                                    sis <span
                                         t-esc="' '.join(filter(None, [
                                         property_rec.street or '',
                                         property_rec.street2 or '',
@@ -606,7 +606,7 @@
 
                                     <!-- Chambres -->
                                     <t t-if="'bed' in property_rec._fields and property_rec.bed">
-                        Chambres : <span t-esc="property_rec.bed" />
+                                        Chambres : <span t-esc="property_rec.bed" />
 
         <t
                                             t-set="bed_lines"
@@ -619,13 +619,13 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
 
                                     <!-- Séjour -->
                                     <t
                                         t-if="'living_room_count' in property_rec._fields and property_rec.living_room_count">
-                        / Séjour : <span t-esc="property_rec.living_room_count" />
+                                        / Séjour : <span t-esc="property_rec.living_room_count" />
 
         <t
                                             t-set="living_lines"
@@ -638,13 +638,13 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
 
                                     <!-- Salle de bain -->
                                     <t
                                         t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
-                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
+                                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
 
         <t
                                             t-set="bath_lines"
@@ -657,13 +657,13 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
 
                                     <!-- Parking -->
                                     <t
                                         t-if="'parking' in property_rec._fields and property_rec.parking">
-                        / Parking : <span t-esc="property_rec.parking" />
+                                        / Parking : <span t-esc="property_rec.parking" />
 
         <t
                                             t-set="parking_lines"
@@ -676,7 +676,7 @@
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
                                             </t>
-                        ) </t>
+                                        ) </t>
                                     </t>
                                     <t t-set="garage_lines"
                                         t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.name == 'Garage') if 'room_measurement_ids' in property_rec._fields else False" />
@@ -688,7 +688,7 @@
                                                 t-esc="measure.carpet_area" /> m²<t
                                                 t-if="not measure_last">, </t>
                                         </t>
-                        ) </t>
+                                        ) </t>
                                 </p>
                                 <p>
                                     <t
@@ -710,31 +710,31 @@
                                 <span
                                     t-esc="doc.duration_id.display_name if 'duration_id' in doc._fields and doc.duration_id else ''" />
                             </strong>,
-                        commençant à courir le <strong>
+                            commençant à courir le <strong>
                                 <span
                                     t-esc="doc.start_date.strftime('%d/%m/%Y') if 'start_date' in doc._fields and doc.start_date else ''" />
                             </strong>
-                        pour se terminer le <strong>
+                            pour se terminer le <strong>
                                 <span
                                     t-esc="doc.end_date.strftime('%d/%m/%Y') if 'end_date' in doc._fields and doc.end_date else ''" />
                             </strong>.
-                        À défaut de dénonciation, il se reconduit tacitement pour une durée égale à
-                        la période initiale. </p>
+                            À défaut de dénonciation, il se reconduit tacitement pour une durée
+                            égale à la période initiale. </p>
                         <p class="pk-text-justify">Chacune des parties peut
-                        toutefois mettre fin au
+                            toutefois mettre fin au
                             présent bail à tout moment moyennant un préavis obligatoire de DEUX (02)
-                        MOIS (ou [03] TROIS mois), notifié exclusivement par lettre recommandée
+                            MOIS (ou [03] TROIS mois), notifié exclusivement par lettre recommandée
                             avec accusé de réception ou par exploit d'huissier. Le loyer et les
-                        charges restent intégralement dus par le Preneur durant toute la période
+                            charges restent intégralement dus par le Preneur durant toute la période
                             du préavis.</p>
 
                         <div class="pk-section-title">ARTICLE 4. LOYER ET
-                        MODALITÉS DE PAIEMENT
+                            MODALITÉS DE PAIEMENT
                             (CONFORMITÉ CHANGE)</div>
                         <p class="pk-text-justify">Le présent bail est
-                        accepté moyennant un loyer
+                            accepté moyennant un loyer
                             mensuel fixé selon l'une des options exclusives ci-dessous (cocher la
-                        variante applicable) :</p>
+                            variante applicable) :</p>
                         <!-- LOYER EN MGA -->
                         <t
                             t-if="not property_rec.foreign_price or (property_rec.foreign_currency_id and property_rec.foreign_currency_id.name == 'MGA')">
@@ -743,8 +743,8 @@
                                     <span
                                         t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
                                 </strong>
-                        Ariary (<span t-esc="doc.rent_price_text or ''" />). Ce montant est fixe et
-                        payable exclusivement en Ariary. </p>
+                                Ariary (<span t-esc="doc.rent_price_text or ''" />). Ce montant est
+                                fixe et payable exclusivement en Ariary. </p>
 
                         </t>
 
@@ -758,16 +758,16 @@
                                 </strong>
         <span
                                     t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else '€'" />
-                        (<span t-esc="doc.rent_foreign_price_text or ''" />), converti au taux
-                        contractuel fixe et invariable de <strong> 1 <span
+                                (<span t-esc="doc.rent_foreign_price_text or ''" />), converti au
+                                taux contractuel fixe et invariable de <strong> 1 <span
                                         t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else '€'" />
-                        = <span
+                                = <span
                                         t-esc="'{:,.2f}'.format(doc.fixed_exchange_rate or 0.0).replace(',', ' ')" />
-                        Ariary </strong>, soit un loyer mensuel net de <strong>
+                                Ariary </strong>, soit un loyer mensuel net de <strong>
                                     <span
                                         t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
                                 </strong>
-                        Ariary (<span t-esc="doc.rent_price_text or ''" />). </p>
+                                Ariary (<span t-esc="doc.rent_price_text or ''" />). </p>
 
                         </t>
 
@@ -781,120 +781,122 @@
                                 </strong>
         <span
                                     t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else '€'" />
-                        (<span t-esc="doc.rent_foreign_price_text or ''" />). Le règlement sera
-                        effectué en Ariary selon le cours officiel publié par la Banque Centrale de
-                        Madagascar (BCM). La conversion sera calculée sur la base du taux de
-                        référence disponible au plus tard le 25 du mois précédent l'échéance du
-                        loyer. Le montant indicatif actuel en Ariary est de <strong>
+                                (<span t-esc="doc.rent_foreign_price_text or ''" />). Le règlement
+                                sera effectué en Ariary selon le cours officiel publié par la Banque
+                                Centrale de Madagascar (BCM). La conversion sera calculée sur la
+                                base du taux de référence disponible au plus tard le 25 du mois
+                                précédent l'échéance du loyer. Le montant indicatif actuel en Ariary
+                                est de <strong>
                                     <span
                                         t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
                                 </strong>
-                        Ariary (<span t-esc="doc.rent_price_text or ''" />). </p>
+                                Ariary (<span t-esc="doc.rent_price_text or ''" />). </p>
 
                         </t>
-                        <t
-                            t-set="company"
-                            t-value="doc.company_id if 'company_id' in doc._fields and doc.company_id else env.company" />
+                        <t t-set="bank_account"
+                            t-value="doc.rent_bank_account_id if 'rent_bank_account_id' in doc._fields and doc.rent_bank_account_id else False" />
 
-<t
-                            t-set="bank_account"
-                            t-value="company.company_bank_account_ids[:1] if 'company_bank_account_ids' in company._fields and company.company_bank_account_ids else False" />
-
-<p>
-                        Virement ou chèque libellé au nom de l'administrateur de biens : <strong> <span
-                                t-esc="bank_account.account_holder if bank_account and 'account_holder' in bank_account._fields else company.name" /></strong>  
-                        — Banque <strong><span
-                                t-esc="bank_account.bank_id.name if bank_account and 'bank_id' in bank_account._fields and bank_account.bank_id else ''" />
-    <span
-                                t-esc="bank_account.agency_name if bank_account and 'agency_name' in bank_account._fields else ''" /></strong>  
-                        — Code Banque :<strong><span
-                                t-esc="bank_account.bank_code if bank_account and 'bank_code' in bank_account._fields else ''" /></strong>
-                        | Code Agence : <strong><span
-                                t-esc="bank_account.branch_code if bank_account and 'branch_code' in bank_account._fields else ''" /></strong>
-                        | N° Compte : <strong><span
-                                t-esc="bank_account.acc_number if bank_account and 'acc_number' in bank_account._fields else ''" /></strong>
-                        | Clé : <strong><span
-                                t-esc="bank_account.account_key if bank_account and 'account_key' in bank_account._fields else ''" /></strong>
-                        .
+                        <p> Virement ou chèque libellé au nom de l'administrateur de biens : <strong>
+                                <span t-esc="bank_account.account_holder if bank_account else ''" />
+                            </strong>
+                            — Banque <strong>
+                                <span
+                                    t-esc="bank_account.bank_id.name if bank_account and bank_account.bank_id else ''" />
+                                <span
+                                    t-esc="bank_account.agency_name if bank_account and 'agency_name' in bank_account._fields else ''" />
+                            </strong>
+                            — Code Banque : <strong>
+                                <span
+                                    t-esc="bank_account.bank_code if bank_account and 'bank_code' in bank_account._fields else ''" />
+                            </strong>
+                            | Code Agence : <strong>
+                                <span
+                                    t-esc="bank_account.branch_code if bank_account and 'branch_code' in bank_account._fields else ''" />
+                            </strong>
+                            | N° Compte : <strong>
+                                <span
+                                    t-esc="bank_account.acc_number if bank_account and 'acc_number' in bank_account._fields else ''" />
+                            </strong>
+                            | Clé : <strong>
+                                <span
+                                    t-esc="bank_account.account_key if bank_account and 'account_key' in bank_account._fields else ''" />
+                            </strong>
+                            .
 </p>
-<p>
-                            <span class="pk-checkbox">☐</span> Cas de Gestion Directe par le
-                        Propriétaire : Virement ou versement direct sur le compte personnel du
-                        Bailleur : Banque : __________________ | N° Compte :
-                        ____________________________________ | Clé : ______.</p>
                         <p
                             class="pk-text-justify">Tout retard de paiement portera de plein droit
-                        des intérêts de retard fixés à 1% du montant du loyer par jour de
+                            des intérêts de retard fixés à 1% du montant du loyer par jour de
                             retard, calculés au jour le jour jusqu'au complet paiement, sans
-                        préjudice de l'application de la clause résolutoire.</p>
+                            préjudice de l'application de la clause résolutoire.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 5. RÉVISION DU LOYER (VARIANTES DE
-                        RÉVISION)</div>
+                            RÉVISION)</div>
                         <p>À la date anniversaire du contrat de bail, le loyer pourra
-                        être révisé
+                            être révisé
                             selon l'accord arrêté ci-dessous par les parties (Cocher l'option
-                        retenue) :</p>
+                            retenue) :</p>
                         <p>
                             <span class="pk-checkbox">☐</span> Option A : Augmentation annuelle fixe
-                        de CINQ POUR CENT (5%) (ou [ ] _________ %), applicable de plein droit de
-                        manière automatique sur les termes suivants en cas de reconduction.</p>
+                            de CINQ POUR CENT (5%) (ou [ ] _________ %), applicable de plein droit
+                            de manière automatique sur les termes suivants en cas de reconduction.</p>
                         <p>
                             <span class="pk-checkbox">☐</span> Option B : Indexation selon l'Indice
-                        des Prix à la Consommation (IPC) national publié périodiquement par l'INSTAT
-                        Madagascar.</p>
+                            des Prix à la Consommation (IPC) national publié périodiquement par
+                            l'INSTAT Madagascar.</p>
                         <p>
                             <span class="pk-checkbox">☐</span> Option C : Révision biennale négociée
-                        d'une augmentation de _________ % intervenant tous les deux (02) ans.</p>
+                            d'une augmentation de _________ % intervenant tous les deux (02) ans.</p>
                         <p>
                             <span class="pk-checkbox">☐</span> Option D : Loyer fixe non révisable
-                        pendant toute la durée initiale du présent bail.</p>
+                            pendant toute la durée initiale du présent bail.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 6. DÉPÔT DE GARANTIE</div>
                         <p
                             class="pk-text-justify">Pour garantir la parfaite exécution de toutes
-                        ses
+                            ses
                             obligations contractuelles, le Preneur verse à la signature du présent
-                        contrat la somme de : __________________________________________________
-                        représentant [ ] UN (01) MOIS / [ ] DEUX (02) MOIS de loyer net.</p>
+                            contrat la somme de : __________________________________________________
+                            représentant [ ] UN (01) MOIS / [ ] DEUX (02) MOIS de loyer net.</p>
                         <p
                             class="pk-text-justify">Cette somme ne fera l'objet d'aucune révision ni
-                        d'aucun intérêt pendant toute la durée de la location. Elle sera
+                            d'aucun intérêt pendant toute la durée de la location. Elle sera
                             restituée au Preneur dans un délai maximum de deux mois après son départ
-                        effectif, sous réserve de l’état des lieux contradictoire de sortie, de
+                            effectif, sous réserve de l’état des lieux contradictoire de sortie, de
                             la remise de l'intégralité des clés et déduction faite de toutes les
-                        sommes dont le Preneur pourrait être débiteur (dégradations constatées,
-                        factures de consommation JIRAMA en retard). En aucun cas, ce dépôt de
-                        garantie ne pourra servir de compensation pour le règlement du dernier
+                            sommes dont le Preneur pourrait être débiteur (dégradations constatées,
+                            factures de consommation JIRAMA en retard). En aucun cas, ce dépôt de
+                            garantie ne pourra servir de compensation pour le règlement du dernier
                             mois de loyer ou de la période de préavis.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 7. CHARGES ET CONSOMMATIONS
                             PERSONNELLES (JIRAMA)</div>
                         <p class="pk-text-justify">Toutes les
-                        consommations personnelles du Preneur
+                            consommations personnelles du Preneur
                             (Eau et Électricité du réseau public JIRAMA, Téléphone, Internet) sont à
-                        sa charge exclusive et devront être acquittées directement auprès des
-                        prestataires. Les modalités de gestion des compteurs sont arrêtées comme
+                            sa charge exclusive et devront être acquittées directement auprès des
+                            prestataires. Les modalités de gestion des compteurs sont arrêtées comme
                             suit :</p>
                         <p>
                             <span class="pk-checkbox">☐</span> Option A : Le Preneur s’engage à
-                        effectuer les démarches pour muter temporairement les compteurs JIRAMA à son
-                        nom propre pendant la durée du bail et à en supporter tous les frais.</p>
+                            effectuer les démarches pour muter temporairement les compteurs JIRAMA à
+                            son nom propre pendant la durée du bail et à en supporter tous les
+                            frais.</p>
                         <p>
                             <span class="pk-checkbox">☐</span> Option B : Les compteurs restent au
-                        nom du propriétaire. Le Preneur remboursera mensuellement au Bailleur ou à
-                        son mandataire le montant exact de sa consommation sur présentation de la
-                        refacturation ou des relevés divisionnaires.</p>
+                            nom du propriétaire. Le Preneur remboursera mensuellement au Bailleur ou
+                            à son mandataire le montant exact de sa consommation sur présentation de
+                            la refacturation ou des relevés divisionnaires.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 8. RÉPARTITION DES TRAVAUX ET DE
-                        L'ENTRETIEN</div>
+                            L'ENTRETIEN</div>
                         <p>Les obligations d'entretien et de réparation sont
-                        strictement réparties
+                            strictement réparties
                             entre les parties selon les dispositions légales et les usages
-                        contractuels :</p>
+                            contractuels :</p>
                         <table class="pk-work-table">
                             <tr>
                                 <th>À LA CHARGE EXCLUSIVE DU BAILLEUR</th>
@@ -902,169 +904,175 @@
                             </tr>
                             <tr>
                                 <td> · Grosses réparations de nature structurelle (Article 606 du
-                        Code Civil).<br /> · Étanchéité de la toiture, réfection des murs maîtres
-                        pour éviter les infiltrations pluviales.<br /> · Ravalement et peinture
-                        extérieure du bâtiment.<br /> · Remplacement complet du chauffe-eau
-                        (uniquement si la vétusté structurelle est prouvée et si les vidanges
-                        périodiques ont été effectuées régulièrement tous les 6 mois par le
-                        locataire).<br /> · Grosses infrastructures du système d'évacuation des eaux
-                        usées (fosse septique) hors cas de bouchage. </td>
+                                    Code Civil).<br /> · Étanchéité de la toiture, réfection des
+                                    murs maîtres pour éviter les infiltrations pluviales.<br /> ·
+                                    Ravalement et peinture extérieure du bâtiment.<br /> ·
+                                    Remplacement complet du chauffe-eau (uniquement si la vétusté
+                                    structurelle est prouvée et si les vidanges périodiques ont été
+                                    effectuées régulièrement tous les 6 mois par le locataire).<br />
+                                    · Grosses infrastructures du système d'évacuation des eaux usées
+                                    (fosse septique) hors cas de bouchage. </td>
                                 <td> · Entretien courant, nettoyage et menues réparations locatives.<br />
-                        · Entretien régulier et vidange des climatiseurs et des chauffes-eau (tous
-                        les 6 mois).<br /> · Remplacement des consommables : ampoules, vitrages,
-                        joints, fusibles.<br /> · Mécanismes d'ouverture/fermeture des portes,
-                        fenêtres, serrures, stores et volets.<br /> · Robinetterie et tuyauteries
-                        non encastrées.<br /> · Entretien, réparations courantes du surpresseur, de
-                        la cuve d'eau et du groupe électrogène mis à disposition.<br /> · Peinture
-                        intérieure et remise en état initial des murs (hors usure normale) lors de
-                        la sortie.<br /> · Frais de vidange et de débouchage de la fosse septique et
-                        des canalisations en cas d'engorgement lié à l'utilisation. </td>
+                                    · Entretien régulier et vidange des climatiseurs et des
+                                    chauffes-eau (tous les 6 mois).<br /> · Remplacement des
+                                    consommables : ampoules, vitrages, joints, fusibles.<br /> ·
+                                    Mécanismes d'ouverture/fermeture des portes, fenêtres, serrures,
+                                    stores et volets.<br /> · Robinetterie et tuyauteries non
+                                    encastrées.<br /> · Entretien, réparations courantes du
+                                    surpresseur, de la cuve d'eau et du groupe électrogène mis à
+                                    disposition.<br /> · Peinture intérieure et remise en état
+                                    initial des murs (hors usure normale) lors de la sortie.<br /> ·
+                                    Frais de vidange et de débouchage de la fosse septique et des
+                                    canalisations en cas d'engorgement lié à l'utilisation. </td>
                             </tr>
                         </table>
                         <p
                             class="pk-text-justify">Le Preneur ne pourra effectuer aucune
-                        transformation, modification de distribution ou percement de murs sans
-                        l'accord préalable écrit et explicite du Bailleur. Toutes les
+                            transformation, modification de distribution ou percement de murs sans
+                            l'accord préalable écrit et explicite du Bailleur. Toutes les
                             améliorations ou décors réalisés par le Preneur resteront acquis au
-                        Bailleur en fin de bail sans aucune indemnité, à moins que le Bailleur
+                            Bailleur en fin de bail sans aucune indemnité, à moins que le Bailleur
                             ne préfère exiger la remise en état primitif aux frais exclusifs du
-                        Preneur.</p>
+                            Preneur.</p>
 
                         <div class="pk-section-title">ARTICLE 9. RÈGLES DE VIE COMMUNE,
-                        SÉCURITÉ ET
+                            SÉCURITÉ ET
                             VOISINAGE</div>
                         <p class="pk-text-justify">
                             <strong>9.1. Tranquillité et Tapage :</strong> Le Preneur s’oblige à
-                        user paisiblement des locaux. Il s'engage formellement à minimiser le bruit
-                        au maximum et à proscrire toute forme de tapage nocturne ou diurne excessif.
-                        Le niveau sonore devra être réduit de manière stricte à partir de 21h00.
-                        Toute organisation de festivité ou réunion devra faire l'objet d'une
-                        information écrite préalable adressée au gestionnaire ou au propriétaire.</p>
+                            user paisiblement des locaux. Il s'engage formellement à minimiser le
+                            bruit au maximum et à proscrire toute forme de tapage nocturne ou diurne
+                            excessif. Le niveau sonore devra être réduit de manière stricte à partir
+                            de 21h00. Toute organisation de festivité ou réunion devra faire l'objet
+                            d'une information écrite préalable adressée au gestionnaire ou au
+                            propriétaire.</p>
                         <p
                             class="pk-text-justify">
                             <strong>9.2. Règlement des litiges de voisinage :</strong> En cas de
-                        troubles ou de litiges liés à la vie en communauté ou au voisinage, le
-                        Preneur s’engage à tenter une résolution amiable et, le cas échéant, à
-                        porter le différend devant le bureau du Fokontany territorialement compétent
-                        avant toute action judiciaire.</p>
+                            troubles ou de litiges liés à la vie en communauté ou au voisinage, le
+                            Preneur s’engage à tenter une résolution amiable et, le cas échéant, à
+                            porter le différend devant le bureau du Fokontany territorialement
+                            compétent avant toute action judiciaire.</p>
                         <p class="pk-text-justify">
                             <strong>9.3. Clause de non-responsabilité :</strong> Le Bailleur décline
-                        toute responsabilité et ne pourra en aucun cas être recherché ou tenu pour
-                        responsable en cas de vol, cambriolage, actes de vandalisme, agressions ou
-                        troubles de jouissance causés par des tiers dans les locaux loués. De même,
-                        le Bailleur ne subira aucune diminution de loyer ni demande d'indemnité en
-                        cas de dysfonctionnement, coupures ou délestages temporaires des réseaux
-                        publics d’eau et d'électricité (JIRAMA).</p>
+                            toute responsabilité et ne pourra en aucun cas être recherché ou tenu
+                            pour responsable en cas de vol, cambriolage, actes de vandalisme,
+                            agressions ou troubles de jouissance causés par des tiers dans les
+                            locaux loués. De même, le Bailleur ne subira aucune diminution de loyer
+                            ni demande d'indemnité en cas de dysfonctionnement, coupures ou
+                            délestages temporaires des réseaux publics d’eau et d'électricité
+                            (JIRAMA).</p>
                         <p class="pk-text-justify">
                             <strong>9.4. Clause de Solidarité et d'Indivisibilité :</strong> En cas
-                        de pluralité de locataires (colocataires, conjoints), les signataires du
-                        présent bail s'obligent solidairement et indivisiblement au paiement de
-                        l'intégralité des loyers, charges et à l'exécution de toutes les clauses du
-                        contrat.</p>
+                            de pluralité de locataires (colocataires, conjoints), les signataires du
+                            présent bail s'obligent solidairement et indivisiblement au paiement de
+                            l'intégralité des loyers, charges et à l'exécution de toutes les clauses
+                            du contrat.</p>
 
                         <div class="pk-section-title">ARTICLE 10. ASSURANCES ET ALÉAS
-                        CLIMATIQUES
+                            CLIMATIQUES
                             (VARIANTES EN OPTION)</div>
                         <p class="pk-text-justify">
                             <strong>10.1. Risques Locatifs obligatoires :</strong> Le Preneur est
-                        tenu de souscrire, à ses frais, une police d'assurance multirisque
-                        habitation auprès d'une compagnie notoirement solvable établie à Madagascar,
-                        couvrant l'incendie, les explosions, le vol et les dégâts des eaux, ainsi
-                        que le recours des voisins. Il s'engage à en remettre une copie ou
-                        attestation au Bailleur dès la signature.</p>
+                            tenu de souscrire, à ses frais, une police d'assurance multirisque
+                            habitation auprès d'une compagnie notoirement solvable établie à
+                            Madagascar, couvrant l'incendie, les explosions, le vol et les dégâts
+                            des eaux, ainsi que le recours des voisins. Il s'engage à en remettre
+                            une copie ou attestation au Bailleur dès la signature.</p>
                         <p class="pk-text-justify">
                             <span class="pk-checkbox">☐</span>
 <strong>10.2. APPLICATION DE LA CLAUSE
-                        DE FORCE MAJEURE CLIMATIQUE (Optionnelle) :</strong>
+                            DE FORCE MAJEURE CLIMATIQUE (Optionnelle) :</strong>
 <br /> En raison des
-                        aléas climatiques inhérents au territoire (cyclones, inondations de saison),
-                        si les locaux loués venaient à être détruits ou rendus totalement
-                        inutilisables par un événement de force majeure indépendant de la volonté du
-                        Bailleur, le présent bail sera résilié de plein droit, sans indemnité de
-                        part et d'autre. Si l'inhabitabilité ou l'inaccessibilité absolue n'est que
-                        partielle ou temporaire et dépasse trente (30) jours, le contrat pourra être
-                        résilié sans préavis par l'une ou l'autre des parties.</p>
+                            aléas climatiques inhérents au territoire (cyclones, inondations de
+                            saison), si les locaux loués venaient à être détruits ou rendus
+                            totalement inutilisables par un événement de force majeure indépendant
+                            de la volonté du Bailleur, le présent bail sera résilié de plein droit,
+                            sans indemnité de part et d'autre. Si l'inhabitabilité ou
+                            l'inaccessibilité absolue n'est que partielle ou temporaire et dépasse
+                            trente (30) jours, le contrat pourra être résilié sans préavis par l'une
+                            ou l'autre des parties.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 11. CESSION ET SOUS-LOCATION</div>
                         <p
                             class="pk-text-justify">La cession des droits au présent bail, la
-                        sous-location totale ou partielle, ou le prêt des locaux à titre gratuit
+                            sous-location totale ou partielle, ou le prêt des locaux à titre gratuit
                             à un tiers sont strictement interdits, sous peine de résiliation
-                        immédiate du contrat aux torts exclusifs du Preneur.</p>
+                            immédiate du contrat aux torts exclusifs du Preneur.</p>
 
                         <div
                             class="pk-section-title">ARTICLE 12. DROIT DE VISITE RÉGLEMENTÉ</div>
                         <p
                             class="pk-text-justify">Pendant toute la durée du bail, le Preneur devra
-                        laisser le Bailleur ou ses représentants inspecter l'état des lieux deux
+                            laisser le Bailleur ou ses représentants inspecter l'état des lieux deux
                             fois par an sur rendez-vous. En cas de notification de congé
-                        (résiliation) ou de mise en vente du bien, le Preneur s’oblige à laisser
-                        visiter les locaux par les candidats locataires ou acquéreurs
+                            (résiliation) ou de mise en vente du bien, le Preneur s’oblige à laisser
+                            visiter les locaux par les candidats locataires ou acquéreurs
                             accompagnés par le Bailleur ou l'agence PACKIMMO S.A., les jours
-                        ouvrables de 09h00 à 12h00 et de 14h00 à 17h00, moyennant un préavis de
-                        courtoisie de 24 heures.</p>
+                            ouvrables de 09h00 à 12h00 et de 14h00 à 17h00, moyennant un préavis de
+                            courtoisie de 24 heures.</p>
 
                         <div class="pk-section-title">ARTICLE 13.
-                        ENREGISTREMENT FISCAL ET FRAIS
+                            ENREGISTREMENT FISCAL ET FRAIS
                             (OPTIONNEL)</div>
                         <p class="pk-text-justify">
                             <span class="pk-checkbox">☐</span>
 <strong>APPLICATION DE LA CLAUSE
-                        D'ENREGISTREMENT FISCAL (Optionnelle selon accord) :</strong>
+                            D'ENREGISTREMENT FISCAL (Optionnelle selon accord) :</strong>
 <br />
-                        Conformément aux lois fiscales malgaches (Code Général des Impôts), le
-                        présent contrat fera l'objet d'un enregistrement obligatoire auprès de
-                        l'administration fiscale compétente. Tous les droits d'enregistrement, frais
-                        de timbre et honoraires de rédaction engendrés par les présentes sont à la
-                        charge exclusive du Preneur qui s'y oblige. Ces frais ne sont pas
-                        remboursables.</p>
+                            Conformément aux lois fiscales malgaches (Code Général des Impôts), le
+                            présent contrat fera l'objet d'un enregistrement obligatoire auprès de
+                            l'administration fiscale compétente. Tous les droits d'enregistrement,
+                            frais de timbre et honoraires de rédaction engendrés par les présentes
+                            sont à la charge exclusive du Preneur qui s'y oblige. Ces frais ne sont
+                            pas remboursables.</p>
 
                         <div class="pk-section-title">ARTICLE 14. CLAUSE
-                        RÉSOLUTOIRE ET EXPULSION</div>
+                            RÉSOLUTOIRE ET EXPULSION</div>
                         <p class="pk-text-justify">À défaut de
-                        paiement intégral d'un seul terme de
+                            paiement intégral d'un seul terme de
                             loyer ou des charges à son échéance, ou en cas d'inexécution d'une seule
-                        des clauses du présent bail, le contrat sera résilié de plein droit si
+                            des clauses du présent bail, le contrat sera résilié de plein droit si
                             bon semble au Bailleur. Cette résiliation prendra effet immédiatement
-                        quinze (15) jours (ou [ ] un mois) après un simple commandement de payer
+                            quinze (15) jours (ou [ ] un mois) après un simple commandement de payer
                             ou une sommation d'exécuter délivré par exploit d'huissier resté
-                        infructueux.</p>
+                            infructueux.</p>
                         <p class="pk-text-justify">Si le Preneur refusait d'évacuer
-                        les locaux après
+                            les locaux après
                             résiliation, son expulsion immédiate serait obtenue par simple
                             Ordonnance de Référé rendue par Monsieur le Président du Tribunal de
-                        Première Instance d'Antananarivo, exécutoire sur minute. De plus, le
+                            Première Instance d'Antananarivo, exécutoire sur minute. De plus, le
                             Preneur sera redevable de plein droit d'une indemnité d'occupation
-                        journalière fixée contractuellement au double du loyer journalier en
+                            journalière fixée contractuellement au double du loyer journalier en
                             cours, calculée au prorata temporis, jusqu’à la libération totale des
-                        lieux.</p>
+                            lieux.</p>
 
                         <div class="pk-section-title">ARTICLE 15. ÉLECTION DE DOMICILE</div>
                         <p
                             class="pk-text-justify">Pour l'exécution des présentes et de leurs
-                        suites, le Bailleur élit domicile à l'adresse de son siège social ou de
+                            suites, le Bailleur élit domicile à l'adresse de son siège social ou de
                             son mandataire gestionnaire (si applicable), et le Preneur élit domicile
-                        de plein droit dans les locaux loués.</p>
+                            de plein droit dans les locaux loués.</p>
 
                         <div class="pk-signature-section">
                             <p> Fait à Antananarivo, le <span class="pk-highlight">
                                     <t t-esc="datetime.datetime.today().strftime('%d/%m/%Y')" />
                                 </span>,
-                        en TROIS (03) exemplaires originaux dument paraphés et signés. </p>
+                                en TROIS (03) exemplaires originaux dument paraphés et signés. </p>
 
                             <table class="pk-signature-table">
                                 <tr>
                                     <td>
                                         <div class="pk-sign-title">LE PRENEUR</div>
                                         <div class="pk-sign-note">(Faire précéder de la mention
-                        manuscrite « Lu et approuvé »)</div>
+                                            manuscrite « Lu et approuvé »)</div>
                                         <div class="pk-sign-space"></div>
                                     </td>
                                     <td>
                                         <div class="pk-sign-title">LE BAILLEUR</div>
                                         <div class="pk-sign-note">(Faire précéder de la mention
-                        manuscrite « Lu et approuvé » ou signature du Mandataire
+                                            manuscrite « Lu et approuvé » ou signature du Mandataire
                                             si Gestion)</div>
                                         <div class="pk-sign-space"></div>
                                     </td>
