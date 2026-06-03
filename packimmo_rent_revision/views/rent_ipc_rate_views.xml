@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_rent_ipc_rate_tree" model="ir.ui.view">
+        <field name="name">rent.ipc.rate.tree</field>
+        <field name="model">rent.ipc.rate</field>
+        <field name="arch" type="xml">
+            <tree string="Indices IPC" default_order="year desc, month desc">
+                <field name="year"/>
+                <field name="month"/>
+                <field name="rate"/>
+                <field name="publication_date"/>
+                <field name="source"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_rent_ipc_rate_form" model="ir.ui.view">
+        <field name="name">rent.ipc.rate.form</field>
+        <field name="model">rent.ipc.rate</field>
+        <field name="arch" type="xml">
+            <form string="Indice IPC">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="year"/>
+                            <field name="month"/>
+                            <field name="rate"/>
+                        </group>
+                        <group>
+                            <field name="publication_date"/>
+                            <field name="source"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="note"
+                                   placeholder="Référence INSTAT, commentaire ou source de publication..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_rent_ipc_rate_search" model="ir.ui.view">
+        <field name="name">rent.ipc.rate.search</field>
+        <field name="model">rent.ipc.rate</field>
+        <field name="arch" type="xml">
+            <search string="Indices IPC">
+                <field name="year"/>
+                <field name="month"/>
+                <field name="source"/>
+
+                <filter name="active"
+                        string="Actifs"
+                        domain="[('active', '=', True)]"/>
+
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_year"
+                            string="Année"
+                            context="{'group_by': 'year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_rent_ipc_rate" model="ir.actions.act_window">
+        <field name="name">Indices IPC</field>
+        <field name="res_model">rent.ipc.rate</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <menuitem id="menu_rent_ipc_rate"
+              name="Indices IPC"
+              parent="rental_management.menu_configuration"
+              action="action_rent_ipc_rate"
+              groups="rental_management.property_rental_manager,rental_management.property_rental_officer"
+              sequence="10"/>
+
+</odoo>

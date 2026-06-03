@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tenancy_details_form_inherit_rent_revision" model="ir.ui.view">
+        <field name="name">tenancy.details.form.inherit.rent.revision</field>
+        <field name="model">tenancy.details</field>
+        <field name="inherit_id" ref="rental_management.tenancy_details_form_view" />
+        <field name="arch" type="xml">
+
+            <xpath expr="//hr[contains(@class, 'mb-3') and contains(@class, 'mt-4')]"
+                position="before">
+                <group string="Révision du loyer">
+                    <group>
+                        <field name="rent_revision_option" />
+                        <field name="rent_revision_rate"
+                            invisible="rent_revision_option not in ['fixed_annual', 'biennial']" />
+                        <field name="revision_only_on_renewal"
+                            invisible="rent_revision_option == 'none'" />
+                    </group>
+                    <group>
+                        <field name="last_revision_date"
+                            readonly="1"
+                            invisible="rent_revision_option == 'none'" />
+                        <field name="next_revision_date"
+                            invisible="rent_revision_option == 'none'" />
+                        <button name="action_apply_rent_revision"
+                            type="object"
+                            string="Appliquer la révision"
+                            class="btn-primary"
+                            invisible="rent_revision_option == 'none'" />
+                    </group>
+                </group>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Historique des révisions" name="rent_revision_history_page">
+                    <field name="revision_line_ids" readonly="1" nolabel="1">
+                        <tree string="Historique des révisions">
+                            <field name="revision_date" />
+                            <field name="option" />
+                            <field name="old_rent" />
+                            <field name="rate" />
+                            <field name="new_rent" />
+                            <field name="ipc_rate_id" />
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

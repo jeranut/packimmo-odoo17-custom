@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rent_ipc_rate_user,rent.ipc.rate.user,model_rent_ipc_rate,base.group_user,1,1,1,1
+access_tenancy_rent_revision_line_user,tenancy.rent.revision.line.user,model_tenancy_rent_revision_line,base.group_user,1,1,1,1
