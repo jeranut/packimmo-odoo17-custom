@@ -14,4 +14,65 @@
         </field>
     </record>
 
+    <record id="view_partner_form_inherit_bank_accounts" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.bank.accounts</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Comptes bancaires">
+                    <field name="partner_bank_account_ids" context="{'default_partner_id': id}">
+                        <tree>
+                            <field name="bank_id"/>
+                            <field name="agency_name"/>
+                            <field name="account_holder"/>
+                            <field name="account_name"/>
+                            <field name="account_type"/>
+                            <field name="acc_number"/>
+                            <field name="currency_id"/>
+                            <field name="is_main"/>
+                            <field name="active"/>
+                        </tree>
+
+                        <form>
+                            <sheet>
+                                <group>
+                                    <group string="Banque">
+                                        <field name="bank_id" placeholder="Sélectionner une banque"/>
+                                        <field name="agency_name" placeholder="Ex : Agence Analakely"/>
+                                        <field name="account_holder"/>
+                                        <field name="account_name" placeholder="Ex : Compte loyers principal"/>
+                                        <field name="account_type" placeholder="Type de compte"/>
+                                    </group>
+
+                                    <group string="RIB / Coordonnées">
+                                        <field name="bank_code" placeholder="00008"/>
+                                        <field name="branch_code" placeholder="00015"/>
+                                        <field name="acc_number" placeholder="02001009158"/>
+                                        <field name="account_key" placeholder="16"/>
+                                        <field name="iban" placeholder="IBAN si disponible"/>
+                                        <field name="bic" placeholder="BIC / SWIFT si disponible"/>
+                                    </group>
+                                </group>
+
+                                <group string="Utilisation">
+                                    <group>
+                                        <field name="currency_id"/>
+                                        <field name="is_main"/>
+                                        <field name="active"/>
+                                    </group>
+                                    <group>
+                                        <field name="notes" placeholder="Notes internes sur ce compte bancaire"/>
+                                    </group>
+                                </group>
+                            </sheet>
+                        </form>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
 </odoo>

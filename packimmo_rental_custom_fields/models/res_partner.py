@@ -95,6 +95,12 @@ class ResPartner(models.Model):
         "res.partner.quality",
         string="En qualité de",
     )
+    partner_bank_account_ids = fields.One2many(
+    "res.partner.bank.account",
+    "partner_id",
+    string="Comptes bancaires",
+)
+
 
     def action_create_portal_user_packimmo(self):
         portal_group = self.env.ref("base.group_portal")

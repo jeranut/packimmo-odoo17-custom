@@ -12,3 +12,4 @@ from . import property_area_type
 from . import res_company_bank_account
 from . import res_company
 from . import tenancy_details
+from . import res_partner_bank_account
