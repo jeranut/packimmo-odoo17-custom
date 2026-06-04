@@ -389,7 +389,70 @@ class PropertyMandate(models.Model):
     string="Type de Loyer",
     default="fixed_forex",
 )
-    
+    rent_bank_account_id = fields.Many2one(
+        "res.partner.bank.account",
+        string="Compte bancaire pour le loyer",
+        domain="[('partner_id', '=', owner_id), ('active', '=', True)]",
+        tracking=True,
+    )
+    revision_rate = fields.Float(
+    string="Taux d’augmentation (%)",
+    tracking=True,
+)
+    rent_revision_option = fields.Selection(
+    [
+        (
+            "fixed_annual",
+            "A - Augmentation annuelle fixe de (%)"
+        ),
+        (
+            "ipc",
+            "B - Indexation selon l'Indice des Prix à la Consommation (IPC) publié par l'INSTAT Madagascar"
+        ),
+        (
+            "negotiated_biennial",
+            "C - Révision biennale négociée de (%)"
+        ),
+        (
+            "none",
+            "D - Loyer fixe non révisable pendant toute la durée initiale du bail"
+        ),
+    ],
+    string="Révision du loyer",
+    default="none",
+    tracking=True,
+)
+
+    revision_rate = fields.Float(
+        string="Taux d'augmentation (%)",
+        tracking=True,
+    )
+    jirama_charge = fields.Selection(
+    [
+        ("tenant", "Charge Jirama preneur"),
+        ("owner", "Charge Jirama propriétaire"),
+    ],
+    string="Jirama",
+    default="tenant",
+    tracking=True,
+)
+
+    @api.constrains(
+    "rent_revision_option",
+    "annual_increase_rate",
+    "biennial_increase_rate",
+)
+    @api.constrains("rent_revision_option", "revision_rate")
+    def _check_revision_rate(self):
+        for rec in self:
+            if (
+                rec.rent_revision_option in ("fixed_annual", "negotiated_biennial")
+                and rec.revision_rate <= 0
+            ):
+                raise ValidationError(
+                    _("Veuillez saisir un taux d'augmentation supérieur à 0.")
+                )
+        
     @api.onchange("property_ids")
     def _onchange_property_rent_currency(self):
         for rec in self:
@@ -400,6 +463,36 @@ class PropertyMandate(models.Model):
                 rec.rent_type = "ariary"
             elif rec.rent_type == "ariary":
                 rec.rent_type = "fixed_forex"
+    
+    @api.onchange("owner_id")
+    def _onchange_owner_id_rent_bank_account(self):
+        for rec in self:
+            rec.rent_bank_account_id = False
+
+            if rec.owner_id:
+                bank_account = self.env["res.partner.bank"].search([
+                    ("partner_id", "=", rec.owner_id.id),
+                    ("active", "=", True),
+                ], limit=1)
+
+                rec.rent_bank_account_id = bank_account
+    
+    def _sync_rent_bank_account(self):
+        Bank = self.env["res.partner.bank"]
+
+        for rec in self:
+            if not rec.owner_id or rec.rent_bank_account_id:
+                continue
+
+            bank_account = Bank.search([
+                ("partner_id", "child_of", rec.owner_id.id),
+                ("active", "=", True),
+            ], limit=1)
+
+            if bank_account:
+                rec.with_context(skip_bank_account_sync=True).write({
+                    "rent_bank_account_id": bank_account.id
+                })
 
     
     def _sync_rent_type_with_property_currency(self):
@@ -550,6 +643,7 @@ class PropertyMandate(models.Model):
                 ) or _("Nouveau")
 
         records = super().create(vals_list)
+        records._sync_rent_bank_account()
         records._sync_rent_type_with_property_currency()
         for rec in records:
             if rec.mandate_type == "exclusive":
@@ -1199,7 +1293,7 @@ class PropertyMandate(models.Model):
 
         if self.env.context.get("skip_rent_type_sync"):
             return super().write(vals)
-
+        
         contract_fields = {
             "contract_start_date",
             "contract_duration_months",
@@ -1211,7 +1305,7 @@ class PropertyMandate(models.Model):
                     rec._get_or_create_exclusive_contract()
 
         res = super().write(vals)
-
+        self._sync_rent_bank_account()
         self._sync_rent_type_with_property_currency()
 
         for rec in self:

@@ -711,9 +711,10 @@
                             avec accusé de réception ou par exploit d'huissier. Le loyer et les
                         charges restent intégralement dus par le Preneur durant toute la période
                             du préavis.</p>
-
+                            <div style="page-break-before: always;"></div>
+                        
                     <div class="pk-section-title">ARTICLE 4. LOYER ET
-                        MODALITÉS DE PAIEMENT
+                            MODALITÉS DE PAIEMENT
                             (CONFORMITÉ CHANGE)</div>
                     <p class="pk-text-justify">Le présent bail est
                         accepté moyennant un loyer
@@ -755,8 +756,7 @@
                                 </strong>
                         Ariary (<span
                                     t-esc="doc.rental_price_ariary_text if 'rental_price_ariary_text' in doc._fields else ''" />
-                        ).
-    </p>
+                        ). </p>
 
                         </t>
 
@@ -779,36 +779,58 @@
 
                         </t>
 
-                        <t t-set="bank_account"
-                            t-value="False" />
+                        <t
+                            t-set="bank_account"
+                            t-value="doc.rent_bank_account_id if 'rent_bank_account_id' in doc._fields and doc.rent_bank_account_id else False" />
 
-                        <p> Virement ou chèque libellé au nom de
-                        l'administrateur de biens : <strong>
-                                <span t-esc="bank_account.account_holder if bank_account else ''" />
-                            </strong>
-                        — Banque <strong>
-                                <span
-                                    t-esc="bank_account.bank_id.name if bank_account and bank_account.bank_id else ''" />
-                                <span
-                                    t-esc="bank_account.agency_name if bank_account and 'agency_name' in bank_account._fields else ''" />
-                            </strong>
-                        — Code Banque : <strong>
-                                <span
-                                    t-esc="bank_account.bank_code if bank_account and 'bank_code' in bank_account._fields else ''" />
-                            </strong>
-                        | Code Agence : <strong>
-                                <span
-                                    t-esc="bank_account.branch_code if bank_account and 'branch_code' in bank_account._fields else ''" />
-                            </strong>
-                        | N° Compte : <strong>
-                                <span
-                                    t-esc="bank_account.acc_number if bank_account and 'acc_number' in bank_account._fields else ''" />
-                            </strong>
-                        | Clé : <strong>
-                                <span
-                                    t-esc="bank_account.account_key if bank_account and 'account_key' in bank_account._fields else ''" />
-                            </strong>
+<t
+                            t-if="bank_account">
+                            <p> Virement ou chèque libellé au nom du propriétaire / bénéficiaire : <strong>
+                                    <span t-esc="bank_account.account_holder or ''" />
+                                </strong>
+                        — Banque : <strong>
+                                    <span
+                                        t-esc="bank_account.bank_id.name if bank_account.bank_id else ''" />
+                                </strong>
+
+        <t
+                                    t-if="bank_account.agency_name"> — Agence : <strong>
+                                        <span t-esc="bank_account.agency_name" />
+                                    </strong>
+                                </t>
+
+        <t
+                                    t-if="bank_account.bank_code"> — Code Banque : <strong>
+                                        <span t-esc="bank_account.bank_code" />
+                                    </strong>
+                                </t>
+
+        <t
+                                    t-if="bank_account.branch_code"> | Code Agence : <strong>
+                                        <span t-esc="bank_account.branch_code" />
+                                    </strong>
+                                </t>
+
+        <t
+                                    t-if="bank_account.acc_number"> | N° Compte : <strong>
+                                        <span t-esc="bank_account.acc_number" />
+                                    </strong>
+                                </t>
+
+        <t
+                                    t-if="bank_account.account_key"> | Clé : <strong>
+                                        <span t-esc="bank_account.account_key" />
+                                    </strong>
+                                </t>
                         . </p>
+                        </t>
+
+<t t-if="not bank_account">
+                            <p>
+                                Les modalités de paiement du loyer seront communiquées par le
+                        Bailleur ou son mandataire.
+                            </p>
+                        </t>
                         <p
                             class="pk-text-justify">Tout retard de paiement portera de plein droit
                         des intérêts de retard fixés à 1% du montant du loyer par jour de
@@ -818,18 +840,21 @@
                         <div
                             class="pk-section-title">ARTICLE 5. RÉVISION DU LOYER</div>
 
-                        <t
-                            t-if="'rent_revision_option' in doc._fields and doc.rent_revision_option == 'fixed_annual'">
+                        <!-- OPTION A : AUGMENTATION ANNUELLE FIXE -->
+<t
+                            t-if="doc.rent_revision_option == 'fixed_annual'">
                             <p> Les parties conviennent qu'à chaque date anniversaire du présent
                         bail, le loyer sera automatiquement révisé par application d'une
                         augmentation de <strong>
                                     <span
-                                        t-esc="doc.rent_revision_rate if 'rent_revision_rate' in doc._fields else 0" />
-                        % </strong> sur le montant du loyer alors en vigueur. </p>
+                                        t-esc="'{:,.2f}'.format(doc.revision_rate or 0.0).replace(',', ' ')" />
+                        % </strong> sur le montant du loyer alors en vigueur, applicable de plein
+                        droit de manière automatique sur les termes suivants en cas de reconduction. </p>
                         </t>
 
-                        <t
-                            t-if="'rent_revision_option' in doc._fields and doc.rent_revision_option == 'ipc'">
+                        <!-- OPTION B : INDEXATION IPC -->
+<t
+                            t-if="doc.rent_revision_option == 'ipc'">
                             <p>
                                 Les parties conviennent que le loyer sera révisé en fonction de
                         l'évolution
@@ -841,30 +866,30 @@
                             </p>
                         </t>
 
-                        <t
-                            t-if="'rent_revision_option' in doc._fields and doc.rent_revision_option == 'biennial'">
+                        <!-- OPTION C : RÉVISION BIENNALE NÉGOCIÉE -->
+<t
+                            t-if="doc.rent_revision_option == 'negotiated_biennial'">
                             <p> Les parties conviennent qu'une révision du loyer interviendra tous
                         les deux (02) ans à compter de la date de prise d'effet du présent bail.
                         Cette révision consistera en une augmentation de <strong>
                                     <span
-                                        t-esc="doc.rent_revision_rate if 'rent_revision_rate' in doc._fields else 0" />
+                                        t-esc="'{:,.2f}'.format(doc.revision_rate or 0.0).replace(',', ' ')" />
                         % </strong> du montant du loyer alors en vigueur. </p>
                         </t>
 
-                        <t
-                            t-if="'rent_revision_option' in doc._fields and doc.rent_revision_option == 'none'">
+                        <!-- OPTION D : LOYER NON RÉVISABLE -->
+<t
+                            t-if="doc.rent_revision_option == 'none'">
                             <p>
                                 Les parties conviennent expressément que le montant du loyer
                         demeurera fixe
                                 et inchangé pendant toute la durée initiale du présent bail. Aucune
-                        augmentation, indexation ou révision ne pourra être appliquée durant
-                                cette
-                                période, sauf accord écrit et signé par les deux parties. En cas de
-                        reconduction ou de renouvellement du bail, les conditions
-                                financières
-                                pourront faire l'objet d'une nouvelle négociation entre le Bailleur
-                        et le
-                                Preneur.</p>
+                        augmentation, indexation ou révision ne pourra être appliquée durant cette
+                        période, sauf accord écrit et signé par les deux parties. En cas de
+                        reconduction ou de renouvellement du bail, les conditions financières
+                        pourront faire l'objet d'une nouvelle négociation entre le Bailleur et le
+                        Preneur.
+                            </p>
                         </t>
 
                         <div
@@ -907,35 +932,26 @@
                         sa charge exclusive et devront être acquittées directement auprès des
                         prestataires. Les modalités de gestion des compteurs sont arrêtées comme
                             suit :</p>
-
-                        <t t-set="syndic_rec"
-                            t-value="env['syndic.management'].sudo().search([
-                                        ('state', '=', 'active'),
-                                        '|', '|',
-                                        ('property_ids', 'in', [property_rec.id]),
-                                        ('subproject_id', '=', property_rec.subproject_id.id if 'subproject_id' in property_rec._fields and property_rec.subproject_id else False),
-                                        ('project_id', '=', property_rec.property_project_id.id if property_rec.property_project_id else False)
-                                ], limit=1) if property_rec else False" />
-
-                        <t
-                            t-set="has_meter_tracking"
-                            t-value="syndic_rec and (syndic_rec.track_water_meter or syndic_rec.track_electricity_meter)" />
-                        <t
-                            t-if="not has_meter_tracking">
+                       
+                           <t t-if="doc.jirama_charge == 'tenant'">
                             <p>
-                                Le Preneur s’engage à
-                                effectuer les démarches pour muter temporairement les compteurs
-                        JIRAMA à son nom propre pendant la durée du bail et à en supporter
-                                tous les frais. </p>
+                                Le Preneur s’engage à effectuer les démarches nécessaires pour
+                                muter temporairement les compteurs JIRAMA à son nom propre
+                                pendant toute la durée du bail et à en supporter l’intégralité
+                                des frais, abonnements, consommations et taxes y afférents.
+                            </p>
                         </t>
 
-                        <t
-                            t-if="has_meter_tracking">
+                        <!-- CHARGES JIRAMA À LA CHARGE DU PROPRIÉTAIRE -->
+<t
+                            t-if="doc.jirama_charge == 'owner'">
                             <p>
-                                Les compteurs restent
-                                au nom du propriétaire. Le Preneur remboursera mensuellement au
-                        Bailleur ou à son mandataire le montant exact de sa consommation sur
-                        présentation de la refacturation ou des relevés divisionnaires. </p>
+                                Les compteurs JIRAMA demeurent au nom du Bailleur.
+                                Le Preneur remboursera mensuellement au Bailleur ou à son
+                                mandataire le montant exact de ses consommations d’eau et
+                        d’électricité, sur présentation des factures, refacturations
+                                ou relevés de consommation correspondants.
+                            </p>
                         </t>
                         <div
                             style="page-break-before: always;"></div>
@@ -946,19 +962,19 @@
                         strictement réparties
                             entre les parties selon les dispositions légales et les usages
                         contractuels :</p>
-                        <table class="pk-work-table">
+                       <table class="pk-work-table">
                             <tr>
-                                <th>À LA CHARGE EXCLUSIVE DU BAILLEUR</th>
-                                <th>À LA CHARGE EXCLUSIVE DU PRENEUR</th>
+                                <th>OBLIGATIONS DU MANDANT</th>
+                                <th>OBLIGATIONS DU MANDATAIRE</th>
                             </tr>
+
                             <tr>
-                                <td>
-                                    <t
-                                        t-raw="doc.charge_exclusive_bailleur_content if 'charge_exclusive_bailleur_content' in doc._fields else ''" />
+                                <td class="pk-obligation-cell">
+                                    <t t-out="doc.owner_obligations or ''" />
                                 </td>
-                                <td>
-                                    <t
-                                        t-raw="doc.charge_exclusive_preneur_content if 'charge_exclusive_preneur_content' in doc._fields else ''" />
+
+                                <td class="pk-obligation-cell">
+                                    <t t-out="doc.agency_obligations or ''" />
                                 </td>
                             </tr>
                         </table>
