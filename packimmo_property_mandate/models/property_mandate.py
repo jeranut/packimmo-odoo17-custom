@@ -334,6 +334,7 @@ class PropertyMandate(models.Model):
         string="Nombre de factures",
         compute="_compute_invoice_count",
     )
+
     invoice_payment_status = fields.Selection(
     [
         ("not_paid", "Non payé"),
@@ -346,6 +347,120 @@ class PropertyMandate(models.Model):
     compute="_compute_invoice_payment_status",
     store=True,
 )
+    exclusive_contract_id = fields.Many2one(
+    "property.mandate.exclusive.contract",
+    string="Contrat exclusif",
+    copy=False,
+    readonly=True,
+)
+
+    contract_start_date = fields.Date(
+    string="Date début contrat",
+)
+
+    contract_end_date = fields.Date(
+    string="Date fin contrat",
+    compute="_compute_contract_end_date",
+    store=True,
+)
+    contract_duration_months = fields.Integer(
+    string="Durée contrat (mois)",
+    default=1,
+)
+    rent_type = fields.Selection(
+    [
+        ("ariary", "Paiement constant en Ariary"),
+        ("fixed_forex", "Devise étrangère à Taux Fixe conventionnel"),
+        ("mid_forex", "Devise étrangère à Taux du MID"),
+    ],
+    string="Type de Loyer",
+    default="ariary",
+    tracking=True,
+)
+    is_foreign_rent = fields.Boolean(
+    string="Loyer en devise étrangère",
+    compute="_compute_is_foreign_rent",
+)
+    foreign_rent_type = fields.Selection(
+    [
+        ("fixed_forex", "Devise étrangère à Taux Fixe conventionnel"),
+        ("mid_forex", "Devise étrangère à Taux du MID"),
+    ],
+    string="Type de Loyer",
+    default="fixed_forex",
+)
+    
+    @api.onchange("property_ids")
+    def _onchange_property_rent_currency(self):
+        for rec in self:
+            property_rec = rec.property_ids[:1]
+            currency = property_rec.foreign_currency_id if property_rec else False
+
+            if not currency or currency.name == "MGA":
+                rec.rent_type = "ariary"
+            elif rec.rent_type == "ariary":
+                rec.rent_type = "fixed_forex"
+
+    
+    def _sync_rent_type_with_property_currency(self):
+        for rec in self:
+            property_rec = rec.property_ids[:1]
+
+            currency = (
+                property_rec.foreign_currency_id
+                if property_rec and "foreign_currency_id" in property_rec._fields
+                else False
+            )
+
+            if not currency or currency.name == "MGA":
+                target = "ariary"
+                foreign_target = False
+            else:
+                foreign_target = rec.foreign_rent_type or "fixed_forex"
+                target = foreign_target
+
+            vals = {}
+
+            if rec.rent_type != target:
+                vals["rent_type"] = target
+
+            if currency and currency.name != "MGA" and rec.foreign_rent_type != foreign_target:
+                vals["foreign_rent_type"] = foreign_target
+
+            if vals:
+                rec.with_context(skip_rent_type_sync=True).write(vals)
+    
+    @api.depends(
+    "property_ids",
+    "property_ids.foreign_currency_id",
+)
+    def _compute_is_foreign_rent(self):
+        for rec in self:
+            property_rec = rec.property_ids[:1]
+
+            currency = (
+                property_rec.foreign_currency_id
+                if property_rec
+                and "foreign_currency_id" in property_rec._fields
+                else False
+            )
+
+            rec.is_foreign_rent = bool(
+                currency and currency.name != "MGA"
+            )
+
+    
+    @api.depends("contract_start_date", "contract_duration_months")
+    def _compute_contract_end_date(self):
+        for rec in self:
+            if rec.contract_start_date and rec.contract_duration_months:
+                rec.contract_end_date = (
+                    rec.contract_start_date
+                    + relativedelta(months=rec.contract_duration_months)
+                )
+            else:
+                rec.contract_end_date = False
+    
     @api.depends("invoice_ids.payment_state")
     def _compute_invoice_payment_status(self):
         for rec in self:
@@ -435,6 +550,10 @@ class PropertyMandate(models.Model):
                 ) or _("Nouveau")
 
         records = super().create(vals_list)
+        records._sync_rent_type_with_property_currency()
+        for rec in records:
+            if rec.mandate_type == "exclusive":
+                rec._get_or_create_exclusive_contract()
 
         for rec in records:
             rec.message_post(body=_("Mandat immobilier créé."))
@@ -987,3 +1106,133 @@ class PropertyMandate(models.Model):
                         "car la facture des honoraires a été payée."
                     )
                 )
+    
+    def action_print_exclusive_contract(self):
+        for rec in self:
+            if rec.mandate_type != "exclusive":
+                raise ValidationError(
+                    _("Ce contrat est disponible uniquement pour un mandat exclusif.")
+                )
+
+            if not rec.property_ids:
+                raise ValidationError(
+                    _("Veuillez rattacher au moins un bien au mandat.")
+                )
+
+            rec._get_or_create_exclusive_contract()
+
+            if not rec.contract_start_date:
+                raise ValidationError(
+                    _("Veuillez renseigner la date début contrat.")
+                )
+
+            if not rec.contract_end_date:
+                raise ValidationError(
+                    _("Veuillez renseigner la date fin contrat.")
+                )
+
+            if rec.contract_end_date < rec.contract_start_date:
+                raise ValidationError(
+                    _("La date fin contrat doit être supérieure ou égale à la date début contrat.")
+                )
+
+            report = self.env.ref(
+                "packimmo_property_mandate.action_report_exclusive_mandate_contract"
+            )
+
+            pdf_content, content_type = report._render_qweb_pdf(
+                report.report_name,
+                [rec.id],
+            )
+
+            attachment = self.env["ir.attachment"].create({
+                "name": "Contrat_Mandat_Exclusif_%s.pdf" % (rec.name or "Mandat"),
+                "type": "binary",
+                "datas": base64.b64encode(pdf_content),
+                "res_model": rec._name,
+                "res_id": rec.id,
+                "mimetype": "application/pdf",
+            })
+
+            rec.message_post(
+                body=_("Contrat de mandat exclusif généré et attaché."),
+                attachment_ids=[attachment.id],
+            )
+
+            return {
+                "type": "ir.actions.act_url",
+                "url": "/web/content/%s?download=true" % attachment.id,
+                "target": "self",
+            }
+        
+
+    def _get_or_create_exclusive_contract(self):
+        Contract = self.env["property.mandate.exclusive.contract"]
+
+        for rec in self:
+            if rec.mandate_type != "exclusive":
+                continue
+
+            contract = rec.exclusive_contract_id
+
+            if not contract:
+                contract = Contract.search([
+                    ("mandate_id", "=", rec.id)
+                ], limit=1)
+
+            if not contract:
+                contract = Contract.create({
+                    "mandate_id": rec.id,
+                    "contract_start_date": rec.start_date,
+                    "contract_duration_months": rec.duration_months or 1,
+                })
+
+            if rec.exclusive_contract_id.id != contract.id:
+                rec.with_context(skip_exclusive_contract_sync=True).write({
+                    "exclusive_contract_id": contract.id
+                })
+
+
+    def write(self, vals):
+        if self.env.context.get("skip_exclusive_contract_sync"):
+            return super().write(vals)
+
+        if self.env.context.get("skip_rent_type_sync"):
+            return super().write(vals)
+
+        contract_fields = {
+            "contract_start_date",
+            "contract_duration_months",
+        }
+
+        if contract_fields.intersection(vals.keys()):
+            for rec in self:
+                if rec.mandate_type == "exclusive" and not rec.exclusive_contract_id:
+                    rec._get_or_create_exclusive_contract()
+
+        res = super().write(vals)
+
+        self._sync_rent_type_with_property_currency()
+
+        for rec in self:
+            if rec.mandate_type == "exclusive":
+                rec._get_or_create_exclusive_contract()
+
+        return res
+    
+    @api.onchange("contract_start_date", "contract_duration_months")
+    def _onchange_contract_dates_on_mandate(self):
+        for rec in self:
+            if rec.contract_start_date and rec.contract_duration_months:
+                rec.contract_end_date = (
+                    rec.contract_start_date
+                    + relativedelta(months=rec.contract_duration_months)
+                )
+            else:
+                rec.contract_end_date = False
+    
+    @api.onchange("foreign_rent_type")
+    def _onchange_foreign_rent_type(self):
+        for rec in self:
+            if rec.is_foreign_rent and rec.foreign_rent_type:
+                rec.rent_type = rec.foreign_rent_type

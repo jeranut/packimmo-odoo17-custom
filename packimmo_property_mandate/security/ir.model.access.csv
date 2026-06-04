@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_property_mandate_user,property.mandate.user,model_property_mandate,base.group_user,1,1,1,1
 access_property_mandate_public,property.mandate.public,model_property_mandate,base.group_public,0,0,0,0
+access_property_mandate_exclusive_contract_user,access.property.mandate.exclusive.contract.user,model_property_mandate_exclusive_contract,base.group_user,1,1,1,0
