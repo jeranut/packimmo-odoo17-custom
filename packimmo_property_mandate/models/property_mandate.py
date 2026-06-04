@@ -305,6 +305,62 @@ class PropertyMandate(models.Model):
         compute="_compute_payment_status",
         store=True,
     )
+    client_id = fields.Many2one(
+    "res.partner",
+    string="Locataire / Acheteur",
+    tracking=True,
+)
+
+    split_billing_type = fields.Selection(
+        [
+            ("half", "50 / 50"),
+            ("full_each", "Montant complet pour chaque partie"),
+        ],
+        string="Mode facturation deux parties",
+        default="half",
+        tracking=True,
+    )
+
+    invoice_ids = fields.Many2many(
+        "account.move",
+        "property_mandate_account_move_rel",
+        "mandate_id",
+        "move_id",
+        string="Factures honoraires",
+        readonly=True,
+        copy=False,
+    )
+    invoice_count = fields.Integer(
+        string="Nombre de factures",
+        compute="_compute_invoice_count",
+    )
+    invoice_payment_status = fields.Selection(
+    [
+        ("not_paid", "Non payé"),
+        ("partial", "Partiellement payé"),
+        ("in_payment", "En paiement"),
+        ("paid", "Payé"),
+        ("reversed", "Annulé"),
+    ],
+    string="Statut paiement factures",
+    compute="_compute_invoice_payment_status",
+    store=True,
+)
+    @api.depends("invoice_ids.payment_state")
+    def _compute_invoice_payment_status(self):
+        for rec in self:
+            states = rec.invoice_ids.mapped("payment_state")
+
+            if not states:
+                rec.invoice_payment_status = "not_paid"
+            elif all(state == "paid" for state in states):
+                rec.invoice_payment_status = "paid"
+            elif any(state in ("partial", "in_payment") for state in states):
+                rec.invoice_payment_status = "partial"
+            elif any(state == "reversed" for state in states):
+                rec.invoice_payment_status = "reversed"
+            else:
+                rec.invoice_payment_status = "not_paid"
 
     @api.depends("invoice_id.payment_state")
     def _compute_payment_status(self):
@@ -436,6 +492,32 @@ class PropertyMandate(models.Model):
             rec.write({"state": "draft"})
 
             rec.message_post(body=_("Mandat remis en brouillon."))
+    
+    def _compute_invoice_count(self):
+        for rec in self:
+            rec.invoice_count = len(rec.invoice_ids)
+
+    def action_view_invoices(self):
+        self.ensure_one()
+
+        invoices = self.invoice_ids
+        if not invoices and self.invoice_id:
+            invoices = self.invoice_id
+
+        action = self.env.ref("account.action_move_out_invoice_type").read()[0]
+
+        if len(invoices) == 1:
+            action["views"] = [(self.env.ref("account.view_move_form").id, "form")]
+            action["res_id"] = invoices.id
+        else:
+            action["domain"] = [("id", "in", invoices.ids)]
+
+        action["context"] = {
+            "default_move_type": "out_invoice",
+            "create": False,
+        }
+
+        return action
 
     def action_view_properties(self):
         self.ensure_one()
@@ -759,90 +841,130 @@ class PropertyMandate(models.Model):
 
     def action_activate(self):
         for rec in self:
-            if rec.invoice_id:
-                rec.write({"state": "active"})
-                rec.message_post(body=_("Mandat activé. Facture déjà existante."))
-                continue
+            rec.write({"state": "active"})
+            rec.message_post(body=_("Mandat activé. En attente de recherche de locataire / acheteur."))
 
-            partner = False
+            rec.message_post(body=_("Mandat activé et facture(s) d’honoraires créée(s)."))
+    
+    def action_done_and_invoice(self):
+        for rec in self:
+            if rec.state != "active":
+                raise ValidationError(_("Seul un mandat actif peut être terminé."))
+
+            if not rec.total_fee_amount:
+                raise ValidationError(_("Le montant des honoraires doit être supérieur à zéro."))
+
+            if rec.billed_to in ("tenant_buyer", "both") and not rec.client_id:
+                raise ValidationError(_("Veuillez renseigner le locataire / acheteur trouvé."))
+
+            if rec.billed_to in ("owner", "both") and not rec.owner_id:
+                raise ValidationError(_("Veuillez renseigner le propriétaire."))
+
+            rec._create_fee_invoices()
+
+            rec.write({"state": "completed"})
+            rec.message_post(body=_("Mandat terminé et facture(s) d’honoraires générée(s)."))
+
+    def _create_fee_invoices(self):
+        AccountMove = self.env["account.move"]
+        Product = self.env["product.product"]
+
+        for rec in self:
+            if rec.invoice_ids:
+                raise ValidationError(_("Des factures existent déjà pour ce mandat."))
+
+            if not rec.total_fee_amount or rec.total_fee_amount <= 0:
+                raise ValidationError(_("Le montant des honoraires doit être supérieur à zéro."))
+
+            if rec.billed_to in ("owner", "both") and not rec.owner_id:
+                raise ValidationError(_("Veuillez renseigner le propriétaire à facturer."))
+
+            if rec.billed_to in ("tenant_buyer", "both") and not rec.client_id:
+                raise ValidationError(_("Veuillez renseigner le locataire / acheteur trouvé."))
+
+            product = Product.search([("name", "=", "Honoraire Agence")], limit=1)
+            if not product:
+                product = Product.create({
+                    "name": "Honoraire Agence",
+                    "type": "service",
+                    "invoice_policy": "order",
+                    "list_price": rec.total_fee_amount,
+                })
+
+            label = _("Honoraires mandat immobilier")
+            if rec.operation_type == "rent":
+                label = _("Honoraires mandat de location")
+            elif rec.operation_type == "sale":
+                label = _("Honoraires mandat de vente")
+
+            if rec.name:
+                label += " - %s" % rec.name
+
+            invoice_data = []
 
             if rec.billed_to == "owner":
-                partner = rec.owner_id
-            else:
-                # Locataire / Acheteur : à adapter plus tard si besoin
-                partner = rec.owner_id
+                invoice_data.append({
+                    "partner_id": rec.owner_id.id,
+                    "amount": rec.total_fee_amount,
+                })
 
-            if not partner:
-                raise ValidationError(_("Veuillez définir le client à facturer."))
+            elif rec.billed_to == "tenant_buyer":
+                invoice_data.append({
+                    "partner_id": rec.client_id.id,
+                    "amount": rec.total_fee_amount,
+                })
 
-            product = self.env["product.product"].search(
-                [("name", "=", "Honoraire Agence")],
-                limit=1,
-            )
+            elif rec.billed_to == "both":
+                if rec.split_billing_type == "full_each":
+                    owner_amount = rec.total_fee_amount
+                    client_amount = rec.total_fee_amount
+                else:
+                    owner_amount = rec.total_fee_amount / 2.0
+                    client_amount = rec.total_fee_amount / 2.0
 
-            if not product:
-                product = self.env["product.product"].create(
-                    {
-                        "name": "Honoraire Agence",
-                        "type": "service",
-                        "invoice_policy": "order",
-                        "list_price": rec.total_fee_amount or 0.0,
-                    }
-                )
+                invoice_data.append({
+                    "partner_id": rec.owner_id.id,
+                    "amount": owner_amount,
+                })
+                invoice_data.append({
+                    "partner_id": rec.client_id.id,
+                    "amount": client_amount,
+                })
 
-            label = "Location mandat non exclusif"
+        created_invoices = AccountMove
 
-            if rec.operation_type == "sale":
-                label = "Vente mandat non exclusif"
+        for data in invoice_data:
+            invoice = AccountMove.create({
+                "move_type": "out_invoice",
+                "partner_id": data["partner_id"],
+                "invoice_date": fields.Date.context_today(self),
+                "invoice_origin": rec.name,
+                "ref": rec.name,
+                "invoice_line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": product.id,
+                            "name": label,
+                            "quantity": 1.0,
+                            "price_unit": data["amount"],
+                        },
+                    )
+                ],
+            })
 
-            if rec.mandate_type == "exclusive":
-                label = (
-                    "Location mandat exclusif"
-                    if rec.operation_type == "rent"
-                    else "Vente mandat exclusif"
-                )
+            created_invoices |= invoice
 
-            elif rec.mandate_type == "exclusive_absolute":
-                label = (
-                    "Location mandat exclusif absolu"
-                    if rec.operation_type == "rent"
-                    else "Vente mandat exclusif absolu"
-                )
+        rec.write({
+            "invoice_ids": [(6, 0, created_invoices.ids)],
+            "invoice_id": created_invoices[:1].id if created_invoices else False,
+        })
 
-            invoice = self.env["account.move"].create(
-                {
-                    "move_type": "out_invoice",
-                    "partner_id": partner.id,
-                    "invoice_date": fields.Date.context_today(self),
-                    "invoice_line_ids": [
-                        (
-                            0,
-                            0,
-                            {
-                                "product_id": product.id,
-                                "name": label,
-                                "quantity": 1,
-                                "price_unit": rec.total_fee_amount or 0.0,
-                            },
-                        )
-                    ],
-                }
-            )
-
-            rec.write(
-                {
-                    "state": "active",
-                    "invoice_id": invoice.id,
-                }
-            )
-
-            rec.message_post(
-                body=_("Mandat activé et facture d’honoraires créée : %s.")
-                % invoice.name
-            )
-            # =========================================================
-            # UPDATE STATE MANDATE A TERMINER SI FACTURE PAYEE
-            # =========================================================
+        rec.message_post(
+            body=_("Facture(s) d’honoraires créée(s) : %s")
+            % ", ".join(created_invoices.mapped("name"))
+        )
 
     @api.depends("invoice_id.payment_state")
     def _compute_payment_status(self):

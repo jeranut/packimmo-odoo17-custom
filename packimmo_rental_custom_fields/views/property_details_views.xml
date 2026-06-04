@@ -23,8 +23,12 @@
 
             <!-- Notaire -->
             <xpath expr="(//field[@name='subproject_id'])[1]" position="after">
-                <field name="notary_id" string="Notaire" placeholder="Choisir un notaire"
-                    required="1" domain="[('is_company', '=', False)]"
+                <field name="notary_id"
+                    string="Notaire"
+                    placeholder="Choisir un notaire"
+                    required="sale_lease == 'for_sale'"
+                    invisible="sale_lease != 'for_sale'"
+                    domain="[('is_company', '=', False)]"
                     options="{'no_quick_create': True}" />
             </xpath>
         </field>
@@ -59,7 +63,7 @@
                         readonly="stage not in ['draft','available']" />
                     <field name="foreign_currency_id" class="oe_inline" nolabel="1"
                         readonly="stage not in ['draft','available']" />
-                    <field name="exchange_rate_label" readonly="1"/>
+                    <field name="exchange_rate_label" readonly="1" />
                 </div>
 
             </xpath>
@@ -93,9 +97,9 @@
                 <attribute name="readonly">is_section_measurement</attribute>
             </xpath>
             <xpath expr="//field[@name='parking']" position="before">
-            <field name="garage_count"
-                invisible="type in ['land','industrial','commercial']"
-                readonly="is_section_measurement"/>
+                <field name="garage_count"
+                    invisible="type in ['land','industrial','commercial']"
+                    readonly="is_section_measurement" />
             </xpath>
 
             <xpath expr="//field[@name='parking']" position="attributes">
