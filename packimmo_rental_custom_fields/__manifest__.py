@@ -16,7 +16,6 @@ Première personnalisation : ajout du CIN client sur res.partner.
         "data/nationality_data.xml",
         "data/quality_data.xml",
         'views/property_sub_type_views.xml',
-        'data/property_sub_type_data.xml',
         "views/property_sub_project_views.xml",
         "views/res_partner_views.xml",
         "views/property_project_views.xml",

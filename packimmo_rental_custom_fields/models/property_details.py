@@ -14,6 +14,9 @@ class PropertyDetails(models.Model):
         ],
         string="Property Type",
     )
+    commercial_activity = fields.Char(
+    string="Activité commerciale",
+)
 
     development_deadline_date = fields.Date(
         string="Date limite d'aménagement",

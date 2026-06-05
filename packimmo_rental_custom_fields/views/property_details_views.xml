@@ -68,8 +68,13 @@
 
             </xpath>
             <xpath expr="//field[@name='property_subtype_id']" position="after">
-                <field name="property_category" />
-            </xpath>
+            <field name="property_category" />
+
+            <field name="commercial_activity"
+                placeholder="Ex : Restaurant, Boutique, Pharmacie..."
+                invisible="type != 'commercial' or property_category != 'commercial'"
+                required="type == 'commercial' and property_category == 'commercial'" />
+</xpath>
 
         </field>
     </record>

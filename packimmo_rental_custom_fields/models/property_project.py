@@ -26,6 +26,7 @@ class PropertyProject(models.Model):
         help="Exemple : 6176-H",
     )
 
+    
     @api.model
     def fields_get(self, allfields=None, attributes=None):
         res = super().fields_get(allfields, attributes)

@@ -9,6 +9,7 @@
             <xpath expr="//field[@name='type']" position="after">
                 <field name="category"/>
             </xpath>
+            
         </field>
     </record>
 
@@ -20,6 +21,7 @@
             <xpath expr="//field[@name='type']" position="after">
                 <field name="category"/>
             </xpath>
+            
         </field>
     </record>
 

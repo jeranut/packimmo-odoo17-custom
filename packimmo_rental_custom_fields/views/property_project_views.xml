@@ -102,8 +102,19 @@
             <xpath expr="//field[@name='zip']" position="attributes">
                 <attribute name="readonly">1</attribute>
             </xpath>
+            
 
         </field>
+    </record>
+    <record id="property_project_view_form_no_create_subtype" model="ir.ui.view">
+    <field name="name">property.project.view.form.no.create.subtype</field>
+    <field name="model">property.project</field>
+    <field name="inherit_id" ref="rental_management.property_project_view_form" />
+    <field name="arch" type="xml">
+        <xpath expr="//field[@name='property_subtype_id']" position="attributes">
+            <attribute name="options">{'no_create': True, 'no_create_edit': True, 'no_quick_create': True}</attribute>
+        </xpath>
+    </field>
     </record>
     <record id="property_details_view_form_inherit_hide_address_fields" model="ir.ui.view">
         <field name="name">property.details.view.form.inherit.hide.address.fields</field>
