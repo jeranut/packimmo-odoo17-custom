@@ -466,28 +466,31 @@ class PropertyMandate(models.Model):
     
     @api.onchange("owner_id")
     def _onchange_owner_id_rent_bank_account(self):
-        for rec in self:
-            rec.rent_bank_account_id = False
+            for rec in self:
+                rec.rent_bank_account_id = False
 
-            if rec.owner_id:
-                bank_account = self.env["res.partner.bank"].search([
+                if not rec.owner_id:
+                    continue
+
+                bank_account = self.env["res.partner.bank.account"].search([
                     ("partner_id", "=", rec.owner_id.id),
                     ("active", "=", True),
-                ], limit=1)
+                ], order="is_main desc, id asc", limit=1)
 
                 rec.rent_bank_account_id = bank_account
-    
+
+
     def _sync_rent_bank_account(self):
-        Bank = self.env["res.partner.bank"]
+        BankAccount = self.env["res.partner.bank.account"]
 
         for rec in self:
             if not rec.owner_id or rec.rent_bank_account_id:
                 continue
 
-            bank_account = Bank.search([
-                ("partner_id", "child_of", rec.owner_id.id),
+            bank_account = BankAccount.search([
+                ("partner_id", "=", rec.owner_id.id),
                 ("active", "=", True),
-            ], limit=1)
+            ], order="is_main desc, id asc", limit=1)
 
             if bank_account:
                 rec.with_context(skip_bank_account_sync=True).write({
@@ -1293,7 +1296,10 @@ class PropertyMandate(models.Model):
 
         if self.env.context.get("skip_rent_type_sync"):
             return super().write(vals)
-        
+
+        if self.env.context.get("skip_bank_account_sync"):
+            return super().write(vals)
+
         contract_fields = {
             "contract_start_date",
             "contract_duration_months",
@@ -1305,6 +1311,7 @@ class PropertyMandate(models.Model):
                     rec._get_or_create_exclusive_contract()
 
         res = super().write(vals)
+
         self._sync_rent_bank_account()
         self._sync_rent_type_with_property_currency()
 
