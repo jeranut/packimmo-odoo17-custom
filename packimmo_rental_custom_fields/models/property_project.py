@@ -7,6 +7,15 @@ from odoo.exceptions import ValidationError
 class PropertyProject(models.Model):
     _inherit = "property.project"
 
+    property_type = fields.Selection(
+        selection=[
+            ("residential", "Résidentielle"),
+            ("commercial", "Commerciale"),
+            ("land", "Terrain"),
+        ],
+        string="Type de propriété",
+    )
+
     property_land_name = fields.Char(
         string="Nom de la propriété",
         help="Exemple : TANJONA II",
@@ -16,6 +25,16 @@ class PropertyProject(models.Model):
         string="Titre n°",
         help="Exemple : 6176-H",
     )
+
+    @api.model
+    def fields_get(self, allfields=None, attributes=None):
+        res = super().fields_get(allfields, attributes)
+        if "property_type" in res and "selection" in res["property_type"]:
+            res["property_type"]["selection"] = [
+                item for item in res["property_type"]["selection"]
+                if item[0] != "industrial"
+            ]
+        return res
 
     @api.constrains(
         "property_type",

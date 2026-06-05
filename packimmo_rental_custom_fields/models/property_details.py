@@ -5,6 +5,16 @@ from odoo.exceptions import ValidationError
 class PropertyDetails(models.Model):
     _inherit = "property.details"
 
+    
+    type = fields.Selection(
+        [
+            ("land", "Terrain"),
+            ("residential", "Résidentielle"),
+            ("commercial", "Commerciale"),
+        ],
+        string="Property Type",
+    )
+
     development_deadline_date = fields.Date(
         string="Date limite d'aménagement",
     )
@@ -94,6 +104,18 @@ class PropertyDetails(models.Model):
         compute="_compute_exchange_rate",
         store=True,
     )
+    
+    @api.model
+    def fields_get(self, allfields=None, attributes=None):
+        res = super().fields_get(allfields, attributes)
+
+        if "type" in res and "selection" in res["type"]:
+            res["type"]["selection"] = [
+                item for item in res["type"]["selection"]
+                if item[0] != "industrial"
+            ]
+
+        return res
 
     @api.depends(
         "is_section_measurement",

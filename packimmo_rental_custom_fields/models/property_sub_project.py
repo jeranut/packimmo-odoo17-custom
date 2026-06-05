@@ -1,8 +1,27 @@
-from odoo import api, models
+from odoo import api, models,fields
 
 
 class PropertySubProject(models.Model):
     _inherit = "property.sub.project"
+
+    property_type = fields.Selection(
+        [
+            ("residential", "Résidentielle"),
+            ("commercial", "Commerciale"),
+            ("land", "Terrain"),
+        ],
+        string="Property Type",
+    )
+
+    @api.model
+    def fields_get(self, allfields=None, attributes=None):
+        res = super().fields_get(allfields, attributes)
+        if "property_type" in res and "selection" in res["property_type"]:
+            res["property_type"]["selection"] = [
+                item for item in res["property_type"]["selection"]
+                if item[0] != "industrial"
+            ]
+        return res
 
     def _get_address_vals_from_project(self, project):
         if not project:
