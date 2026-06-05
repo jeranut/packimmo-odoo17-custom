@@ -433,11 +433,49 @@
 
                         <div
                             class="pk-section-title">ARTICLE 1. OBJET ET DESTINATION</div>
+                        <t
+                            t-set="property_subtype"
+                            t-value="doc.property_id.property_subtype_id if doc.property_id and doc.property_id.property_subtype_id else False" />
+
                         <p
-                            class="pk-text-justify">Le Bailleur donne à bail à loyer, à titre professionnel, 
-                            au Preneur qui accepte, les locaux dont il est propriétaire et qui sont désignés 
-                            à l'Article 2. Les parties conviennent expressément que la destination exclusive 
-                            des locaux sera</p>
+                            class="pk-text-justify">
+                            Le Bailleur donne à bail à loyer, à titre professionnel, au Preneur qui
+                        accepte, les locaux dont il est propriétaire et qui sont désignés à
+                            l'Article
+                            2. Les parties conviennent expressément que la destination exclusive des
+                        locaux sera :</p>
+                        <t
+                            t-if="property_subtype and property_subtype.type == 'commercial' and property_subtype.category == 'commercial'">
+                            <p class="pk-text-justify"> Destiné exclusivement à l'exploitation d'une
+                        activité commerciale de : <strong>
+                                    <span
+                                        t-esc="doc.property_id.commercial_activity if doc.property_id and 'commercial_activity' in doc.property_id._fields else ''" />
+                                </strong>,
+                        avec autorisation de recevoir de la clientèle et de stocker les marchandises
+                        inhérentes à ladite exploitation. </p>
+                        </t>
+
+                        <t
+                            t-if="property_subtype and property_subtype.type == 'commercial' and property_subtype.category == 'bureaux'">
+                            <p class="pk-text-justify">
+                                Destiné exclusivement à l'usage de bureaux professionnels,
+                        d'activités
+                                administratives, de services tertiaires ou de siège social pour la
+                        société Preneuse, à l'exclusion de toute activité commerciale de vente au
+                        détail ou artisanale avec flux continu de clientèle.
+                            </p>
+                        </t>
+
+                        <t
+                            t-if="property_subtype and property_subtype.type == 'commercial' and property_subtype.category == 'stockage'">
+                            <p class="pk-text-justify">
+                                Destiné exclusivement au stockage de marchandises non dangereuses, à
+                        la logistique, au dépôt de matériel ou à de la petite production
+                                artisanale autorisée, conformément aux réglementations de sécurité
+                        et
+                                d'urbanisme en vigueur à Madagascar.
+                            </p>
+                        </t>
 
                         <div
                             class="pk-section-title">ARTICLE 2. DÉSIGNATION DU BIEN</div>
@@ -448,19 +486,82 @@
 
                         <div
                             class="pk-property-details">
+                            <p>
+
+                            </p>
                             <t t-set="property_rec"
-                                t-value="doc.property_id if 'property_id' in doc._fields and doc.property_id else False" />
+                                t-value="doc.property_id if doc.property_id else False" />
+                            <t t-set="project_rec"
+                                t-value="property_rec.property_project_id if property_rec and property_rec.property_project_id else False" />
+                            <t t-set="subproject_rec"
+                                t-value="property_rec.subproject_id if property_rec and property_rec.subproject_id else False" />
+                            <t t-set="property_subtype"
+                                t-value="property_rec.property_subtype_id if property_rec and property_rec.property_subtype_id else False" />
 
-                            <t
-                                t-if="property_rec and property_rec.type == 'residential' and property_rec.property_category == 'independant'">
+                            <t t-set="project_property_count"
+                                t-value="len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id)])) if project_rec else 0" />
 
+                            <t t-set="subproject_property_count"
+                                t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else 0" />
+
+                            <t t-set="is_independent_property"
+                                t-value="project_rec and not subproject_rec and project_property_count == 1" />
+
+                            <t t-set="is_common_property"
+                                t-value="(project_rec and not subproject_rec and project_property_count > 1) or (subproject_rec and subproject_property_count > 1)" />
+
+                            <t t-if="is_independent_property">
                                 <p>
                                     <span
-                                        t-esc="property_rec.property_subtype_id.name if property_rec.property_subtype_id else '[   ]'" />
-                        de type : <span
-                                        t-esc="dict(property_rec._fields['unit_type'].selection).get(property_rec.unit_type, '[   ]')" />
-                        se situant à <span
-                                        t-esc="' '.join(filter(None, [
+                                        t-esc="property_subtype.name if property_subtype else '[   ]'" />
+                        se situant à <span t-esc="' '.join(filter(None, [
+                                            property_rec.street or '',
+                                            property_rec.street2 or '',
+                                            property_rec.city_id.name if property_rec.city_id else '',
+                                            property_rec.zip or ''
+                                        ]))" />
+                                </p>
+
+                                <p>
+                                    <strong>Comprenant :</strong>
+
+                                    <t t-if="'bed' in property_rec._fields and property_rec.bed">
+                        Pièces : <span t-esc="property_rec.bed" />
+                                    <t t-set="bed_lines" t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'room') if 'room_measurement_ids' in property_rec._fields else False" />
+                                    <t t-if="bed_lines"> ( <t t-foreach="bed_lines" t-as="measure">
+                                             <span t-esc="measure.section_id.name" /> = <span
+                                                    t-esc="measure.carpet_area" /> m²<t
+                                                    t-if="not measure_last">, </t>
+                                            </t>             ) </t>
+                                    </t>
+
+                                    <t t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
+                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" /></t>
+                                    <t t-if="'parking' in property_rec._fields and property_rec.parking">
+                        / Parking : <span t-esc="property_rec.parking" /></t>
+                                    </p>
+                                <t t-if="'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
+                                    <p>
+                                        <strong>Commodités :</strong>
+                                        <span
+                                            t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" />
+                                    </p>
+                                </t>
+                            </t>
+
+                            <t t-if="is_common_property">
+
+                                <p>
+                                    <span t-esc="property_subtype.name if property_subtype else '[   ]'" />
+                                    Porte / Lot N° <span t-esc="property_rec.unit_map_label if 'unit_map_label' in property_rec._fields and property_rec.unit_map_label else '[   ]'" />,
+                                    situé au <t t-if="'floor' in property_rec._fields and property_rec.floor == 0">
+                                    RDC</t>
+                                        <t t-elif="'floor' in property_rec._fields and property_rec.floor == 1">1er étage</t>
+                                        <t t-elif="'floor' in property_rec._fields and property_rec.floor">
+                                        <t t-esc="str(property_rec.floor) + 'ème étage'" /></t>
+                                        <t t-else="">[ ]</t> de l'Immeuble / Résidence dénommé(e) : 
+                                        <span t-esc="project_rec.name if project_rec else '__________________'" />
+                                    sis <span t-esc="' '.join(filter(None, [
                                         property_rec.street or '',
                                         property_rec.street2 or '',
                                         property_rec.city_id.name if property_rec.city_id else '',
@@ -470,233 +571,34 @@
 
                                 <p>
                                     <strong>Comprenant :</strong>
+                                        <t t-if="'bed' in property_rec._fields and property_rec.bed">
+                                    Pièces : <span t-esc="property_rec.bed" />
+                                        <t t-set="bed_lines"
+                                           t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'room') if 'room_measurement_ids' in property_rec._fields else False" />
 
-                                    <!-- Chambres -->
-                                    <t t-if="'bed' in property_rec._fields and property_rec.bed">
-                        Chambres : <span t-esc="property_rec.bed" />
-
-        <t
-                                            t-set="bed_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'room') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="bed_lines"> ( <t t-foreach="bed_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
+                                        <t t-if="bed_lines"> ( <t t-foreach="bed_lines" t-as="measure">
+                                             <span t-esc="measure.section_id.name" /> = <span
                                                     t-esc="measure.carpet_area" /> m²<t
                                                     t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
+                                            </t>             ) </t>
                                     </t>
 
-                                    <!-- Séjour -->
-                                    <t
-                                        t-if="'living_room_count' in property_rec._fields and property_rec.living_room_count">
-                        / Séjour : <span t-esc="property_rec.living_room_count" />
-
-        <t
-                                            t-set="living_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'hall') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="living_lines"> ( <t t-foreach="living_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
+                                    <t t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
+                                     / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
                                     </t>
 
-                                    <!-- Salle de bain -->
-                                    <t
-                                        t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
-                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
-
-        <t
-                                            t-set="bath_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'bathroom') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="bath_lines"> ( <t t-foreach="bath_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
-                                    </t>
-
-                                    <!-- Parking -->
-                                    <t
-                                        t-if="'parking' in property_rec._fields and property_rec.parking">
-                        / Parking : <span t-esc="property_rec.parking" />
-
-        <t
-                                            t-set="parking_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'parking') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="parking_lines"> ( <t t-foreach="parking_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
-                                    </t>
-                                    <t t-set="garage_lines"
-                                        t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.name == 'Garage') if 'room_measurement_ids' in property_rec._fields else False" />
-
-                                    <t t-if="garage_lines"> / Garage : <span
-                                            t-esc="sum(garage_lines.mapped('no_of_unit'))" /> ( <t
-                                            t-foreach="garage_lines" t-as="measure">
-                                            <span t-esc="measure.section_id.name" /> = <span
-                                                t-esc="measure.carpet_area" /> m²<t
-                                                t-if="not measure_last">, </t>
-                                        </t>
-                        ) </t>
-                                </p>
-                                <p>
-                                    <t
-                                        t-if="'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
-                                        <p>
-                                            <strong>Commodités :</strong>
-                                            <span
-                                                t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" />
-                                        </p>
+                                    <t t-if="'parking' in property_rec._fields and property_rec.parking">
+                                      / Parking : <span t-esc="property_rec.parking" />
                                     </t>
                                 </p>
 
-                            </t>
-                            <t
-                                t-if="property_rec and property_rec.type == 'residential' and property_rec.property_category == 'commune'">
-                                <p>
-                                    <strong>APPARTEMENT EN COPROPRIÉTÉ / RÉSIDENCE</strong>
-                                </p>
-
-                                <p>
-                                    <span
-                                        t-esc="property_rec.property_subtype_id.name if property_rec.property_subtype_id else '[   ]'" />
-                        de type : <span
-                                        t-esc="dict(property_rec._fields['unit_type'].selection).get(property_rec.unit_type, '[   ]')" />,
-                        Porte N° <span
-                                        t-esc="property_rec.unit_map_label if 'unit_map_label' in property_rec._fields and property_rec.unit_map_label else '[   ]'" />,
-                        situé au <t t-if="property_rec.floor == 0">RDC</t>
-    <t
-                                        t-elif="property_rec.floor == 1">1er étage</t>
-    <t t-else="">
-                                        <t t-esc="str(property_rec.floor) + 'ème étage'" />
-                                    </t>
-                        de l'Immeuble / Résidence dénommé(e) : <span
-                                        t-esc="property_rec.property_project_id.name if property_rec.property_project_id else '__________________'" />
-                        sis <span
-                                        t-esc="' '.join(filter(None, [
-                                        property_rec.street or '',
-                                        property_rec.street2 or '',
-                                        property_rec.city_id.name if property_rec.city_id else '',
-                                        property_rec.zip or ''
-                                    ]))" /></p>
-
-                                <p>
-                                    <strong>Comprenant :</strong>
-
-                                    <!-- Chambres -->
-                                    <t t-if="'bed' in property_rec._fields and property_rec.bed">
-                        Chambres : <span t-esc="property_rec.bed" />
-
-        <t
-                                            t-set="bed_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'room') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="bed_lines"> ( <t t-foreach="bed_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
-                                    </t>
-
-                                    <!-- Séjour -->
-                                    <t
-                                        t-if="'living_room_count' in property_rec._fields and property_rec.living_room_count">
-                        / Séjour : <span t-esc="property_rec.living_room_count" />
-
-        <t
-                                            t-set="living_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'hall') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="living_lines"> ( <t t-foreach="living_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
-                                    </t>
-
-                                    <!-- Salle de bain -->
-                                    <t
-                                        t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
-                        / Salle d'eau / bains : <span t-esc="property_rec.bathroom" />
-
-        <t
-                                            t-set="bath_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'bathroom') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="bath_lines"> ( <t t-foreach="bath_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
-                                    </t>
-
-                                    <!-- Parking -->
-                                    <t
-                                        t-if="'parking' in property_rec._fields and property_rec.parking">
-                        / Parking : <span t-esc="property_rec.parking" />
-
-        <t
-                                            t-set="parking_lines"
-                                            t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'parking') if 'room_measurement_ids' in property_rec._fields else False" />
-
-        <t
-                                            t-if="parking_lines"> ( <t t-foreach="parking_lines"
-                                                t-as="measure">
-                                                <span t-esc="measure.section_id.name" /> = <span
-                                                    t-esc="measure.carpet_area" /> m²<t
-                                                    t-if="not measure_last">, </t>
-                                            </t>
-                        ) </t>
-                                    </t>
-                                    <t t-set="garage_lines"
-                                        t-value="property_rec.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.name == 'Garage') if 'room_measurement_ids' in property_rec._fields else False" />
-
-                                    <t t-if="garage_lines"> / Garage : <span
-                                            t-esc="sum(garage_lines.mapped('no_of_unit'))" /> ( <t
-                                            t-foreach="garage_lines" t-as="measure">
-                                            <span t-esc="measure.section_id.name" /> = <span
-                                                t-esc="measure.carpet_area" /> m²<t
-                                                t-if="not measure_last">, </t>
-                                        </t>
-                        ) </t>
-                                </p>
-                                <p>
-                                    <t
-                                        t-if="'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
-                                        <p>
-                                            <strong>Commodités :</strong>
-                                            <span
-                                                t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" />
-                                        </p>
-                                    </t>
-                                </p>
+                                <t t-if="'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
+                                    <p>
+                                        <strong>Commodités :</strong>
+                                        <span
+                                            t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" />
+                                    </p>
+                                </t>
                             </t>
                         </div>
 
