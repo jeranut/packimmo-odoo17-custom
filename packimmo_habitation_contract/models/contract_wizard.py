@@ -57,6 +57,7 @@ class ContractWizard(models.TransientModel):
 
                 if "foreign_currency_id" in property_id._fields:
                     rec.foreign_currency_id = property_id.foreign_currency_id
+
     @api.depends("foreign_price", "foreign_currency_id")
     def _compute_is_foreign_rent(self):
         for rec in self:
@@ -93,7 +94,7 @@ class ContractWizard(models.TransientModel):
         """
         Create native rental contract
         + save exchange mode
-        + generate habitation contract PDF
+        + generate contract PDF
         + send PDF to tenancy chatter
         """
 
@@ -177,17 +178,31 @@ class ContractWizard(models.TransientModel):
 
         return Tenancy
 
+    def _packimmo_get_report_by_property_type(self, tenancy):
+        if tenancy.property_type == "residential":
+            xmlid = (
+                "packimmo_habitation_contract."
+                "action_report_packimmo_habitation_contract"
+            )
+        else:
+            xmlid = (
+                "packimmo_habitation_contract."
+                "action_report_packimmo_commercial_contract"
+            )
+
+        return self.env.ref(xmlid, raise_if_not_found=False)
+
     def _packimmo_create_habitation_contract_attachment(self, tenancy):
         self.ensure_one()
         tenancy.ensure_one()
 
-        report = self.env.ref(
-            "packimmo_habitation_contract.action_report_packimmo_habitation_contract",
-            raise_if_not_found=False,
-        )
+        report = self._packimmo_get_report_by_property_type(tenancy)
 
         if not report:
-            _logger.warning("Report packimmo habitation contract not found.")
+            _logger.warning(
+                "Aucun rapport de contrat trouvé pour le type de bien %s.",
+                tenancy.property_type,
+            )
             return False
 
         pdf_content, _content_type = report._render_qweb_pdf(
@@ -195,8 +210,9 @@ class ContractWizard(models.TransientModel):
             res_ids=tenancy.ids,
         )
 
-        filename = "Contrat_Bail_Habitation_%s.pdf" % (
-            tenancy.display_name or tenancy.id
+        filename = "%s_%s.pdf" % (
+            report.name.replace(" ", "_"),
+            tenancy.display_name or tenancy.id,
         )
 
         attachment = self.env["ir.attachment"].create(
@@ -222,7 +238,7 @@ class ContractWizard(models.TransientModel):
             tenancy.write(vals)
 
         tenancy.message_post(
-            body="Contrat de bail habitation généré automatiquement depuis l'assistant Contrat.",
+            body="Contrat de bail généré automatiquement depuis l'assistant Contrat.",
             attachment_ids=[attachment.id],
             subtype_xmlid="mail.mt_note",
         )

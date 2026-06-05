@@ -14,6 +14,7 @@
     ],
     "data": [
         "report/report_habitation_contract.xml",
+        "report/report_commercial_contract.xml",
         'views/account_move_view.xml',
         "views/contract_wizard_view.xml",
         "views/tenancy_details_view.xml",

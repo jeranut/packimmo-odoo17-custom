@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="paperformat_packimmo_habitation_contract" model="report.paperformat">
-        <field name="name">PACKIMMO Bail Habitation A4</field>
+    <record id="paperformat_packimmo_commercial_contract" model="report.paperformat">
+        <field name="name">PACKIMMO Bail Commercial A4</field>
         <field name="default" eval="False" />
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
@@ -14,19 +14,18 @@
         <field name="dpi">99</field>
     </record>
 
-    <record id="action_report_packimmo_habitation_contract" model="ir.actions.report">
-        <field name="name">Contrat de bail habitation PACKIMMO</field>
+    <record id="action_report_packimmo_commercial_contract" model="ir.actions.report">
+        <field name="name">Contrat de bail commercial PACKIMMO</field>
         <field name="model">tenancy.details</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">packimmo_habitation_contract.report_packimmo_habitation_contract</field>
-        <field name="report_file">packimmo_habitation_contract.report_packimmo_habitation_contract</field>
-        <field name="print_report_name">'Contrat_Bail_Habitation_%s' % (object.display_name)</field>
+        <field name="report_name">packimmo_habitation_contract.report_packimmo_commercial_contract</field>
+        <field name="report_file">packimmo_habitation_contract.report_packimmo_commercial_contract</field>
+        <field name="print_report_name">'Contrat_Bail_Commercial_%s' % (object.display_name)</field>
         <field name="binding_type">report</field>
         <field name="paperformat_id"
-            ref="packimmo_habitation_contract.paperformat_packimmo_habitation_contract" />
+            ref="packimmo_habitation_contract.paperformat_packimmo_commercial_contract" />
     </record>
-
-    <template id="report_packimmo_habitation_contract">
+    <template id="report_packimmo_commercial_contract">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
                 <t t-set="prop"
@@ -37,7 +36,8 @@
 
 
                         <div class="text-center mb-4 pack-title">
-                            <h2>CONTRAT DE LOCATION UNIQUE À USAGE D'HABITATION</h2>
+                            <h2>CONTRAT DE LOCATION UNIQUE À USAGE
+                        COMMERCIAL,INDUSTRIEL,PROFESSIONNEL OU D'ENTREPÔT</h2>
                             <div class="pk-small">
                                 (Régi par les dispositions du Code Civil applicable à Madagascar, du
                         Code Général des Impôts et des textes réglementaires en vigueur)
@@ -434,12 +434,10 @@
                         <div
                             class="pk-section-title">ARTICLE 1. OBJET ET DESTINATION</div>
                         <p
-                            class="pk-text-justify">Le Bailleur donne en location, pour la durée et
-                        aux conditions définies ci-après, au Preneur qui accepte, le logement
-                            dont la consistance est détaillée à l'Article 2. Le bien immobilier
-                        faisant l'objet du présent bail est loué à usage exclusif d’habitation
-                        personnelle et bourgeoise. Tout usage commercial, professionnel,
-                            industriel ou artisanal est strictement interdit.</p>
+                            class="pk-text-justify">Le Bailleur donne à bail à loyer, à titre professionnel, 
+                            au Preneur qui accepte, les locaux dont il est propriétaire et qui sont désignés 
+                            à l'Article 2. Les parties conviennent expressément que la destination exclusive 
+                            des locaux sera</p>
 
                         <div
                             class="pk-section-title">ARTICLE 2. DÉSIGNATION DU BIEN</div>

@@ -4,14 +4,31 @@
     <record id="tenancy_details_form_view_inherit_exchange_mode" model="ir.ui.view">
         <field name="name">tenancy.details.form.inherit.exchange.mode</field>
         <field name="model">tenancy.details</field>
-        <field name="inherit_id" ref="rental_management.tenancy_details_form_view"/>
+        <field name="inherit_id" ref="rental_management.tenancy_details_form_view" />
         <field name="arch" type="xml">
 
             <xpath expr="//field[@name='total_rent']/.." position="after">
                 <field name="exchange_description"
-                       string="Conversion"
-                       readonly="1"
-                       invisible="not exchange_description"/>
+                    string="Conversion"
+                    readonly="1"
+                    invisible="not exchange_description" />
+            </xpath>
+            <xpath expr="//form/header" position="inside">
+                <button
+                    name="%(packimmo_habitation_contract.action_report_packimmo_commercial_contract)d"
+                    type="action"
+                    string="Contrat commercial"
+                    icon="fa-print"
+                    class="btn btn-success"
+                    invisible="property_type == 'residential' or contract_type != 'running_contract'" />
+
+                <button
+                    name="%(packimmo_habitation_contract.action_report_packimmo_habitation_contract)d"
+                    type="action"
+                    string="Contrat habitation"
+                    icon="fa-print"
+                    class="btn btn-success"
+                    invisible="property_type != 'residential' or contract_type != 'running_contract'" />
             </xpath>
 
         </field>
