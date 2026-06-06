@@ -44,6 +44,11 @@ class PropertyDetails(models.Model):
     has_simple_mandate = fields.Boolean(
         compute="_compute_has_simple_mandate",
     )
+    property_subtype_category = fields.Selection(
+        related="property_subtype_id.category",
+        string="Catégorie sous-type",
+        store=True,
+    )
     is_company_property = fields.Boolean(
         string="Bien appartenant à la société",
         compute="_compute_is_company_property",
@@ -101,8 +106,17 @@ class PropertyDetails(models.Model):
     def action_in_available(self):
         for rec in self:
 
-            # Si le bien appartient à PACKIMMO
-            # on autorise directement
+            is_land_morcellement = (
+                rec.type == "land"
+                and rec.property_subtype_id
+                and rec.property_subtype_id.category == "morcellement"
+            )
+
+            # Cas terrain morcellement : pas besoin de mandat actif
+            if is_land_morcellement:
+                continue
+
+            # Si le bien appartient à PACKIMMO : pas besoin de mandat actif
             if (
                 rec.landlord_id
                 and rec.company_id

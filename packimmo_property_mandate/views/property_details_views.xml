@@ -8,9 +8,16 @@
             <xpath expr="//header" position="inside">
                 <field name="is_company_property" invisible="1"/>
             </xpath>
-
-            <xpath expr="//header/button[@name='action_draft_property']" position="after">
-                <button name="action_open_mandate" type="object" string="Mandat" class="btn btn-primary" icon="fa-file-text-o" invisible="is_company_property"/>
+             <xpath expr="//sheet" position="inside">
+            <field name="property_subtype_category" invisible="1"/>
+            </xpath>
+             <xpath expr="//header/button[@name='action_draft_property']" position="after">
+            <button name="action_open_mandate"
+                    type="object"
+                    string="Mandat"
+                    class="btn btn-primary"
+                    icon="fa-file-text-o"
+                    invisible="is_company_property or (type == 'land' and property_subtype_category == 'morcellement')"/>
             </xpath>
 
             <xpath expr="//notebook" position="inside">
