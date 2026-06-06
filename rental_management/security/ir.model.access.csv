@@ -237,3 +237,7 @@ rental_management.access_property_exposure_manager,access_property_exposure_mana
 rental_management.access_property_exposure_portal,access_property_exposure_portal,rental_management.model_property_exposure,base.group_portal,1,0,0,0
 
 maintenance.access_maintenance_request_portal,access_maintenance_request_portal,maintenance.model_maintenance_request,base.group_portal,1,1,0,0
+
+rental_management.access_property_images_public,property.images public,rental_management.model_property_images,base.group_public,1,0,0,0
+rental_management.access_project_images_line_public,project.images.line public,rental_management.model_project_images_line,base.group_public,1,0,0,0
+rental_management.access_subproject_images_line_public,subproject.images.line public,rental_management.model_subproject_images_line,base.group_public,1,0,0,0

@@ -27,32 +27,27 @@
                             template with that specific name.
                         </div>
                         <notebook>
-    <page string="Agreement">
-        <field name="agreement"
-               widget="html"
-               placeholder="Add your dynamic variable inside {{}}"
-               required="1"/>
-    </page>
-
-    <page string="Variables">
-        <field name="template_variable_ids">
-            <tree create="0" delete="0" editable="bottom">
-                <field name="name" readonly="1" force_save="1"/>
-                <field name="field_type" required="1"/>
-                <field name="model" column_invisible="1"/>
-                <field name="field_name"
-                       options="{'model': 'model'}"
-                       widget="DynamicModelFieldSelectorChar"
-                       invisible="field_type != 'field'"
-                       required="field_type == 'field'"/>
-                <field name="free_text"
-                       invisible="field_type != 'free_text'"
-                       required="field_type == 'free_text'"/>
-                <field name="demo"/>
-            </tree>
-        </field>
-    </page>
-</notebook>
+                            <page string="Agreement">
+                                <field name="agreement" placeholder="Add you dynamic variable inside {{}}"
+                                       required="1"/>
+                            </page>
+                            <page string="Variables">
+                                <field name="template_variable_ids">
+                                    <tree create="0" delete="0" editable="bottom">
+                                        <field name="name" readonly="1" force_save="1"/>
+                                        <field name="field_type" required="1"/>
+                                        <field name="model" column_invisible="1"/>
+                                        <field name="field_name" options="{'model': 'model'}"
+                                               widget="DynamicModelFieldSelectorChar"
+                                               invisible="field_type != 'field'"
+                                               required="field_type == 'field'"/>
+                                        <field name="free_text" invisible="field_type != 'free_text'"
+                                               required="field_type == 'free_text'"/>
+                                        <field name="demo"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

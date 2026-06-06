@@ -7516,7 +7516,7 @@ msgstr "Montant total"
 #: model_terms:ir.ui.view,arch_db:rental_management.rental_user_sell_contract_details
 #: model_terms:ir.ui.view,arch_db:rental_management.tenancy_details_qweb_report_template
 msgid "Total Area"
-msgstr "Surface Total"
+msgstr "Surface habitable"
 
 #. module: rental_management
 #: model:ir.model.fields,field_description:rental_management.field_property_details__total_square_ft
@@ -7868,7 +7868,7 @@ msgstr "Mis en ligne le"
 #: model_terms:ir.ui.view,arch_db:rental_management.rental_user_rent_contract_details
 #: model_terms:ir.ui.view,arch_db:rental_management.rental_user_sell_contract_details
 msgid "Usable Area"
-msgstr "Surface habitable"
+msgstr "Surface total"
 
 #. module: rental_management
 #: model:ir.model.fields,field_description:rental_management.field_property_details__usable_square_ft

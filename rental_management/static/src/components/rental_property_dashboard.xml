@@ -38,7 +38,7 @@
                                         <h4 class="bg-draft mb-1">
                                             <t t-out="this.state.property_data.draft_prop_count" />
                                         </h4>
-                                        <div class="fw-bold">Draft</div>
+                                        <div class="fw-bold">Brouillont</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2" title="Draft Properties">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewProperties('draft','land')">
@@ -60,7 +60,7 @@
                                         <h4 class="bg-available mb-1">
                                             <t t-out="this.state.property_data.available_prop_count" />
                                         </h4>
-                                        <div class="fw-bold">Available</div>
+                                        <div class="fw-bold">Disponible</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2" title="Available">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewProperties('available','land')">
@@ -92,7 +92,7 @@
                                         <h4 class="bg-sale mb-1">
                                             <t t-out="this.state.property_data.total_for_rent_count" />
                                         </h4>
-                                        <div class="fw-bold">For Rent</div>
+                                        <div class="fw-bold">À louer</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewForRentProperties('land')">
@@ -114,7 +114,7 @@
                                         <h4 class="bg-available mb-1">
                                             <t t-out="this.state.property_data.on_lease_prop_count" />
                                         </h4>
-                                        <div class="fw-bold">On Rent</div>
+                                        <div class="fw-bold">En location</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewProperties('on_lease','land')">
@@ -146,7 +146,7 @@
                                         <h4 class="bg-sale mb-1">
                                             <t t-out="this.state.property_data.sale_prop_count" />
                                         </h4>
-                                        <div class="fw-bold">For Sale</div>
+                                        <div class="fw-bold">À vendre</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewProperties('sale','land')">
@@ -168,7 +168,7 @@
                                         <h4 class="bg-booked mb-1">
                                             <t t-out="this.state.property_data.booked_prop_count" />
                                         </h4>
-                                        <div class="fw-bold">Booked</div>
+                                        <div class="fw-bold">Réservé</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewProperties('booked','land')">
@@ -190,7 +190,7 @@
                                         <h4 class="bg-sold mb-1">
                                             <t t-out="this.state.property_data.sold_prop_count" />
                                         </h4>
-                                        <div class="fw-bold bg-sold">Sold</div>
+                                        <div class="fw-bold bg-sold">Vendu</div>
                                     </div>
                                     <div class="d-flex flex-wrap justify-content-center gap-2">
                                         <div class="property_type_box bg-land prop-cursor" title="Land" t-on-click="() => this.viewProperties('sold','land')">
@@ -218,11 +218,11 @@
                 <div class="d-flex justify-content-center w-100">
                     <div class="d-flex m-1 align-items-center">
                         <div class="legend_box bg-land"></div>
-                        <span class="px-2 text-center">Land</span>
+                        <span class="px-2 text-center">Terrain</span>
                     </div>
                     <div class="d-flex m-1 align-items-center">
                         <div class="legend_box bg-residential"></div>
-                        <span class="px-2">Residential</span>
+                        <span class="px-2">Résidentiel</span>
                     </div>
                     <div class="d-flex m-1 align-items-center">
                         <div class="legend_box bg-commercial"></div>
@@ -230,7 +230,7 @@
                     </div>
                     <div class="d-flex m-1 align-items-center">
                         <div class="legend_box bg-industrial"></div>
-                        <span class="px-2">Industrial</span>
+                        <span class="px-2">Industriel</span>
                     </div>
                 </div>
             </div>
