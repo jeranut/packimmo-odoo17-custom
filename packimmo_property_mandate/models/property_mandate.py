@@ -1059,9 +1059,18 @@ class PropertyMandate(models.Model):
     def action_activate(self):
         for rec in self:
             rec.write({"state": "active"})
-            rec.message_post(body=_("Mandat activé. En attente de recherche de locataire / acheteur."))
 
-            rec.message_post(body=_("Mandat activé et facture(s) d’honoraires créée(s)."))
+            draft_properties = rec.property_ids.filtered(lambda p: p.stage == "draft")
+
+            for property_rec in draft_properties:
+                if hasattr(property_rec, "action_in_available"):
+                    property_rec.action_in_available()
+                else:
+                    property_rec.write({"stage": "available"})
+
+            rec.message_post(
+                body=_("Mandat activé. Les biens liés au mandat ont été rendus disponibles.")
+            )
     
     def action_done_and_invoice(self):
         for rec in self:
