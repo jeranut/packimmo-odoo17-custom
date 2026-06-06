@@ -709,6 +709,7 @@ class PropertyMandate(models.Model):
 
             rec.message_post(body=_("Mandat remis en brouillon."))
     
+    @api.depends("invoice_ids")
     def _compute_invoice_count(self):
         for rec in self:
             rec.invoice_count = len(rec.invoice_ids)

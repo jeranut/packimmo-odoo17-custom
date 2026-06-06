@@ -430,14 +430,34 @@
                     <p
                             class="pk-text-justify">Le Preneur déclare parfaitement connaître les
                         lieux pour les avoir vus et visités en vue des présentes, et les trouve
-                            dans les conditions nécessaires à l'usage auquel ils sont destinés.</p>
+                            dans les conditions nécessaires à l'usage auquel ils sont destinés. TEST TEST </p>
 
+                            
                     <div
                             class="pk-property-details">
                             <t t-set="property_rec" t-value="doc.property_ids[:1]" />
 
-                            <t
-                                t-if="property_rec and property_rec.type == 'residential' and property_rec.property_category == 'independant'">
+                            <t t-set="project_rec"
+                                t-value="property_rec.property_project_id if property_rec and property_rec.property_project_id else False" />
+
+                            <t t-set="subproject_rec"
+                                t-value="property_rec.subproject_id if property_rec and 'subproject_id' in property_rec._fields and property_rec.subproject_id else False" />
+
+                            <t t-set="project_property_count"
+                                t-value="len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id)])) if project_rec else 0" />
+
+                            <t t-set="subproject_property_count"
+                                t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else 0" />
+
+                            <t t-set="is_independent_property"
+                                t-value="project_rec and not subproject_rec and project_property_count == 1" />
+
+                            <t t-set="is_common_property"
+                                t-value="(project_rec and not subproject_rec and project_property_count > 1) or (subproject_rec and subproject_property_count > 1)" />
+
+                            <t t-if="is_independent_property">
+                                <!-- colle ici tout le contenu de ton ancien bloc indépendant -->
+
 
                                 <p>
                                     <span
@@ -553,9 +573,11 @@
                                     </t>
                                 </p>
 
+
                             </t>
-                            <t
-                                t-if="property_rec and property_rec.type == 'residential' and property_rec.property_category == 'commune'">
+
+                            <t t-if="is_common_property">
+                                <!-- colle ici tout le contenu de ton ancien bloc commune/résidence -->
                                 <p>
                                     <strong>APPARTEMENT EN COPROPRIÉTÉ / RÉSIDENCE</strong>
                                 </p>
@@ -684,7 +706,6 @@
                                 </p>
                             </t>
                         </div>
-
                     <div
                             class="pk-section-title">
                             ARTICLE 3. DURÉE ET RÉSILIATION ANTICIPÉE
@@ -713,7 +734,8 @@
                             du préavis.</p>
                             <div style="page-break-before: always;"></div>
                         
-                    <div class="pk-section-title">ARTICLE 4. LOYER ET
+                    <div
+                            class="pk-section-title">ARTICLE 4. LOYER ET
                             MODALITÉS DE PAIEMENT
                             (CONFORMITÉ CHANGE)</div>
                     <p class="pk-text-justify">Le présent bail est

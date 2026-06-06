@@ -401,29 +401,59 @@
                             </t>
 
                             <!-- RÉSIDENTIEL -->
-                            <t t-if="property.type == 'residential'">
+                            <t t-if="property.type in ['residential', 'commercial']">
                                 <p class="pk-property-details">
 
-                                    <t
-                                        t-if="'residence_type' in property._fields and property.residence_type">
-                                        <strong>Type résidence :</strong>
+                                    <!-- BIEN RÉSIDENTIEL -->
+                                    <t t-if="property.type == 'residential'">
 
-                                        <span
-                                            t-esc="dict(property._fields['residence_type'].selection).get(property.residence_type, '')" />
-                                        / </t>
+                                        <t
+                                            t-if="'residence_type' in property._fields and property.residence_type">
+                                            <strong>Type résidence :</strong>
 
-                                    <t t-if="'unit_type' in property._fields and property.unit_type">
-                                        <strong>Type du bien:</strong>
+        <span
+                                                t-esc="dict(property._fields['residence_type'].selection).get(property.residence_type, '')" />
+                                            / </t>
 
-                                        <span
-                                            t-esc="dict(property._fields['unit_type'].selection).get(property.unit_type, '')" />
-                                        / </t>
+                                        <t
+                                            t-if="'unit_type' in property._fields and property.unit_type">
+                                            <strong>Type du bien :</strong>
+
+        <span
+                                                t-esc="dict(property._fields['unit_type'].selection).get(property.unit_type, '')" />
+                                            / </t>
+
+                                    </t>
+
+                                    <!-- BIEN COMMERCIAL -->
+                                    <t t-set="property_subtype"
+   t-value="property.property_subtype_id if property and 'property_subtype_id' in property._fields and property.property_subtype_id else False"/>
+
+<t t-if="property.type == 'commercial'">
+
+    <t t-if="property_subtype">
+        <strong>Type :</strong>
+        <span t-esc="property_subtype.name"/> /
+    </t>
+
+    <t t-if="property_subtype
+             and property_subtype.type == 'commercial'
+             and property_subtype.category == 'commercial'
+             and 'commercial_activity' in property._fields
+             and property.commercial_activity">
+
+        <strong>Activité commerciale :</strong>
+        <span t-esc="property.commercial_activity"/> /
+
+    </t>
+
+</t>
 
                                     <t t-if="'bed' in property._fields and property.bed">
-                                        <strong>Chambres :</strong>
-    <span t-esc="property.bed" />
+                                        <strong>Pièce(s) :</strong>
+                                        <span t-esc="property.bed" />
 
-    <t
+                                        <t
                                             t-if="'room_measurement_ids' in property._fields and property.room_measurement_ids">
                                         ( <t
                                                 t-foreach="property.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'room')"
@@ -508,32 +538,39 @@
 
                                     <t
                                         t-if="'floor' in property._fields and property.floor is not False">
-                                        <strong>Étage :</strong>
-                                        <t t-if="property.floor == 0">
-                                            <t
-                                                t-if="'residence_type' in property._fields and property.residence_type == 'villa'">
-                                        Villa basse
-                                            </t>
-                                            <t t-else="">RDC</t>
-                                        </t>
+
                                         <t
-                                            t-elif="property.floor == 1">1er étage</t>
-                                        <t t-else="">
-                                            <span t-esc="str(property.floor) + 'ème étage'" />
+                                            t-if="'total_floor' in property._fields and property.total_floor == 0">
+                                            <strong>Type :</strong> Villa basse / </t>
+
+                                        <t
+                                            t-elif="'total_floor' in property._fields and property.total_floor > 0">
+                                            <strong>Situé au :</strong>
+                                            <t t-if="property.floor == 0">
+                                            RDC</t>
+                                            <t t-elif="property.floor == 1">1er étage</t>
+                                            <t
+                                                t-else="">
+                                                <span t-esc="str(property.floor) + 'ème étage'" />
+                                            </t>
+                                            / <t
+                                                t-if="'unit_map_label' in property._fields and property.unit_map_label">
+                                                <strong>Porte/Lot N°: </strong><span
+                                                    t-esc="property.unit_map_label" /> , </t>
                                         </t>
-                                        / </t>
+                                    </t>
 
                                     <t
                                         t-if="'total_floor' in property._fields and property.total_floor">
                                         <strong>Total étages :</strong>
-
                                         <span
                                             t-esc="property.total_floor" /> / </t>
 
                                     <t
-                                        t-if="'furnishing' in property._fields and property.furnishing">
-                                        <strong>Meublé :</strong> Oui / </t>
-
+                                        t-if="'furnishing_id' in property._fields and property.furnishing_id">
+                                        <strong>Mobilier :</strong>
+                                        <span
+                                            t-esc="property.furnishing_id.name" /> / </t>
                                     <t t-if="property.name">
 
                                         /
@@ -554,331 +591,97 @@
                                         <span
                                             t-esc="property.usable_square_ft if 'usable_square_ft' in property._fields and property.usable_square_ft else property.usable_area" />
                                         m² </t>
-
-                                </p>
-                                <t t-if="property.property_project_id">
-                                    <p class="pk-property-location">
-                                        <strong>se situant à</strong>
-
-                                        <span
-                                            t-esc="' '.join(filter(None, [
-                property.property_project_id.street or '',
-                property.property_project_id.street2 or '',
-                property.property_project_id.city_id.name if property.property_project_id.city_id else '',
-                property.property_project_id.zip or ''
-            ]))" />
-
-                                    </p>
-                                    <t t-if="doc.operation_type == 'rent' and property">
-
-                                        <p>
-                                            <strong>Loyer mensuel :</strong>
-
-                                            <!-- Cas devise étrangère -->
-                                            <t
-                                                t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
-                                                ( <span t-esc="doc.rental_price_text or ''" /> ) </t>
-
-                                            <!-- Cas Ariary uniquement -->
-                                            <t t-else="">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="doc.currency_id.symbol or 'Ar'" /> ( <span
-                                                    t-esc="doc.rental_price_text or ''" /> ) </t>
-                                        </p>
-
-                                        <!-- Affichage équivalent Ariary uniquement si devise
-                                        étrangère -->
-                                        <t
-                                            t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                            <p>
-                                                <strong>Loyer en Ariary :</strong>
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                Ar ( <span
-                                                    t-esc="doc.rental_price_ariary_text or ''" /> ) </p>
-
-                                            <p class="pk-note">
-                                                <strong>NB :</strong> Lorsque le loyer est fixé en
-                                                devise étrangère, son équivalent en Ariary sera
-                                                calculé sur la base du cours MID du jour publié par
-                                                la Banque Centrale de Madagascar à la date
-                                                d’exigibilité ou de paiement du loyer. </p>
-
-                                        </t>
-
-                                    </t>
+                                    <t t-set="property_rec"
+                                        t-value="doc.property_ids[:1] if 'property_ids' in doc._fields and doc.property_ids else False" />
                                     <p>
-                                        <strong>Caution :</strong>
-
-                                        <span
-                                            t-esc="'{:,.0f}'.format(doc.deposit_amount or 0.0).replace(',', ' ')" />
-
-                                        <span t-esc="doc.currency_id.symbol or 'Ar'" />
-
-                                        <t t-if="doc.deposit_type == 'fixed'"> ( <span
-                                                t-esc="doc.deposit_amount_text or ''" /> ) </t>
-
                                         <t
-                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent']">
-                                            ( <span t-esc="doc.deposit_calculation_label or ''" /> ) </t>
-                                    </p>
+                                            t-if="property_rec and 'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
 
-                                    <t t-if="doc.deposit_type == 'fixed'">
-                                        <p>
-                                            Caution fixée d’un commun accord entre les deux parties.
-                                        </p>
-                                    </t>
-                                </t>
-                            </t>
-                            <!-- COMMERCIAL -->
-                            <t t-if="property.type == 'commercial'">
-                                <p class="pk-property-details"> Nom local : <strong>
-                                        <span
-                                            t-esc="property.commercial_name if 'commercial_name' in property._fields and property.commercial_name else property.name or ''" />
-                                    </strong>
-                                    / Type commercial : <strong>
-                                        <span
-                                            t-esc="dict(property._fields['commercial_type'].selection).get(property.commercial_type, '') if 'commercial_type' in property._fields and property.commercial_type else ''" />
-                                    </strong>
-                                    / Usage prévu : <strong>
-                                        <span
-                                            t-esc="dict(property._fields['used_for'].selection).get(property.used_for, '') if 'used_for' in property._fields and property.used_for else ''" />
-                                    </strong>
-                                    / Autre usage : <strong>
-                                        <span
-                                            t-esc="property.other_use if 'other_use' in property._fields and property.other_use else ''" />
-                                    </strong>
-                                    / Étage : <strong>
-                                        <span
-                                            t-esc="property.floor_commercial if 'floor_commercial' in property._fields and property.floor_commercial else 0" />
-                                    </strong>
-                                    / Total étages : <strong>
-                                        <span
-                                            t-esc="property.total_floor_commercial if 'total_floor_commercial' in property._fields and property.total_floor_commercial else 0" />
-                                    </strong>
-                                    / Facilités : <strong>
-                                        <span
-                                            t-esc="property.commercial_facilities if 'commercial_facilities' in property._fields and property.commercial_facilities else ''" />
-                                    </strong>
-                                    / Surface commerciale : <strong>
-                                        <span
-                                            t-esc="property.total_commercial_measure if 'total_commercial_measure' in property._fields and property.total_commercial_measure else 0" />
-                                    m²</strong>
-                                </p>
-                                <t t-if="property.property_project_id">
-                                    <p class="pk-property-location">
-                                        <strong>se situant à</strong>
-
-                                        <span
-                                            t-esc="' '.join(filter(None, [
-                property.property_project_id.street or '',
-                property.property_project_id.street2 or '',
-                property.property_project_id.city_id.name if property.property_project_id.city_id else '',
-                property.property_project_id.zip or ''
-            ]))" />
-
-                                    </p>
-                                    <t t-if="doc.operation_type == 'rent' and property">
-
-                                        <p>
-                                            <strong>Loyer mensuel :</strong>
-
-                                            <!-- Cas devise étrangère -->
-                                            <t
-                                                t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
-                                                ( <span t-esc="doc.rental_price_text or ''" /> ) </t>
-
-                                            <!-- Cas Ariary uniquement -->
-                                            <t t-else="">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="doc.currency_id.symbol or 'Ar'" /> ( <span
-                                                    t-esc="doc.rental_price_text or ''" /> ) </t>
-                                        </p>
-
-                                        <!-- Affichage équivalent Ariary uniquement si devise
-                                        étrangère -->
-                                        <t
-                                            t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                            <p>
-                                                <strong>Loyer en Ariary :</strong>
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                Ar ( <span
-                                                    t-esc="doc.rental_price_ariary_text or ''" /> ) </p>
-
-                                            <p class="pk-note">
-                                                <strong>NB :</strong> Lorsque le loyer est fixé en
-                                                devise étrangère, son équivalent en Ariary sera
-                                                calculé sur la base du cours MID du jour publié par
-                                                la Banque Centrale de Madagascar à la date
-                                                d’exigibilité ou de paiement du loyer. </p>
-
-                                        </t>
-
-                                    </t>
-                                    <p>
-                                        <strong>Caution :</strong>
-
-                                        <span
-                                            t-esc="'{:,.0f}'.format(doc.deposit_amount or 0.0).replace(',', ' ')" />
-
-                                        <span t-esc="doc.currency_id.symbol or 'Ar'" />
-
-                                        <t t-if="doc.deposit_type == 'fixed'"> ( <span
-                                                t-esc="doc.deposit_amount_text or ''" /> ) </t>
-
-                                        <t
-                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent']">
-                                            ( <span t-esc="doc.deposit_calculation_label or ''" /> ) </t>
-                                    </p>
-
-                                    <t t-if="doc.deposit_type == 'fixed'">
-                                        <p>
-                                            Caution fixée d’un commun accord entre les deux parties.
-                                        </p>
-                                    </t>
-                                </t>
-                            </t>
-
-                            <!-- INDUSTRIEL -->
-                            <t t-if="property.type == 'industrial'">
-                                <p class="pk-property-details">
-                                    <strong>Nom industriel :</strong>
-
-                                    <span
-                                        t-esc="property.industry_name if 'industry_name' in property._fields and property.industry_name else property.name or ''" />
-                                    / <strong>Localisation industrielle :</strong>
-
-                                    <span
-                                        t-esc="property.industry_location if 'industry_location' in property._fields and property.industry_location else ''" />
-                                    / <strong>Usage industriel :</strong>
-
-                                    <span
-                                        t-esc="dict(property._fields['industrial_used_for'].selection).get(property.industrial_used_for, '') if 'industrial_used_for' in property._fields and property.industrial_used_for else ''" />
-                                    / <strong>Autre usage :</strong>
-
-                                    <span
-                                        t-esc="property.other_usages if 'other_usages' in property._fields and property.other_usages else ''" />
-                                    / <strong>Facilités :</strong>
-
-                                    <span
-                                        t-esc="property.industrial_facilities if 'industrial_facilities' in property._fields and property.industrial_facilities else ''" />
-                                    / <strong>Surface industrielle :</strong>
-
-                                    <span
-                                        t-esc="property.total_industrial_measure if 'total_industrial_measure' in property._fields and property.total_industrial_measure else 0" />
-                                    m² </p>
-                                <t t-if="property.property_project_id">
-                                    <p class="pk-property-location">
-                                        <strong>se situant à</strong>
-
-                                        <span
-                                            t-esc="' '.join(filter(None, [
-                property.property_project_id.street or '',
-                property.property_project_id.street2 or '',
-                property.property_project_id.city_id.name if property.property_project_id.city_id else '',
-                property.property_project_id.zip or ''
-            ]))" />
-
-                                    </p>
-                                    <t t-if="doc.operation_type == 'rent' and property">
-
-                                        <p>
-                                            <strong>Loyer mensuel :</strong>
-
-                                            <!-- Cas devise étrangère -->
-                                            <t
-                                                t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
-                                                ( <span t-esc="doc.rental_price_text or ''" /> ) </t>
-
-                                            <!-- Cas Ariary uniquement -->
-                                            <t t-else="">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="doc.currency_id.symbol or 'Ar'" /> ( <span
-                                                    t-esc="doc.rental_price_text or ''" /> ) </t>
-                                        </p>
-
-                                        <!-- Affichage équivalent Ariary uniquement si devise
-                                        étrangère -->
-                                        <t
-                                            t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                            <p>
-                                                <strong>Loyer en Ariary :</strong>
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                Ar ( <span
-                                                    t-esc="doc.rental_price_ariary_text or ''" /> ) </p>
-
-                                            <p class="pk-note">
-                                                <strong>NB :</strong> Lorsque le loyer est fixé en
-                                                devise étrangère, son équivalent en Ariary sera
-                                                calculé sur la base du cours MID du jour publié par
-                                                la Banque Centrale de Madagascar à la date
-                                                d’exigibilité ou de paiement du loyer. </p>
-
-                                        </t>
-                                        <p>
-                                            <strong>Caution :</strong>
-
+                                            <strong>Commodités :</strong>
                                             <span
-                                                t-esc="'{:,.0f}'.format(doc.deposit_amount or 0.0).replace(',', ' ')" />
+                                                t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" />
+                                        </t>
+                                    </p>
 
-                                            <span t-esc="doc.currency_id.symbol or 'Ar'" />
+                                </p>
 
-                                            <t t-if="doc.deposit_type == 'fixed'"> ( <span
-                                                    t-esc="doc.deposit_amount_text or ''" /> ) </t>
+                                <t t-if="property.property_project_id">
+                                    <p class="pk-property-location">
+                                        <strong>Se situant à</strong>
 
+                                        <span
+                                            t-esc="' '.join(filter(None, [
+                property.property_project_id.street or '',
+                property.property_project_id.street2 or '',
+                property.property_project_id.city_id.name if property.property_project_id.city_id else '',
+                property.property_project_id.zip or ''
+            ]))" />
+
+                                    </p>
+                                    <t t-if="doc.operation_type == 'rent' and property">
+
+                                        <p>
+                                            <strong>Loyer mensuel :</strong>
+
+                                            <!-- Cas devise étrangère -->
                                             <t
-                                                t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent']">
-                                                ( <span t-esc="doc.deposit_calculation_label or ''" />
-                                                ) </t>
+                                                t-if="'foreign_price' in property._fields and property.foreign_price">
+
+                                                <span
+                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
+                                                <span
+                                                    t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
+                                                ( <span t-esc="doc.rental_price_text or ''" /> ) </t>
+
+                                            <!-- Cas Ariary uniquement -->
+                                            <t t-else="">
+
+                                                <span
+                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+                                                <span
+                                                    t-esc="doc.currency_id.symbol or 'Ar'" /> ( <span
+                                                    t-esc="doc.rental_price_text or ''" /> ) </t>
                                         </p>
 
-                                        <t t-if="doc.deposit_type == 'fixed'">
-                                            <p>
-                                                Caution fixée d’un commun accord entre les deux
-                                                parties.
-                                            </p>
+                                        <!-- Affichage équivalent Ariary uniquement si devise
+                                        étrangère -->
+                                        <t
+                                            t-if="'foreign_price' in property._fields and property.foreign_price">
+
+                                            <p class="pk-note">
+                                                <strong>NB :</strong> Lorsque le loyer est fixé en
+                                                devise étrangère, son équivalent en Ariary sera
+                                                calculé sur la base du cours MID du jour publié par
+                                                la Banque Centrale de Madagascar à la date
+                                                d’exigibilité ou de paiement du loyer. </p>
+
                                         </t>
 
                                     </t>
+                                    <p>
+                                        <strong>Caution :</strong>
+
+                                        <span
+                                            t-esc="'{:,.0f}'.format(doc.deposit_amount or 0.0).replace(',', ' ')" />
+
+                                        <span t-esc="doc.currency_id.symbol or 'Ar'" />
+
+                                        <t t-if="doc.deposit_type == 'fixed'"> ( <span
+                                                t-esc="doc.deposit_amount_text or ''" /> ) </t>
+
+                                        <t
+                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent']">
+                                            ( <span t-esc="doc.deposit_calculation_label or ''" /> ) </t>
+                                    </p>
+
+                                    <t t-if="doc.deposit_type == 'fixed'">
+                                        <p>
+                                            Caution fixée d’un commun accord entre les deux parties.
+                                        </p>
+                                    </t>
                                 </t>
-
                             </t>
-
                         </t>
-
-
                         <!-- ===================================== -->
                         <!-- SECTION II -->
                         <!-- ===================================== -->
