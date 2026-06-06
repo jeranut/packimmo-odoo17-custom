@@ -13,6 +13,7 @@
     "assets": {
         "web.assets_frontend": [
             "packimmo_property_brochure_layout/static/src/css/property_brochure_layout.css",
+            "packimmo_property_brochure_layout/static/src/js/property_brochure_carousel.js",
         ],
     },
     "installable": True,

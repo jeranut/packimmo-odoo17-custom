@@ -44,7 +44,7 @@
 
         <xpath expr="//form[contains(@class, 'property-search-box')]"
                position="attributes">
-            <attribute name="class">property-search-box shadow-sm packimmo-search-overlay</attribute>
+            <attribute name="class">property-search-box property-search-dropdown-box shadow-sm packimmo-search-overlay</attribute>
         </xpath>
 
     </template>
