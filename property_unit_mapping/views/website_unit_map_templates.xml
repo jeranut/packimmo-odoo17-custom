@@ -2,9 +2,10 @@
 <odoo>
     <template id="unit_map_designer_template" name="Property Unit Map Designer">
         <t t-call="website.layout">
-            <t t-set="title">Cartographie - <t t-esc="project.name"/></t>
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+            <t t-set="title">Cartographie - <t t-esc="project.name" /></t>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 
             <style>
                 html, body {
@@ -81,7 +82,7 @@
             </style>
 
             <div class="container-fluid my-4">
-                <h3><t t-esc="project.name"/> — Cartographie des unités</h3>
+                <h3><t t-esc="project.name" /> — Cartographie des unités</h3>
                 <div class="toolbar">
                     <div class="map-toolbar-grid">
                         <div>
@@ -93,7 +94,9 @@
 
                             <div class="alert alert-info phase-info-line">
                                 <strong>Phase = </strong>
-                                <span class="ms-1"><t t-esc="project.name"/></span>
+                                <span class="ms-1">
+                                    <t t-esc="project.name" />
+                                </span>
                             </div>
                         </div>
 
@@ -103,22 +106,28 @@
                         </div>
 
                         <div class="toolbar-actions">
-                            <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier dessin</button>
-                            <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
-                            <button type="button" id="btn_clear_selected" class="btn btn-danger">Effacer dessin</button>
+                            <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier
+                                dessin</button>
+                            <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer
+                                dessin</button>
+                            <button type="button" id="btn_clear_selected" class="btn btn-danger">Effacer
+                                dessin</button>
 
                             <a t-if="map_type == 'subproject'"
-                               t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id"
-                               class="btn btn-dark">Finaliser</a>
+                                t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id"
+                                class="btn btn-dark">Finaliser</a>
 
                             <a t-else=""
-                               t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id"
-                               class="btn btn-dark">Finaliser</a>
+                                t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id"
+                                class="btn btn-dark">Finaliser</a>
                         </div>
                     </div>
 
                     <div class="text-muted mt-2">
-                        Dessin comme le module morcellement : utilisez les boutons polygone/rectangle à gauche, cliquez sur un lot puis “Modifier dessin” pour ajuster les points, puis “Enregistrer dessin”. Le fond utilisé ici est l’image importée, pas une carte Esri/API.
+                        Dessin comme le module morcellement : utilisez les boutons
+                        polygone/rectangle à gauche, cliquez sur un lot puis “Modifier dessin” pour
+                        ajuster les points, puis “Enregistrer dessin”. Le fond utilisé ici est
+                        l’image importée, pas une carte Esri/API.
                     </div>
                     <div class="status-line" id="status_line"></div>
                 </div>
@@ -615,8 +624,8 @@
     <template id="unit_map_preview_template" name="Aperçu cartographie des unités">
         <html>
             <head>
-                <meta charset="utf-8"/>
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                <meta charset="utf-8" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
                 <style>
                     html, body {
                     margin:0;
@@ -743,9 +752,11 @@
 
     <template id="website_property_unit_map_page" name="Carte publique des unités">
         <t t-call="website.layout">
-            <t t-set="title"><t t-esc="project.name"/></t>
+            <t t-set="title">
+                <t t-esc="project.name" />
+            </t>
 
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
             <style>
                 #public_unit_map {
@@ -768,7 +779,9 @@
             </style>
 
             <div class="container-fluid my-4">
-                <h2><t t-esc="project.name"/></h2>
+                <h2>
+                    <t t-esc="project.name" />
+                </h2>
                 <div id="public_unit_map"></div>
             </div>
 
@@ -879,9 +892,10 @@
     </template>
     <template id="unit_map_esri_designer_template" name="Property Unit Map Esri Designer">
         <t t-call="website.layout">
-            <t t-set="title">Cartographie Esri - <t t-esc="project.name"/></t>
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+            <t t-set="title">Cartographie Esri - <t t-esc="project.name" /></t>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
             <style>
                 #unit_map_esri_designer { height: 78vh; width: 100%; border-radius: 12px; background:#f3f3f3; }
                 .toolbar { margin: 15px 0; padding: 12px; background: #f7f7f7; border-radius: 12px; }
@@ -897,13 +911,16 @@
                 @media (max-width: 992px) { .map-toolbar-grid { grid-template-columns:1fr; } }
             </style>
             <div class="container-fluid my-4">
-                <h3><t t-esc="project.name"/> — Cartographie terrain Esri</h3>
+                <h3><t t-esc="project.name" /> — Cartographie terrain Esri</h3>
                 <div class="toolbar">
                     <div class="search-row">
                         <strong>Recherche terrain :</strong>
-                        <input id="search_place" class="form-control" placeholder="Ex : Ivandry, Antananarivo ou -18.8792,47.5079"/>
-                        <button type="button" id="btn_search_place" class="btn btn-secondary">Rechercher</button>
-                        <button type="button" id="btn_use_position" class="btn btn-outline-secondary">Utiliser la position actuelle</button>
+                        <input id="search_place" class="form-control"
+                            placeholder="Ex : Ivandry, Antananarivo ou -18.8792,47.5079" />
+                        <button type="button" id="btn_search_place" class="btn btn-secondary">
+                            Rechercher</button>
+                        <button type="button" id="btn_use_position"
+                            class="btn btn-outline-secondary">Utiliser la position actuelle</button>
                     </div>
                     <div class="map-toolbar-grid">
                         <div>
@@ -912,7 +929,12 @@
                                 <option value="phase">Phase</option>
                                 <option value="unit">Lot / Unité</option>
                             </select>
-                            <div class="alert alert-info phase-info-line"><strong>Phase = </strong><span class="ms-1"><t t-esc="project.name"/></span></div>
+                            <div class="alert alert-info phase-info-line">
+                                <strong>Phase = </strong>
+                                <span class="ms-1">
+                                    <t t-esc="project.name" />
+                                </span>
+                            </div>
                         </div>
 
                         <div>
@@ -921,15 +943,30 @@
                         </div>
 
                         <div class="toolbar-actions">
-                            <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier dessin</button>
-                            <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
-                            <button type="button" id="btn_rename_selected" class="btn btn-secondary">Renommer</button>
-                            <button type="button" id="btn_clear_selected" class="btn btn-danger">Supprimer dessin</button>
-                            <a t-if="map_type == 'subproject'" t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id" class="btn btn-dark">Finaliser</a>
-                            <a t-else="" t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id" class="btn btn-dark">Finaliser</a>
+                            <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier
+                                dessin</button>
+                            <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer
+                                dessin</button>
+                            <button type="button" id="btn_rename_selected" class="btn btn-secondary">
+                                Renommer</button>
+                            <button type="button" id="btn_clear_selected" class="btn btn-danger">Supprimer
+                                dessin</button>
+                            <a t-if="map_type == 'subproject'"
+                                t-attf-href="/property/unit-map/finalize/subproject/#{project.id}"
+                                class="btn btn-dark">
+                                Finaliser
+</a>
+
+                            <a t-else=""
+                                t-attf-href="/property/unit-map/finalize/project/#{project.id}"
+                                class="btn btn-dark">
+                                Finaliser
+</a>
                         </div>
                     </div>
-                    <div class="text-muted mt-2">Fond Esri satellite : dessinez les unités/lots directement sur la carte. Cliquez sur une unité puis “Modifier dessin” pour ajuster les points.</div>
+                    <div class="text-muted mt-2">Fond Esri satellite : dessinez les unités/lots
+                        directement sur la carte. Cliquez sur une unité puis “Modifier dessin” pour
+                        ajuster les points.</div>
                     <div class="status-line" id="status_line"></div>
                 </div>
                 <div class="map-wrapper">
@@ -1025,8 +1062,8 @@
     <template id="unit_map_esri_preview_template" name="Aperçu cartographie Esri des unités">
         <html>
             <head>
-                <meta charset="utf-8"/>
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+                <meta charset="utf-8" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
                 <style>html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#f3f3f3; } #preview_unit_map_esri { height:520px; width:100%; background:#f3f3f3; } .unit-label { background:rgba(255,255,255,0.9); border:1px solid #333; border-radius:4px; padding:2px 6px; font-size:12px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,0.25); }</style>
             </head>
             <body>
@@ -1050,11 +1087,15 @@
 
     <template id="website_property_unit_map_esri_page" name="Carte publique Esri des unités">
         <t t-call="website.layout">
-            <t t-set="title"><t t-esc="project.name"/></t>
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+            <t t-set="title">
+                <t t-esc="project.name" />
+            </t>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
             <style>#public_unit_map_esri { height:80vh; width:100%; border-radius:12px; background:#f3f3f3; } .unit-label { background:rgba(255,255,255,0.9); border:1px solid #333; border-radius:4px; padding:2px 6px; font-size:12px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,0.25); }</style>
             <div class="container-fluid my-4">
-                <h2><t t-esc="project.name"/></h2>
+                <h2>
+                    <t t-esc="project.name" />
+                </h2>
                 <div id="public_unit_map_esri"></div>
             </div>
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
