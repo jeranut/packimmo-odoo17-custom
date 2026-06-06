@@ -132,13 +132,15 @@ class PropertyUnitMapWebsite(http.Controller):
         })
 
     @http.route('/property/unit-map/data/<int:project_id>', type='json', auth='public', methods=['POST'], website=True)
-    def unit_map_data(self, project_id, **kw):
+    def unit_map_data(self, project_id, exclude_draft=False, **kw):
         project = request.env['property.project'].sudo().browse(project_id).exists()
         if not project:
             return {'error': 'Projet introuvable'}
 
-        if request.env.user._is_public():
-            lines = project.unit_map_line_ids.sudo()
+        if exclude_draft or request.env.user._is_public():
+            lines = project.unit_map_line_ids.sudo().filtered(
+                lambda line: line.stage != 'draft'
+            )
         else:
             project.action_prepare_unit_map_lines()
             lines = project.unit_map_line_ids.sudo()
@@ -160,6 +162,7 @@ class PropertyUnitMapWebsite(http.Controller):
                 'label': line.property_id.unit_map_label or '',
                 'stage': line.stage or '',
                 'color': line.color or '#6b7280',
+                'price_per_area': getattr(line.property_id, 'price_per_area', 0) or 0,
                 'price': getattr(line.property_id, 'price', 0) or getattr(line.property_id, 'rent_unit', 0) or 0,
                 'surface': getattr(line.property_id, 'total_area', 0) or getattr(line.property_id, 'land_area', 0) or 0,
                 'geojson': _json_load(line.polygon_json, None),
@@ -180,13 +183,15 @@ class PropertyUnitMapWebsite(http.Controller):
         })
 
     @http.route('/property/subproject/unit-map/data/<int:subproject_id>', type='json', auth='public', methods=['POST'], website=True)
-    def subproject_unit_map_data(self, subproject_id, **kw):
+    def subproject_unit_map_data(self, subproject_id, exclude_draft=False, **kw):
         subproject = request.env['property.sub.project'].sudo().browse(subproject_id).exists()
         if not subproject:
             return {'error': 'Sous-projet introuvable'}
 
-        if request.env.user._is_public():
-            lines = subproject.unit_map_line_ids.sudo()
+        if exclude_draft or request.env.user._is_public():
+            lines = subproject.unit_map_line_ids.sudo().filtered(
+                lambda line: line.stage != 'draft'
+            )
         else:
             subproject.action_prepare_unit_map_lines()
             lines = subproject.unit_map_line_ids.sudo()
@@ -208,6 +213,7 @@ class PropertyUnitMapWebsite(http.Controller):
                 'label': line.property_id.unit_map_label or '',
                 'stage': line.stage or '',
                 'color': line.color or '#6b7280',
+                'price_per_area': getattr(line.property_id, 'price_per_area', 0) or 0,
                 'price': getattr(line.property_id, 'price', 0) or getattr(line.property_id, 'rent_unit', 0) or 0,
                 'surface': getattr(line.property_id, 'total_area', 0) or getattr(line.property_id, 'land_area', 0) or 0,
                 'geojson': _json_load(line.polygon_json, None),
@@ -328,4 +334,3 @@ class PropertyUnitMapWebsite(http.Controller):
         })
 
         return {'ok': True}
-

@@ -765,10 +765,56 @@
                 color: #111;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.25);
                 }
+
+                .unit-map-legend {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px 22px;
+                margin: 0 0 14px;
+                padding: 12px 16px;
+                background: #f5f7fa;
+                border-left: 4px solid #64748b;
+                border-radius: 4px;
+                }
+
+                .unit-map-legend-item {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 115px;
+                padding: 6px 12px;
+                border-radius: 3px;
+                font-weight: 700;
+                color: #1f2937;
+                white-space: nowrap;
+                box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+                }
+
+                .unit-map-legend-item.text-light {
+                color: #fff;
+                }
+
+                .unit-map-legend-help {
+                flex: 1 1 420px;
+                margin: 0;
+                color: #475569;
+                }
             </style>
 
             <div class="container-fluid my-4">
                 <h2><t t-esc="project.name"/></h2>
+                <div class="unit-map-legend" aria-label="Légende des statuts">
+                    <span class="unit-map-legend-item" style="background:#22c55e;">Disponible</span>
+                    <span class="unit-map-legend-item" style="background:#f59e0b;">Réservé</span>
+                    <span class="unit-map-legend-item text-light" style="background:#8b5cf6;">En location</span>
+                    <span class="unit-map-legend-item text-light" style="background:#3b82f6;">En vente</span>
+                    <span class="unit-map-legend-item text-light" style="background:#ef4444;">Vendu</span>
+                    <p class="unit-map-legend-help">
+                        Cliquez sur un bien pour consulter plus de détails ou nous contacter pour
+                        effectuer une réservation.
+                    </p>
+                </div>
                 <div id="public_unit_map"></div>
             </div>
 
@@ -815,7 +861,31 @@
                 return unit.label || unit.code || unit.name || 'Lot';
                 }
 
-                rpc(DATA_ROUTE, {}).then(data =&gt; {
+                function stageLabel(stage) {
+                const labels = {
+                draft: 'Brouillon',
+                available: 'Disponible',
+                booked: 'Réservé',
+                on_lease: 'En location',
+                sale: 'En vente',
+                sold: 'Vendu'
+                };
+                return labels[stage] || stage || '-';
+                }
+
+                function formatNumber(value) {
+                const number = Number(value || 0);
+                return Number.isFinite(number) ? number.toLocaleString('fr-FR') : '0';
+                }
+
+                function pricePerArea(unit) {
+                const value = Number(unit.price_per_area || 0);
+                const price = Number(unit.price || 0);
+                const surface = Number(unit.surface || 0);
+                return value || (surface ? price / surface : 0);
+                }
+
+                rpc(DATA_ROUTE, {exclude_draft: true}).then(data =&gt; {
                 if (!data.project.image_url) return;
 
                 const img = new Image();
@@ -841,9 +911,10 @@
                 layer.bindPopup(`
                 &lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;
                 Code : ${u.code || '-'}&lt;br/&gt;
-                Statut : ${u.stage || '-'}&lt;br/&gt;
-                Surface : ${u.surface || 0}&lt;br/&gt;
-                Prix : ${u.price || 0}
+                Statut : ${stageLabel(u.stage)}&lt;br/&gt;
+                Surface totale : ${formatNumber(u.surface)} m²&lt;br/&gt;
+                Prix par m² : ${formatNumber(pricePerArea(u))} Ariary/m²&lt;br/&gt;
+                Prix : ${formatNumber(u.price)} Ariary
                 `);
 
                 layer.bindTooltip(unitDisplayLabel(u), {
@@ -1052,9 +1123,20 @@
         <t t-call="website.layout">
             <t t-set="title"><t t-esc="project.name"/></t>
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-            <style>#public_unit_map_esri { height:80vh; width:100%; border-radius:12px; background:#f3f3f3; } .unit-label { background:rgba(255,255,255,0.9); border:1px solid #333; border-radius:4px; padding:2px 6px; font-size:12px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,0.25); }</style>
+            <style>#public_unit_map_esri { height:80vh; width:100%; border-radius:12px; background:#f3f3f3; } .unit-label { background:rgba(255,255,255,0.9); border:1px solid #333; border-radius:4px; padding:2px 6px; font-size:12px; font-weight:700; color:#111; box-shadow:0 1px 3px rgba(0,0,0,0.25); } .unit-map-legend { display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px; margin:0 0 14px; padding:12px 16px; background:#f5f7fa; border-left:4px solid #64748b; border-radius:4px; } .unit-map-legend-item { display:inline-flex; align-items:center; justify-content:center; min-width:115px; padding:6px 12px; border-radius:3px; font-weight:700; color:#1f2937; white-space:nowrap; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.18); } .unit-map-legend-item.text-light { color:#fff; } .unit-map-legend-help { flex:1 1 420px; margin:0; color:#475569; }</style>
             <div class="container-fluid my-4">
                 <h2><t t-esc="project.name"/></h2>
+                <div class="unit-map-legend" aria-label="Légende des statuts">
+                    <span class="unit-map-legend-item" style="background:#22c55e;">Disponible</span>
+                    <span class="unit-map-legend-item" style="background:#f59e0b;">Réservé</span>
+                    <span class="unit-map-legend-item text-light" style="background:#8b5cf6;">En location</span>
+                    <span class="unit-map-legend-item text-light" style="background:#3b82f6;">En vente</span>
+                    <span class="unit-map-legend-item text-light" style="background:#ef4444;">Vendu</span>
+                    <p class="unit-map-legend-help">
+                        Cliquez sur un bien pour consulter plus de détails ou nous contacter pour
+                        effectuer une réservation.
+                    </p>
+                </div>
                 <div id="public_unit_map_esri"></div>
             </div>
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1068,7 +1150,7 @@
                 function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
                 function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
                 function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
-                rpc(DATA_ROUTE, {}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); layer.on('mouseover', function() { layer.openPopup(); }); layer.on('mouseout', function() { layer.closePopup(); }); layer.on('click', function() { if (u.brocher_access_token) window.location.href = '/property-brochure/' + u.brocher_access_token; }); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
+                rpc(DATA_ROUTE, {exclude_draft: true}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); layer.on('mouseover', function() { layer.openPopup(); }); layer.on('mouseout', function() { layer.closePopup(); }); layer.on('click', function() { if (u.brocher_access_token) window.location.href = '/property-brochure/' + u.brocher_access_token; }); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
             </script>
         </t>
     </template>

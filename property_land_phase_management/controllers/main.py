@@ -27,6 +27,11 @@ def _geo_defaults(record):
 
 def _unit_payload(line):
     prop = line.property_id
+    price = getattr(prop, 'price', 0) or getattr(prop, 'rent_unit', 0) or 0
+    surface = getattr(prop, 'total_area', 0) or getattr(prop, 'land_area', 0) or 0
+    price_per_area = getattr(prop, 'price_per_area', 0) or (
+        price / surface if isinstance(price, (int, float)) and surface else 0
+    )
     return {
         'line_id': line.id,
         'property_id': prop.id,
@@ -37,8 +42,9 @@ def _unit_payload(line):
         'label': prop.unit_map_label or '',
         'stage': line.stage or '',
         'color': line.color or '#6b7280',
-        'price': getattr(prop, 'price', 0) or getattr(prop, 'rent_unit', 0) or 0,
-        'surface': getattr(prop, 'total_area', 0) or getattr(prop, 'land_area', 0) or 0,
+        'price_per_area': price_per_area,
+        'price': price,
+        'surface': surface,
         'geojson': _json_load(line.polygon_json, None),
         'brocher_access_token': prop.brocher_access_token or '',
     }
@@ -107,7 +113,7 @@ class PropertyLandPhaseController(http.Controller):
         })
 
     @http.route('/property/land-phase/project/data/<int:project_id>', type='json', auth='public', methods=['POST'], website=True)
-    def project_data(self, project_id, **kw):
+    def project_data(self, project_id, exclude_draft=False, **kw):
         project = request.env['property.project'].sudo().browse(project_id).exists()
         if not project or not _is_land(project):
             return {'error': 'Projet terrain introuvable'}
@@ -121,6 +127,8 @@ class PropertyLandPhaseController(http.Controller):
             ('project_id', '=', project.id),
             ('subproject_id', 'in', subprojects.ids),
         ], order='sequence, id')
+        if exclude_draft:
+            lines = lines.filtered(lambda line: line.stage != 'draft')
 
         return {
             'project': {
