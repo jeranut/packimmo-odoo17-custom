@@ -7,6 +7,17 @@ from werkzeug.urls import url_encode
 class PropertyListDynamicSliderController(http.Controller):
     """Website property list with modern switch + dropdown filters."""
 
+    def _get_property_group_key(self, prop):
+        if prop.type == "land" and prop.subproject_id:
+            return "land_sub_%s" % prop.subproject_id.id
+        if prop.type == "land" and prop.property_project_id:
+            return "land_project_%s" % prop.property_project_id.id
+        if prop.subproject_id:
+            return "sub_%s" % prop.subproject_id.id
+        if prop.property_project_id:
+            return "project_%s" % prop.property_project_id.id
+        return "property_%s" % prop.id
+
     def _to_int(self, value):
         try:
             return int(value) if value not in (None, "") else False
@@ -145,29 +156,17 @@ class PropertyListDynamicSliderController(http.Controller):
         display_properties = Property.browse()
         seen_keys = []
         project_property_count = {}
+        project_sale_lease_status = {}
 
         for prop in all_properties:
-            if prop.type == "land" and prop.property_project_id:
-                key = prop.property_project_id.id
-                project_property_count[key] = project_property_count.get(key, 0) + 1
-                continue
-
-            if prop.subproject_id:
-                key = "sub_%s" % prop.subproject_id.id
-                project_property_count[key] = project_property_count.get(key, 0) + 1
-            elif prop.property_project_id:
-                key = prop.property_project_id.id
-                project_property_count[key] = project_property_count.get(key, 0) + 1
+            key = self._get_property_group_key(prop)
+            project_property_count[key] = project_property_count.get(key, 0) + 1
+            project_sale_lease_status.setdefault(key, set())
+            if prop.sale_lease:
+                project_sale_lease_status[key].add(prop.sale_lease)
 
         for prop in all_properties:
-            if prop.type == "land" and prop.property_project_id:
-                key = "land_project_%s" % prop.property_project_id.id
-            elif prop.subproject_id:
-                key = "sub_%s" % prop.subproject_id.id
-            elif prop.property_project_id:
-                key = "project_%s" % prop.property_project_id.id
-            else:
-                key = "property_%s" % prop.id
+            key = self._get_property_group_key(prop)
 
             if key not in seen_keys:
                 display_properties += prop
@@ -228,6 +227,8 @@ class PropertyListDynamicSliderController(http.Controller):
                 "page": page,
                 "total_pages": total_pages,
                 "pager_query": pager_query,
+                "filter_url": "&" + pager_query if pager_query else "",
                 "project_property_count": project_property_count,
+                "project_sale_lease_status": project_sale_lease_status,
             },
         )

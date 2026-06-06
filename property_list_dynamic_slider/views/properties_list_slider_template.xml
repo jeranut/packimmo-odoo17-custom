@@ -188,7 +188,114 @@
             </form>
         </xpath>
 
-        <!-- Pagination preserving filters -->
+        <!-- Modern property cards, kept entirely in the extension module. -->
+        <xpath expr="//t[@t-foreach='properties']" position="replace">
+            <t t-foreach="properties" t-as="property">
+                <t t-set="property_group_key" t-value="
+                    'land_sub_%s' % property.subproject_id.id if property.type == 'land' and property.subproject_id
+                    else 'land_project_%s' % property.property_project_id.id if property.type == 'land' and property.property_project_id
+                    else 'sub_%s' % property.subproject_id.id if property.subproject_id
+                    else 'project_%s' % property.property_project_id.id if property.property_project_id
+                    else 'property_%s' % property.id
+                "/>
+                <t t-set="unit_count" t-value="project_property_count.get(property_group_key, 1)"/>
+                <t t-set="sale_lease_values" t-value="project_sale_lease_status.get(property_group_key, [])"/>
+                <t t-set="hide_price" t-value="unit_count &gt; 1"/>
+                <t t-set="display_title" t-value="
+                    property.subproject_id.name if property.subproject_id
+                    else property.property_project_id.name if property.property_project_id
+                    else property.name
+                "/>
+                <t t-set="detail_href" t-value="
+                    '/property/land-phase/project/%s/map' % property.property_project_id.id if property.type == 'land' and property.property_project_id
+                    else '/property/subproject/%s/unit-map' % property.subproject_id.id if property.subproject_id and unit_count &gt; 1
+                    else '/property/project/%s/unit-map' % property.property_project_id.id if property.property_project_id and unit_count &gt; 1
+                    else '/property-brochure/%s' % property.brocher_access_token if property.brocher_access_token
+                    else False
+                "/>
+
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <article class="pack-property-card h-100">
+                        <div class="pack-property-media">
+                            <img t-if="property.subproject_id and property.subproject_id.subproject_image_ids"
+                                 t-att-src="'/web/image/subproject.images.line/%s/image' % property.subproject_id.subproject_image_ids[0].id"
+                                 t-att-alt="display_title"
+                                 class="pack-property-image"/>
+                            <img t-elif="property.property_project_id and property.property_project_id.project_image_ids"
+                                 t-att-src="'/web/image/project.images.line/%s/image' % property.property_project_id.project_image_ids[0].id"
+                                 t-att-alt="display_title"
+                                 class="pack-property-image"/>
+                            <img t-elif="property.property_images_ids"
+                                 t-att-src="'/web/image/property.images/%s/image' % property.property_images_ids[0].id"
+                                 t-att-alt="display_title"
+                                 class="pack-property-image"/>
+                            <img t-elif="property.image"
+                                 t-att-src="'/web/image/property.details/%s/image' % property.id"
+                                 t-att-alt="display_title"
+                                 class="pack-property-image"/>
+                            <img t-else="" src="/web/static/img/placeholder.png" t-att-alt="display_title" class="pack-property-image"/>
+
+                            <div class="pack-property-status">
+                                <i class="fa fa-tag" aria-hidden="true"/>
+                                <t t-if="'for_sale' in sale_lease_values and 'for_tenancy' in sale_lease_values">Vente et location</t>
+                                <t t-elif="'for_sale' in sale_lease_values">À vendre</t>
+                                <t t-elif="'for_tenancy' in sale_lease_values">À louer</t>
+                                <t t-elif="property.sale_lease == 'for_sale'">À vendre</t>
+                                <t t-else="">À louer</t>
+                            </div>
+
+                            <div t-if="not hide_price and property.price and property.price &gt; 0" class="pack-property-price">
+                                <t t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')"/>
+                                Ar
+                            </div>
+                        </div>
+
+                        <div class="pack-property-body">
+                            <div class="pack-property-kind">
+                                <t t-esc="property.property_subtype_id.name or property.type or ''"/>
+                            </div>
+
+                            <h3 class="pack-property-title">
+                                <t t-esc="display_title"/>
+                            </h3>
+
+                            <div t-if="property.city or property.city_id" class="pack-property-location">
+                                <i class="fa fa-map-marker" aria-hidden="true"/>
+                                <span t-esc="property.city or property.city_id.name"/>
+                            </div>
+
+                            <div class="pack-property-features">
+                                <span t-if="property.type != 'land' and property.bed" class="pack-property-feature">
+                                    <i class="fa fa-bed" aria-hidden="true"/>
+                                    <t t-esc="property.bed"/>
+                                    chambre<t t-if="property.bed &gt; 1">s</t>
+                                </span>
+                                <span t-if="property.type != 'land' and property.bathroom" class="pack-property-feature">
+                                    <i class="fa fa-bath" aria-hidden="true"/>
+                                    <t t-esc="property.bathroom"/>
+                                    SDB
+                                </span>
+                                <span t-if="property.total_area" class="pack-property-feature">
+                                    <i class="fa fa-expand" aria-hidden="true"/>
+                                    <t t-esc="'{:,.1f}'.format(property.total_area).replace(',', ' ').replace('.', ',')"/>
+                                    m²
+                                </span>
+                                <span t-if="property.type != 'land' and property.parking" class="pack-property-feature">
+                                    <i class="fa fa-car" aria-hidden="true"/>
+                                    <t t-esc="property.parking"/>
+                                    parking<t t-if="property.parking &gt; 1">s</t>
+                                </span>
+                            </div>
+
+                            <a t-if="detail_href" t-att-href="detail_href" class="btn pack-property-detail">
+                                Voir le détail
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            </t>
+        </xpath>
+
         <!-- Pagination preserving filters -->
         <xpath expr="//t[@t-if='total_pages &gt; 1']" position="replace">
             <t t-if="total_pages &gt; 1">
