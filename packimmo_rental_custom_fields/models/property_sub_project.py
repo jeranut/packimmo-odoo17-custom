@@ -3,6 +3,7 @@ from odoo import api, models,fields
 
 class PropertySubProject(models.Model):
     _inherit = "property.sub.project"
+    _order = "date_of_project desc, id desc"
 
     property_type = fields.Selection(
         [

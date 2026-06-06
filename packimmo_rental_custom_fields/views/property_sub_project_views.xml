@@ -7,7 +7,37 @@
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="rental_management.property_sub_project_view_tree" />
         <field name="domain">[('property_subtype_id.name', '=', 'Morcellement')]</field>
+        <field name="context">
+            {
+                'search_default_groupby_property_type': 1,
+                'search_default_groupby_project_for': 2
+            }
+        </field>
     </record>
+
+    <record id="property_sub_project_search_view_inherit_default_groups" model="ir.ui.view">
+        <field name="name">property.sub.project.search.view.inherit.default.groups</field>
+        <field name="model">property.sub.project</field>
+        <field name="inherit_id" ref="rental_management.property_sub_project_search_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='groupby_project']" position="after">
+                <filter string="Property Type" name="groupby_property_type" domain="[]"
+                        context="{'group_by': 'property_type'}"/>
+                <filter string="Project For" name="groupby_project_for" domain="[]"
+                        context="{'group_by': 'project_for'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="rental_management.action_property_sub_project" model="ir.actions.act_window">
+        <field name="context">
+            {
+                'search_default_groupby_property_type': 1,
+                'search_default_groupby_project_for': 2
+            }
+        </field>
+    </record>
+
     <record id="property_sub_project_view_form_no_create_subtype" model="ir.ui.view">
     <field name="name">property.sub.project.view.form.no.create.subtype</field>
     <field name="model">property.sub.project</field>

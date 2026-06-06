@@ -161,4 +161,13 @@
         </field>
     </record>
 
+    <record id="rental_management.action_property_project" model="ir.actions.act_window">
+        <field name="context">
+            {
+                'search_default_groupby_property_type': 1,
+                'search_default_groupby_project_for': 2
+            }
+        </field>
+    </record>
+
 </odoo>

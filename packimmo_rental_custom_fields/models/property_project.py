@@ -6,6 +6,7 @@ from odoo.exceptions import ValidationError
 
 class PropertyProject(models.Model):
     _inherit = "property.project"
+    _order = "date_of_project desc, id desc"
 
     property_type = fields.Selection(
         selection=[
