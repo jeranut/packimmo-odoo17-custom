@@ -107,13 +107,9 @@
                             <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
                             <button type="button" id="btn_clear_selected" class="btn btn-danger">Effacer dessin</button>
 
-                            <a t-if="map_type == 'subproject'"
-                               t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id"
-                               class="btn btn-dark">Finaliser</a>
-
-                            <a t-else=""
-                               t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id"
-                               class="btn btn-dark">Finaliser</a>
+                            <button type="button" class="btn btn-dark" onclick="window.close();">
+                                Finaliser
+                            </button>
                         </div>
                     </div>
 
@@ -1009,8 +1005,7 @@
                             <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
                             <button type="button" id="btn_rename_selected" class="btn btn-secondary">Renommer</button>
                             <button type="button" id="btn_clear_selected" class="btn btn-danger">Supprimer dessin</button>
-                            <a t-if="map_type == 'subproject'" t-att-href="'/web#id=%s&amp;model=property.sub.project&amp;view_type=form' % project.id" class="btn btn-dark">Finaliser</a>
-                            <a t-else="" t-att-href="'/web#id=%s&amp;model=property.project&amp;view_type=form' % project.id" class="btn btn-dark">Finaliser</a>
+                            <button type="button" class="btn btn-dark" onclick="window.close();">Finaliser</button>
                         </div>
                     </div>
                     <div class="text-muted mt-2">Fond Esri satellite : dessinez les unités/lots directement sur la carte. Cliquez sur une unité puis “Modifier dessin” pour ajuster les points.</div>

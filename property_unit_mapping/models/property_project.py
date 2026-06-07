@@ -91,7 +91,7 @@ class PropertyProject(models.Model):
         return {
             'type': 'ir.actions.act_url',
             'url': url,
-            'target': 'self',
+            'target': 'new',
         }
 
     def action_prepare_unit_map_lines(self):
