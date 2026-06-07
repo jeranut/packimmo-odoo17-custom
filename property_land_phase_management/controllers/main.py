@@ -69,6 +69,7 @@ class PropertyLandPhaseController(http.Controller):
         return request.render('property_land_phase_management.land_phase_project_designer_template', {
             'project': project,
             'map_type': 'project',
+            'designer_mode': True,
         })
 
     @http.route('/property/land-phase/subproject/esri-designer/<int:subproject_id>', type='http', auth='user', website=True)
@@ -90,6 +91,7 @@ class PropertyLandPhaseController(http.Controller):
             return request.not_found()
         return request.render('property_land_phase_management.land_phase_public_map_template', {
             'project': project,
+            'designer_mode': False,
         })
 
     @http.route('/property/land-phase/project/<int:project_id>/preview', type='http', auth='user', website=True)

@@ -16,7 +16,7 @@ class PropertySubProject(models.Model):
             return {
                 'type': 'ir.actions.act_url',
                 'url': '/property/land-phase/subproject/esri-designer/%s' % self.id,
-                'target': 'self',
+                'target': 'new',
             }
         return super().action_open_unit_map_editor()
 
