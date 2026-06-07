@@ -691,6 +691,10 @@
                     return unit.label || unit.code || unit.name || 'Lot';
                     }
 
+                    function priceSuffix(unit) {
+                    return unit.is_rental ? ' /Mois' : '';
+                    }
+
                     rpc(DATA_ROUTE, {}).then(data =&gt; {
                     if (!data.project.image_url) return;
 
@@ -719,7 +723,7 @@
                     Code : ${u.code || '-'}&lt;br/&gt;
                     Statut : ${u.stage || '-'}&lt;br/&gt;
                     Surface : ${u.surface || 0}&lt;br/&gt;
-                    Prix : ${u.price || 0}
+                    Prix : ${u.price || 0}${priceSuffix(u)}
                     `);
 
                     layer.bindTooltip(unitDisplayLabel(u), {
@@ -885,6 +889,15 @@
                 return value || (surface ? price / surface : 0);
                 }
 
+                function pricePerAreaLine(unit, isLand) {
+                if (!isLand) return '';
+                return `Prix par m² : ${formatNumber(pricePerArea(unit))} Ariary/m²&lt;br/&gt;`;
+                }
+
+                function priceSuffix(unit) {
+                return unit.is_rental ? ' /Mois' : '';
+                }
+
                 rpc(DATA_ROUTE, {exclude_draft: true}).then(data =&gt; {
                 if (!data.project.image_url) return;
 
@@ -913,8 +926,8 @@
                 Code : ${u.code || '-'}&lt;br/&gt;
                 Statut : ${stageLabel(u.stage)}&lt;br/&gt;
                 Surface totale : ${formatNumber(u.surface)} m²&lt;br/&gt;
-                Prix par m² : ${formatNumber(pricePerArea(u))} Ariary/m²&lt;br/&gt;
-                Prix : ${formatNumber(u.price)} Ariary
+                ${pricePerAreaLine(u, data.project.is_land)}
+                Prix : ${formatNumber(u.price)} Ariary${priceSuffix(u)}
                 `);
 
                 layer.bindTooltip(unitDisplayLabel(u), {
@@ -1113,7 +1126,8 @@
                     function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
                     function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
                     function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
-                    rpc(DATA_ROUTE, {}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
+                    function priceSuffix(unit) { return unit.is_rental ? ' /Mois' : ''; }
+                    rpc(DATA_ROUTE, {}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}${priceSuffix(u)}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
                 </script>
             </body>
         </html>
@@ -1150,7 +1164,8 @@
                 function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
                 function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
                 function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
-                rpc(DATA_ROUTE, {exclude_draft: true}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); layer.on('mouseover', function() { layer.openPopup(); }); layer.on('mouseout', function() { layer.closePopup(); }); layer.on('click', function() { if (u.brocher_access_token) window.location.href = '/property-brochure/' + u.brocher_access_token; }); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
+                function priceSuffix(unit) { return unit.is_rental ? ' /Mois' : ''; }
+                rpc(DATA_ROUTE, {exclude_draft: true}).then(data =&gt; { if (data.project) map.setView([data.project.latitude || -18.8792, data.project.longitude || 47.5079], data.project.zoom || 16); (data.units || []).forEach(u =&gt; { const feature = toFeature(u.geojson); if (!feature) return; L.geoJSON(feature, {style:{color:u.color || '#6b7280', fillColor:u.color || '#6b7280', weight:2, fillOpacity:0.45}, onEachFeature:function(f, layer) { layer.bindPopup(`&lt;b&gt;${unitDisplayLabel(u)}&lt;/b&gt;&lt;br/&gt;Code : ${u.code || '-'}&lt;br/&gt;Statut : ${u.stage || '-'}&lt;br/&gt;Prix : ${u.price || 0}${priceSuffix(u)}`); layer.bindTooltip(unitDisplayLabel(u), {permanent:true, direction:'center', className:'unit-label'}); layer.on('mouseover', function() { layer.openPopup(); }); layer.on('mouseout', function() { layer.closePopup(); }); layer.on('click', function() { if (u.brocher_access_token) window.location.href = '/property-brochure/' + u.brocher_access_token; }); all.addLayer(layer); }}); }); if (all.getLayers().length) map.fitBounds(all.getBounds(), {padding:[20,20]}); });
             </script>
         </t>
     </template>
