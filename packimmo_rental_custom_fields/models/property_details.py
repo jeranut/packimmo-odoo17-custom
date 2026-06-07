@@ -5,7 +5,15 @@ from odoo.exceptions import ValidationError
 class PropertyDetails(models.Model):
     _inherit = "property.details"
 
-    
+    stage = fields.Selection(
+        selection_add=[
+            ("completed", "Terminé"),
+        ],
+        ondelete={
+            "completed": "set default",
+        },
+    )
+
     type = fields.Selection(
         [
             ("land", "Terrain"),
@@ -14,6 +22,12 @@ class PropertyDetails(models.Model):
         ],
         string="Property Type",
     )
+
+    @api.model
+    def _expand_groups(self, states, domain, order):
+        groups = super()._expand_groups(states, domain, order)
+        return groups if "completed" in groups else [*groups, "completed"]
+
     commercial_activity = fields.Char(
     string="Activité commerciale",
 )

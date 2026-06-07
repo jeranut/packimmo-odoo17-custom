@@ -588,6 +588,29 @@ class PropertyMandate(models.Model):
             else:
                 rec.invoice_payment_status = "not_paid"
 
+            rec._sync_state_with_invoice_payment_status()
+
+    def _sync_state_with_invoice_payment_status(self):
+        for rec in self:
+            if rec.invoice_payment_status == "reversed" and rec.state != "cancelled":
+                rec.write({"state": "cancelled"})
+                rec.property_ids.write({"stage": "completed"})
+                rec.message_post(
+                    body=_(
+                        "Le mandat a été automatiquement annulé car une facture "
+                        "d’honoraires a été extournée. Le bien lié a été "
+                        "marqué comme terminé."
+                    )
+                )
+            elif rec.invoice_payment_status == "paid" and rec.state == "active":
+                rec.write({"state": "completed"})
+                rec.message_post(
+                    body=_(
+                        "Le mandat a été automatiquement marqué comme terminé "
+                        "car toutes les factures d’honoraires ont été payées."
+                    )
+                )
+
     @api.depends("invoice_id.payment_state")
     def _compute_payment_status(self):
         for rec in self:
@@ -1133,8 +1156,12 @@ class PropertyMandate(models.Model):
 
             rec._create_fee_invoices()
 
-            rec.write({"state": "completed"})
-            rec.message_post(body=_("Mandat terminé et facture(s) d’honoraires générée(s)."))
+            rec.message_post(
+                body=_(
+                    "Facture(s) d’honoraires générée(s). Le mandat sera terminé "
+                    "automatiquement après leur paiement intégral."
+                )
+            )
 
     def _create_fee_invoices(self):
         for rec in self:
@@ -1247,28 +1274,6 @@ class PropertyMandate(models.Model):
                 % ", ".join(created_invoices.mapped("name"))
             )
 
-    @api.depends("invoice_id.payment_state")
-    def _compute_payment_status(self):
-        for rec in self:
-
-            payment_state = (
-                rec.invoice_id.payment_state if rec.invoice_id else "not_paid"
-            )
-
-            rec.payment_status = payment_state
-
-            # Si facture payée → mandat terminé
-            if payment_state == "paid" and rec.state == "active":
-
-                rec.state = "completed"
-
-                rec.message_post(
-                    body=_(
-                        "Le mandat a été automatiquement marqué comme terminé "
-                        "car la facture des honoraires a été payée."
-                    )
-                )
-    
     def _get_exclusive_contract_report(self):
         self.ensure_one()
         property_rec = self.property_ids[:1]
@@ -1367,6 +1372,18 @@ class PropertyMandate(models.Model):
 
 
     def write(self, vals):
+        if vals.get("state") == "completed":
+            unpaid_mandates = self.filtered(
+                lambda mandate: mandate.invoice_payment_status != "paid"
+            )
+            if unpaid_mandates:
+                raise ValidationError(
+                    _(
+                        "Un mandat ne peut être terminé que lorsque toutes les "
+                        "factures d’honoraires sont payées."
+                    )
+                )
+
         if self.env.context.get("skip_exclusive_contract_sync"):
             return super().write(vals)
 
@@ -1387,6 +1404,13 @@ class PropertyMandate(models.Model):
                     rec._get_or_create_exclusive_contract()
 
         res = super().write(vals)
+
+        if vals.get("state") == "completed":
+            properties = self.filtered(
+                lambda mandate: mandate.mandate_type
+                in ("simple", "exclusive")
+            ).mapped("property_ids")
+            properties.write({"stage": "completed"})
 
         self._sync_rent_bank_account()
         self._sync_rent_type_with_property_currency()

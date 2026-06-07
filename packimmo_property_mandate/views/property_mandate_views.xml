@@ -62,7 +62,7 @@
                         type="object"
                         string="Terminer et facturer"
                         class="btn-primary"
-                        invisible="state != 'active'" />
+                        invisible="state != 'active' or invoice_ids" />
                 </header>
                 <sheet>
                     <div name="button_box" class="oe_button_box">
