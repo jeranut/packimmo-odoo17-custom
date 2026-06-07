@@ -24,10 +24,15 @@
                                 <span t-field="property_id.type"/>
                             </span>
                             <span class="pk-badge pk-badge-sale" t-if="property_id.sale_lease">
-                                <span t-field="property_id.sale_lease"/>
+                                <t t-if="property_id.sale_lease == 'for_sale'">À vendre</t>
+                                <t t-elif="property_id.sale_lease == 'for_tenancy'">À louer</t>
+                                <span t-else="" t-field="property_id.sale_lease"/>
                             </span>
                         </div>
                         <h1 t-field="property_id.name"/>
+                        <div class="pk-unit-map-label" t-if="property_id.unit_map_label">
+                            Lot: <span t-esc="property_id.unit_map_label"/>
+                        </div>
                         <div class="pk-location" t-if="property_id.city_id or property_id.city or property_id.region_id">
                             <i class="fa fa-map-marker me-1"/>
                             <span t-if="property_id.city_id" t-field="property_id.city_id"/>
@@ -79,25 +84,117 @@
                             <p t-else="">Contactez-nous pour obtenir plus d'informations sur ce bien.</p>
                         </section>
 
-                        <section class="pk-section">
+                        <section class="pk-section"
+                                 t-if="property_id.unit_type or property_id.sale_lease or property_id.property_seq or property_id.total_area or property_id.usable_area or property_id.facing or (property_id.type == 'residential' and (property_id.total_floor or property_id.parking or property_id.bed or property_id.bathroom))">
                             <h3>Caractéristiques du bien</h3>
-                            <div class="pk-grid">
+                            <div class="pk-property-features-grid">
                                 <div class="pk-info" t-if="property_id.unit_type"><small>Type de bien</small><strong t-field="property_id.unit_type"/></div>
-                                <div class="pk-info" t-if="property_id.sale_lease"><small>Type d'opération</small><strong t-field="property_id.sale_lease"/></div>
+                                <div class="pk-info" t-if="property_id.sale_lease">
+                                    <small>Type d'opération</small>
+                                    <strong t-if="property_id.sale_lease == 'for_sale'">À vendre</strong>
+                                    <strong t-elif="property_id.sale_lease == 'for_tenancy'">À louer</strong>
+                                    <strong t-else="" t-field="property_id.sale_lease"/>
+                                </div>
                                 <div class="pk-info" t-if="property_id.property_seq"><small>Référence</small><strong t-field="property_id.property_seq"/></div>
                                 <div class="pk-info" t-if="property_id.total_area"><small>Surface totale</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.usable_area"><small>Surface habitable</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>
+                                <div class="pk-info" t-if="property_id.type == 'residential' and property_id.total_floor"><small>Étages</small><strong t-field="property_id.total_floor"/></div>
+                                <div class="pk-info" t-if="property_id.type == 'residential' and property_id.parking"><small>Parking</small><strong t-field="property_id.parking"/></div>
+                                <div class="pk-info" t-if="property_id.type == 'residential' and property_id.bed"><small>Chambres</small><strong t-field="property_id.bed"/></div>
+                                <div class="pk-info" t-if="property_id.type == 'residential' and property_id.bathroom"><small>Salles de bain</small><strong t-field="property_id.bathroom"/></div>
                             </div>
                         </section>
 
-                        <section class="pk-section" t-if="property_id.type == 'residential'">
-                            <h3>Détails résidentiels</h3>
-                            <div class="pk-grid pk-grid-four">
-                                <div class="pk-info"><small>Étages</small><strong t-field="property_id.total_floor"/></div>
-                                <div class="pk-info"><small>Parking</small><strong t-field="property_id.parking"/></div>
-                                <div class="pk-info"><small>Chambres</small><strong t-field="property_id.bed"/></div>
-                                <div class="pk-info"><small>Salles de bain</small><strong t-field="property_id.bathroom"/></div>
+                        <section class="pk-section" t-if="property_id.amenities and property_id.amenities_ids">
+                            <h3>Commodités</h3>
+                            <div class="pk-amenities-grid">
+                                <t t-foreach="property_id.amenities_ids" t-as="amenity">
+                                    <div class="pk-amenity-card" t-if="amenity.title">
+                                        <div class="pk-amenity-logo">
+                                            <img t-if="amenity.image"
+                                                 t-att-src="image_data_uri(amenity.image)"
+                                                 t-att-alt="amenity.title"/>
+                                            <i t-else="" class="fa fa-check" aria-hidden="true"/>
+                                        </div>
+                                        <strong t-field="amenity.title"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="pk-section" t-if="property_id.is_facilities and property_id.property_specification_ids">
+                            <h3>Caractéristiques</h3>
+                            <div class="pk-specifications-grid">
+                                <t t-foreach="property_id.property_specification_ids" t-as="specification">
+                                    <article class="pk-specification-card">
+                                        <div class="pk-specification-logo">
+                                            <img t-if="specification.image"
+                                                 t-att-src="image_data_uri(specification.image)"
+                                                 t-att-alt="specification.title or 'Caractéristique'"/>
+                                            <i t-else="" class="fa fa-home" aria-hidden="true"/>
+                                        </div>
+                                        <div class="pk-specification-content">
+                                            <strong t-if="specification.title" t-field="specification.title"/>
+                                            <p t-if="specification.description" t-field="specification.description"/>
+                                            <small t-if="specification.description_line1" t-field="specification.description_line1"/>
+                                            <small t-if="specification.description_line2" t-field="specification.description_line2"/>
+                                            <small t-if="specification.description_line3" t-field="specification.description_line3"/>
+                                        </div>
+                                    </article>
+                                </t>
+                            </div>
+                        </section>
+
+                        <section class="pk-section" t-if="property_id.nearby_connectivity and property_id.connectivity_ids">
+                            <h3>Connectivités à proximité</h3>
+                            <div class="pk-connectivity-grid">
+                                <t t-foreach="property_id.connectivity_ids" t-as="connectivity">
+                                    <article class="pk-connectivity-card">
+                                        <div class="pk-connectivity-logo">
+                                            <img t-if="connectivity.image"
+                                                 t-att-src="image_data_uri(connectivity.image)"
+                                                 t-att-alt="connectivity.connectivity_id.name or 'Connectivité'"/>
+                                            <i t-else="" class="fa fa-map-marker" aria-hidden="true"/>
+                                        </div>
+                                        <strong t-if="connectivity.connectivity_id" t-field="connectivity.connectivity_id"/>
+                                        <span t-if="connectivity.name" class="pk-connectivity-name" t-field="connectivity.name"/>
+                                        <span t-if="connectivity.distance" class="pk-connectivity-distance" t-field="connectivity.distance"/>
+                                    </article>
+                                </t>
+                            </div>
+                        </section>
+
+                        <t t-set="floor_plans" t-value="property_id.floreplan_ids.filtered(lambda plan: plan.image)"/>
+                        <section class="pk-section" t-if="property_id.is_floor_plan and floor_plans">
+                            <h3>Plan de l'étage</h3>
+                            <div id="pkFloorPlanCarousel" class="carousel slide pk-floor-plan-carousel" data-bs-ride="false">
+                                <div class="carousel-inner">
+                                    <t t-foreach="floor_plans" t-as="floor_plan">
+                                        <div t-att-class="'carousel-item active' if floor_plan_index == 0 else 'carousel-item'">
+                                            <div class="pk-floor-plan-title"
+                                                 t-if="floor_plan.title"
+                                                 style="position:absolute;top:16px;left:16px;z-index:5;display:inline-flex;align-items:center;gap:9px;max-width:calc(100% - 32px);padding:11px 17px;color:#fff;font-size:17px;font-weight:800;line-height:1.2;background:linear-gradient(135deg,#bf2925,#ee941f);border:2px solid rgba(255,255,255,.88);border-radius:10px;box-shadow:0 8px 20px rgba(148,31,28,.32);">
+                                                <i class="fa fa-map-o" aria-hidden="true"/>
+                                                <span t-field="floor_plan.title"/>
+                                            </div>
+                                            <img t-att-src="image_data_uri(floor_plan.image)"
+                                                 t-att-alt="floor_plan.title or 'Plan de l’étage'"
+                                                 class="pk-floor-plan-img"/>
+                                        </div>
+                                    </t>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#pkFloorPlanCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon"/>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#pkFloorPlanCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon"/>
+                                </button>
+                                <div class="pk-carousel-counter" aria-live="polite">
+                                    <span class="pk-carousel-current">1</span>
+                                    /
+                                    <span t-esc="len(floor_plans)"/>
+                                </div>
                             </div>
                         </section>
 
@@ -130,7 +227,10 @@
 
                     <aside class="pk-sidebar">
                         <div class="pk-side-card">
-                            <div class="pk-side-title">Prix</div>
+                            <div class="pk-side-title">
+                                <t t-if="property_id.sale_lease == 'for_tenancy'">Loyer</t>
+                                <t t-else="">Prix</t>
+                            </div>
                             <div class="pk-price">
                                 <span t-if="property_id.sale_lease == 'for_sale'" t-field="property_id.price"/>
                                 <t t-if="property_id.sale_lease == 'for_tenancy'">
