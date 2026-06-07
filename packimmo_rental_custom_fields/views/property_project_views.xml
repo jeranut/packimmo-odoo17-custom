@@ -30,6 +30,7 @@
             <xpath expr="//field[@name='website']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+
             <!-- Cacher Valuation Of -->
             <xpath expr="//field[@name='sale_lease']" position="attributes">
                 <attribute name="invisible">1</attribute>
@@ -167,6 +168,50 @@
                 'search_default_groupby_property_type': 1,
                 'search_default_groupby_project_for': 2
             }
+        </field>
+    </record>
+
+    <record id="property_project_view_form_inherit_address_placeholders" model="ir.ui.view">
+        <field name="name">property.project.view.form.inherit.address.placeholders</field>
+        <field name="model">property.project</field>
+        <field name="inherit_id" ref="rental_management.property_project_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='address_details']//field[@name='street']"
+                position="attributes">
+                <attribute name="placeholder">Adresse</attribute>
+            </xpath>
+            <xpath expr="//group[@name='address_details']//field[@name='street2']"
+                position="attributes">
+                <attribute name="placeholder">Adresse 2</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="property_project_view_form_hide_coordinates" model="ir.ui.view">
+        <field name="name">property.project.view.form.hide.coordinates</field>
+        <field name="model">property.project</field>
+        <field name="inherit_id" ref="rental_management.property_project_view_form" />
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('row')][.//field[@name='latitude'] and .//field[@name='longitude']]"
+                position="replace">
+                <field name="latitude" invisible="1" />
+                <field name="longitude" invisible="1" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="property_sub_project_view_form_hide_coordinates" model="ir.ui.view">
+        <field name="name">property.sub.project.view.form.hide.coordinates</field>
+        <field name="model">property.sub.project</field>
+        <field name="inherit_id" ref="rental_management.property_sub_project_view_form" />
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('row')][.//field[@name='latitude'] and .//field[@name='longitude']]"
+                position="replace">
+                <field name="latitude" invisible="1" />
+                <field name="longitude" invisible="1" />
+            </xpath>
         </field>
     </record>
 

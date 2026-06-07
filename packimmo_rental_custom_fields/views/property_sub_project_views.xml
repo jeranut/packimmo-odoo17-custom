@@ -49,6 +49,22 @@
     </field>
 </record>
 
+    <record id="property_sub_project_view_form_inherit_address_placeholders" model="ir.ui.view">
+        <field name="name">property.sub.project.view.form.inherit.address.placeholders</field>
+        <field name="model">property.sub.project</field>
+        <field name="inherit_id" ref="rental_management.property_sub_project_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='address_details']//field[@name='street']"
+                position="attributes">
+                <attribute name="placeholder">Adresse</attribute>
+            </xpath>
+            <xpath expr="//group[@name='address_details']//field[@name='street2']"
+                position="attributes">
+                <attribute name="placeholder">Adresse 2</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <menuitem id="menu_property_sub_project_morcellement" name="Morcellements" parent="rental_management.menu_property_vendor" action="action_property_sub_project_morcellement" sequence="20" />
 
 </odoo>
