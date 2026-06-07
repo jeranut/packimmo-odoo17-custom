@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="packimmo_rental_custom_fields.DashboardFrench"
+       t-inherit="rental_management.Dashboard"
+       t-inherit-mode="extension"
+       owl="1">
+        <xpath expr="//div[contains(@class, 'rm-dash-root')]" position="attributes">
+            <attribute name="data-packimmo-dashboard-fr">1</attribute>
+        </xpath>
+    </t>
+</templates>

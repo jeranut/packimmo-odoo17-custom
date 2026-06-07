@@ -26,6 +26,12 @@ Première personnalisation : ajout du CIN client sur res.partner.
         "views/portal_templates.xml",
         "views/tenancy_details_views.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "packimmo_rental_custom_fields/static/src/components/rental_dashboard_fr.xml",
+            "packimmo_rental_custom_fields/static/src/js/rental_dashboard_fr.js",
+        ],
+    },
     "installable": True,
     "application": False,
     "license": "LGPL-3",
