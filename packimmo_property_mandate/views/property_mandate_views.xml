@@ -55,7 +55,7 @@
                         string="Imprimer contrat"
                         class="btn-primary"
                         icon="fa-print"
-                        invisible="mandate_type != 'exclusive'" />
+                        invisible="mandate_type != 'exclusive' or state != 'completed'" />
                     <button name="action_done_and_invoice"
                         type="object"
                         string="Terminer et facturer"

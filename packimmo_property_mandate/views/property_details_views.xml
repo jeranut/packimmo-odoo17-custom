@@ -48,16 +48,18 @@
 
             <xpath expr="//header" position="inside">
                 <field name="has_simple_mandate" invisible="1" />
+                <field name="mandate_type" invisible="1" />
+                <field name="mandate_state" invisible="1" />
             </xpath>
 
             <xpath expr="//button[@name='%(rental_management.contract_wizard_action)d']" position="attributes">
-                <attribute name="invisible">stage not in ['available','on_lease'] or sale_lease != 'for_tenancy' or has_simple_mandate</attribute>
+                <attribute name="invisible">stage not in ['available','on_lease'] or sale_lease != 'for_tenancy' or has_simple_mandate or (mandate_type == 'exclusive' and mandate_state == 'active')</attribute>
             </xpath>
 
             <xpath expr="//button[@name='%(rental_management.maintenance_wizard_action)d']" position="attributes">
-                <attribute name="invisible">stage == 'draft' or has_simple_mandate</attribute>
+                <attribute name="invisible">stage == 'draft' or has_simple_mandate or (mandate_type == 'exclusive' and mandate_state == 'active')</attribute>
             </xpath>
 
         </field>
     </record>
-</odoo>  
+</odoo>
