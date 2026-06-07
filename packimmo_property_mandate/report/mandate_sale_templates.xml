@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_property_mandate_sale_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <t t-set="Date" t-value="datetime.date" />
+                    <t t-set="partner" t-value="doc.owner_id" />
+
+                    <div class="page">
+                        <div class="text-center mb-4 pack-title">
+                            <h2>MANDAT DE VENTE N° <span t-field="doc.name" /></h2>
+                        </div>
+
+                        <table style="width:100%; margin-bottom:25px;">
+                            <tr>
+                                <td style="width:33%; text-align:center;">
+                                    <strong>
+                                        <t t-if="doc.mandate_type == 'simple'">[X]</t>
+                                        <t t-else="">☐</t>
+                                        NON EXCLUSIF
+                                    </strong>
+                                </td>
+                                <td style="width:33%; text-align:center;">
+                                    <strong>
+                                        <t t-if="doc.mandate_type == 'exclusive'">[X]</t>
+                                        <t t-else="">☐</t>
+                                        EXCLUSIF
+                                    </strong>
+                                </td>
+                                <td style="width:33%; text-align:center;">
+                                    <strong>
+                                        <t t-if="doc.mandate_type == 'exclusive_absolute'">[X]</t>
+                                        <t t-else="">☐</t>
+                                        EXCLUSIF ABSOLU
+                                    </strong>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <h4>I — Identification des parties</h4>
+                        <p>
+                            Entre <strong>PACKIMMO S.A.</strong>, agence immobilière représentée
+                            par son Directeur Général, ci-après dénommée
+                            <strong>le mandataire</strong>,
+                        </p>
+                        <p>Et :</p>
+
+                        <table class="pk-table" style="width:100%;">
+                            <tr>
+                                <td style="width:20%;"><strong>Mandant :</strong></td>
+                                <td style="width:30%;">
+                                    <span t-esc="partner.display_name if partner else ''" />
+                                </td>
+                                <td style="width:20%;"><strong>Qualité :</strong></td>
+                                <td style="width:30%;">
+                                    <t t-if="partner and partner.company_type == 'company'">
+                                        Société
+                                    </t>
+                                    <t t-else="">Propriétaire / représentant habilité</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Adresse :</strong></td>
+                                <td>
+                                    <span
+                                        t-esc="partner.contact_address or partner.street or '' if partner else ''" />
+                                </td>
+                                <td><strong>Téléphone :</strong></td>
+                                <td>
+                                    <span t-esc="partner.phone or partner.mobile or '' if partner else ''" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email :</strong></td>
+                                <td>
+                                    <span t-esc="partner.email or '' if partner else ''" />
+                                </td>
+                                <td><strong>CIN / RCS :</strong></td>
+                                <td>
+                                    <t t-if="partner and partner.company_type == 'person'">
+                                        <span
+                                            t-esc="partner.cin if 'cin' in partner._fields else ''" />
+                                    </t>
+                                    <t t-elif="partner">
+                                        <span
+                                            t-esc="partner.rcs if 'rcs' in partner._fields else ''" />
+                                    </t>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p>
+                            Ci-après dénommé <strong>le mandant</strong>, lequel confère au
+                            mandataire, qui l’accepte, le mandat de rechercher un acquéreur pour
+                            le ou les biens désignés ci-dessous.
+                        </p>
+
+                        <h4 class="pk-section-title">
+                            II — Désignation des biens et prix de vente
+                        </h4>
+
+                        <t t-if="doc.property_ids">
+                            <table class="pk-table" style="width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Bien</th>
+                                        <th>Type</th>
+                                        <th>Adresse / localisation</th>
+                                        <th>Surface</th>
+                                        <th>Prix de vente</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.property_ids" t-as="property">
+                                        <td>
+                                            <span t-esc="property.display_name or ''" />
+                                            <t t-if="'title' in property._fields and property.title">
+                                                <br />
+                                                <span t-esc="property.title" />
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <span
+                                                t-esc="dict(property._fields['type'].selection).get(property.type, '') if property.type else ''" />
+                                        </td>
+                                        <td>
+                                            <span
+                                                t-esc="' '.join(filter(None, [
+                                                    property.street or '',
+                                                    property.street2 or '',
+                                                    property.city_id.name if property.city_id else property.city or '',
+                                                    property.zip or ''
+                                                ]))" />
+                                        </td>
+                                        <td>
+                                            <span t-esc="property.total_area or 0.0" /> m²
+                                        </td>
+                                        <td>
+                                            <t
+                                                t-if="'foreign_price' in property._fields and property.foreign_price">
+                                                <span
+                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
+                                                <span
+                                                    t-esc="property.foreign_currency_id.symbol if property.foreign_currency_id else ''" />
+                                            </t>
+                                            <t t-else="">
+                                                <span
+                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+                                                <span t-esc="doc.currency_id.symbol or 'Ar'" />
+                                            </t>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <p>Aucun bien n’est encore rattaché à ce mandat.</p>
+                        </t>
+
+                        <div class="pk-section-start">
+                            <h4>III — Mission et pouvoirs du mandataire</h4>
+                            <p>
+                                Le mandataire est chargé de promouvoir les biens, organiser les
+                                visites, recueillir les offres d’achat et présenter au mandant tout
+                                acquéreur potentiel. Il peut utiliser, à ses frais, les moyens
+                                publicitaires qu’il juge utiles. Toute vente demeure soumise à
+                                l’acceptation du mandant et à la signature des actes requis.
+                            </p>
+                        </div>
+
+                        <div class="pk-section-start">
+                            <h4>IV — Engagements du mandant</h4>
+                            <p>
+                                Le mandant déclare être propriétaire des biens ou dûment habilité à
+                                les vendre. Il s’engage à fournir les titres, plans, diagnostics et
+                                documents nécessaires, à permettre les visites et à informer sans
+                                délai le mandataire de toute offre ou vente.
+                            </p>
+                            <t t-if="doc.mandate_type == 'simple'">
+                                <p>
+                                    Le mandant conserve la faculté de vendre directement ou par
+                                    l’intermédiaire d’un tiers, sous réserve d’en informer le
+                                    mandataire dans les 48 heures.
+                                </p>
+                            </t>
+                            <t t-if="doc.mandate_type == 'exclusive'">
+                                <p>
+                                    Pendant la durée du mandat, le mandant s’engage à ne confier la
+                                    commercialisation à aucune autre agence. Il peut rechercher
+                                    lui-même un acquéreur, sous réserve d’en informer le mandataire.
+                                </p>
+                            </t>
+                            <t t-if="doc.mandate_type == 'exclusive_absolute'">
+                                <p>
+                                    La commercialisation est confiée exclusivement au mandataire.
+                                    Toute vente réalisée pendant la durée du mandat ouvre droit aux
+                                    honoraires convenus, y compris lorsque l’acquéreur est trouvé
+                                    directement par le mandant.
+                                </p>
+                            </t>
+                        </div>
+
+                        <div class="pk-section-start">
+                            <h4>V — Durée du mandat</h4>
+                            <p>
+                                Le présent mandat est donné pour une durée de
+                                <strong><span t-field="doc.duration_months" /> mois</strong>,
+                                du <strong><span t-field="doc.start_date" /></strong>
+                                au <strong><span t-field="doc.end_date" /></strong>.
+                            </p>
+                            <t t-if="doc.tacit_renewal">
+                                <p>
+                                    Il sera renouvelé par tacite reconduction, sauf dénonciation par
+                                    l’une des parties cinq jours ouvrables avant son échéance.
+                                </p>
+                            </t>
+                        </div>
+
+                        <div class="pk-section-start">
+                            <h4>VI — Honoraires</h4>
+                            <p>
+                                Les honoraires de PACKIMMO sont fixés à
+                                <strong><span t-esc="doc.fee_calculation_label or ''" /></strong>
+                                (<span t-esc="doc.fee_amount_in_words or ''" />).
+                            </p>
+                            <p>
+                                Ils seront facturés
+                                <t t-if="doc.billed_to == 'owner'">au mandant</t>
+                                <t t-elif="doc.billed_to == 'tenant_buyer'">à l’acquéreur</t>
+                                <t t-else="">au mandant et à l’acquéreur</t>,
+                                selon les conditions convenues entre les parties.
+                            </p>
+                        </div>
+
+                        <div class="pk-section-start">
+                            <h4>VII — Attribution de juridiction</h4>
+                            <p>
+                                Toute contestation relative à l’exécution du présent mandat sera
+                                soumise à une tentative de règlement amiable. À défaut d’accord,
+                                compétence est attribuée au Tribunal d’Antananarivo.
+                            </p>
+                        </div>
+
+                        <div class="pack-signature-section">
+                            <p>
+                                Antananarivo le
+                                <span class="pack-value">
+                                    <t t-esc="Date.today().strftime('%d/%m/%Y')" />
+                                </span>
+                            </p>
+                            <table class="pack-signature-box">
+                                <tr>
+                                    <td>
+                                        <div class="pack-sign-title">Le Mandant</div>
+                                        <div class="pack-sign-note">
+                                            « Lu et approuvé, bon pour mandat de vente »
+                                        </div>
+                                        <div class="pack-sign-space"></div>
+                                        <div class="pack-sign-line">—</div>
+                                    </td>
+                                    <td>
+                                        <div class="pack-sign-title">
+                                            Le Mandataire<br />
+                                            (<span class="pack-value">PACKIMMO S.A.</span>)
+                                        </div>
+                                        <div class="pack-sign-note">
+                                            « Lu et approuvé, mandat accepté »
+                                        </div>
+                                        <div class="pack-sign-space"></div>
+                                        <div class="pack-sign-line">—</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

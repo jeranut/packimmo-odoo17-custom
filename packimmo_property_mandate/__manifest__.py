@@ -29,6 +29,7 @@ Gestion des mandats immobiliers PACKIMMO.
         "views/property_mandate_views.xml",
         "views/property_details_views.xml",
         "report/mandate_report.xml",
+        "report/mandate_sale_templates.xml",
         "report/mandate_templates.xml",
         "report/exclusive_mandate_contract.xml",
     ],

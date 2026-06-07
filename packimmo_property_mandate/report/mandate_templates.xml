@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="report_property_mandate_document">
+    <template id="report_property_mandate_rent_document">
         <t t-call="web.html_container">
 
             <t t-foreach="docs" t-as="doc">
@@ -43,7 +43,7 @@
 
                                 <td style="width:33%; text-align:center;">
                                     <strong>
-                                        <t t-if="doc.mandate_type == 'exclusive_standard'">
+                                        <t t-if="doc.mandate_type == 'exclusive'">
                                             [X]
                                         </t>
                                         <t
@@ -916,6 +916,13 @@
             </t>
 
         </t>
+    </template>
+
+    <template id="report_property_mandate_document">
+        <t t-if="docs and docs[0].operation_type == 'sale'"
+            t-call="packimmo_property_mandate.report_property_mandate_sale_document" />
+        <t t-else=""
+            t-call="packimmo_property_mandate.report_property_mandate_rent_document" />
     </template>
 
 </odoo>
