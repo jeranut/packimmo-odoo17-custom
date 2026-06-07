@@ -53,11 +53,11 @@
             </xpath>
 
             <xpath expr="//button[@name='%(rental_management.contract_wizard_action)d']" position="attributes">
-                <attribute name="invisible">stage not in ['available','on_lease'] or sale_lease != 'for_tenancy' or has_simple_mandate or (mandate_type == 'exclusive' and mandate_state == 'active')</attribute>
+                <attribute name="invisible">stage not in ['available','on_lease'] or sale_lease != 'for_tenancy' or mandate_type in ['simple', 'exclusive'] or has_simple_mandate</attribute>
             </xpath>
 
             <xpath expr="//button[@name='%(rental_management.maintenance_wizard_action)d']" position="attributes">
-                <attribute name="invisible">stage == 'draft' or has_simple_mandate or (mandate_type == 'exclusive' and mandate_state == 'active')</attribute>
+                <attribute name="invisible">stage == 'draft' or mandate_type in ['simple', 'exclusive'] or has_simple_mandate</attribute>
             </xpath>
 
         </field>
