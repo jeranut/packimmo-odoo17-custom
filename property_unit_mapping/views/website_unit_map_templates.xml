@@ -105,6 +105,7 @@
                         <div class="toolbar-actions">
                             <button type="button" id="btn_edit_selected" class="btn btn-primary">Modifier dessin</button>
                             <button type="button" id="btn_save_selected" class="btn btn-success">Enregistrer dessin</button>
+                            <button type="button" id="btn_rename_selected" class="btn btn-secondary">Renommer</button>
                             <button type="button" id="btn_clear_selected" class="btn btn-danger">Effacer dessin</button>
 
                             <button type="button" class="btn btn-dark" onclick="window.close();">
@@ -186,11 +187,11 @@
 
                 function phaseStyle() {
                 return {
-                color: '#dc2626',
+                color: '#0f172a',
                 fillColor: '#f97316',
                 weight: 3,
                 fillOpacity: 0,
-                dashArray: '8,6'
+                dashArray: '10,7'
                 };
                 }
 
@@ -240,6 +241,7 @@
                 Prix : ${unit.price || 0}&lt;br/&gt;&lt;br/&gt;
                 &lt;button type="button" class="btn btn-sm btn-primary js-edit-unit" data-line-id="${unit.line_id}"&gt;Modifier dessin&lt;/button&gt;
                 &lt;button type="button" class="btn btn-sm btn-success js-save-unit" data-line-id="${unit.line_id}"&gt;Enregistrer dessin&lt;/button&gt;
+                &lt;button type="button" class="btn btn-sm btn-secondary js-rename-unit" data-line-id="${unit.line_id}"&gt;Renommer&lt;/button&gt;
                 `;
                 }
 
@@ -267,6 +269,9 @@
                 layer.meta = unit;
                 layer.setStyle(styleFor(unit));
                 refreshLayerText(layer, unit);
+                layer.on('click', function() {
+                selectDrawnUnit(layer);
+                });
 
                 drawnItems.addLayer(layer);
                 unitLayers.push(layer);
@@ -352,6 +357,33 @@
                 });
                 }
 
+                function selectDrawnUnit(layer) {
+                if (!layer || !layer.meta) return;
+
+                activeLayer = layer;
+                document.getElementById('draw_type').value = 'unit';
+
+                const select = document.getElementById('unit_select');
+
+                if (![...select.options].some(opt =&gt; String(opt.value) === String(layer.meta.line_id))) {
+                const opt = document.createElement('option');
+                opt.value = layer.meta.line_id;
+                opt.textContent =
+                (layer.meta.code ? layer.meta.code + ' - ' : '') +
+                unitDisplayLabel(layer.meta) +
+                ' (dessiné)';
+                opt.dataset.drawn = '1';
+                select.appendChild(opt);
+                }
+
+                select.value = layer.meta.line_id;
+                setStatus(
+                'Unité sélectionnée : ' +
+                unitDisplayLabel(layer.meta) +
+                '. Vous pouvez modifier, renommer ou effacer ce dessin.'
+                );
+                }
+
                 function disableEditing(except) {
                 unitLayers.forEach(l =&gt; {
                 if (l !== except &amp;&amp; l.editing) {
@@ -391,17 +423,34 @@
 
                 function askUnitLabel(unit) {
                 const currentLabel = unit.label || '';
-                const label = prompt("Introduire le label de l'unité :", currentLabel);
+                const label = prompt("Introduire la référence plan de l'unité :", currentLabel);
 
                 if (!label || !label.trim()) {
-                alert('Le label est obligatoire.');
+                alert('La référence plan est obligatoire.');
                 return false;
                 }
 
                 return label.trim();
                 }
 
-                function saveLayer(layer) {
+                function renameUnit(lineId) {
+                const unit = findUnit(lineId);
+
+                if (!unit) {
+                alert('Sélectionnez une unité dessinée.');
+                return;
+                }
+
+                const label = askUnitLabel(unit);
+                if (!label) return;
+
+                const layer = findLayer(lineId);
+                if (layer) {
+                saveLayer(layer, label);
+                }
+                }
+
+                function saveLayer(layer, requestedLabel) {
                 if (!layer) return;
 
                 const unit = layer.meta || findUnit(document.getElementById('unit_select').value);
@@ -411,7 +460,7 @@
                 return;
                 }
 
-                let label = unit.label || '';
+                let label = requestedLabel || unit.label || '';
 
                 if (!label) {
                 label = askUnitLabel(unit);
@@ -430,7 +479,7 @@
                 }
 
                 unit.geojson = geometry;
-                unit.label = label;
+                unit.label = res.label || label;
                 layer.meta = unit;
                 refreshLayerText(layer, unit);
                 refreshSelect();
@@ -452,7 +501,8 @@
                 return;
                 }
 
-                const lineId = document.getElementById('unit_select').value;
+                const lineId = document.getElementById('unit_select').value ||
+                (activeLayer &amp;&amp; activeLayer.meta ? activeLayer.meta.line_id : false);
                 const layer = activeLayer || findLayer(lineId);
 
                 if (!lineId || !layer) {
@@ -573,12 +623,10 @@
                 l =&gt; String((l.meta || {}).line_id) !== String(lineId)
                 );
 
-                unit.label = label;
-
                 const layer = event.layer;
 
                 registerLayer(layer, unit);
-                saveLayer(layer);
+                saveLayer(layer, label);
                 });
 
                 document.getElementById('btn_edit_selected').addEventListener('click', () =&gt; {
@@ -590,11 +638,18 @@
                 });
 
                 document.getElementById('btn_save_selected').addEventListener('click', saveSelected);
+                document.getElementById('btn_rename_selected').addEventListener('click', () =&gt; {
+                renameUnit(
+                document.getElementById('unit_select').value ||
+                (activeLayer &amp;&amp; activeLayer.meta ? activeLayer.meta.line_id : false)
+                );
+                });
                 document.getElementById('btn_clear_selected').addEventListener('click', clearSelected);
 
                 document.addEventListener('click', function(ev) {
                 const edit = ev.target.closest('.js-edit-unit');
                 const save = ev.target.closest('.js-save-unit');
+                const rename = ev.target.closest('.js-rename-unit');
 
                 if (edit) {
                 enableEdit(edit.dataset.lineId);
@@ -602,6 +657,10 @@
 
                 if (save) {
                 saveLayer(findLayer(save.dataset.lineId));
+                }
+
+                if (rename) {
+                renameUnit(rename.dataset.lineId);
                 }
                 });
             </script>
@@ -1027,7 +1086,11 @@
                 const CLEAR_ROUTE = (lineId) =&gt; `/property/unit-map/clear/${lineId}`;
 
                 const map = L.map('unit_map_esri_designer').setView([-18.8792, 47.5079], 16);
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri', maxZoom: 19 }).addTo(map);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles © Esri',
+                    maxNativeZoom: 19,
+                    maxZoom: 24,
+                }).addTo(map);
 
                 const drawnItems = new L.FeatureGroup();
                 map.addLayer(drawnItems);
@@ -1051,7 +1114,7 @@
                 }
                 function setStatus(msg) { document.getElementById('status_line').innerText = msg || ''; }
                 function styleFor(unit) { return {color: unit.color || '#6b7280', fillColor: unit.color || '#6b7280', weight:2, fillOpacity:0.45}; }
-                function phaseStyle() { return {color:'#dc2626', fillColor:'#f97316', weight:3, fillOpacity:0, dashArray:'8,6'}; }
+                function phaseStyle() { return {color:'#0f172a', fillColor:'transparent', weight:4, fillOpacity:0, opacity:1, dashArray:'10,7'}; }
                 function unitDisplayLabel(unit) { return unit.label || unit.code || unit.name || 'Lot'; }
                 function geometryFeature(geometry) { return {type:'Feature', properties:{}, geometry: geometry}; }
                 function calculateArea(geometry) { try { return Math.round(turf.area(geometryFeature(geometry)) * 100) / 100; } catch(e) { return 0; } }
@@ -1063,16 +1126,17 @@
                 function clearEditingAreaDisplay() { if (areaInfoBox) { areaInfoBox.style.display = 'none'; areaInfoBox.innerText = 'Surface dessinée : 0 m²'; } if (activeLayer &amp;&amp; activeEditHandler) activeLayer.off('edit', activeEditHandler); activeEditHandler = null; }
                 function popupHtml(unit) { return `&lt;b&gt;${unitDisplayLabel(unit)}&lt;/b&gt;&lt;br/&gt;Code : ${unit.code || '-'}&lt;br/&gt;Statut : ${unit.stage || '-'}&lt;br/&gt;Surface fiche : ${unit.surface || 0}&lt;br/&gt;Prix : ${unit.price || 0}&lt;br/&gt;&lt;br/&gt;&lt;button type="button" class="btn btn-sm btn-primary js-edit-unit" data-line-id="${unit.line_id}"&gt;Modifier dessin&lt;/button&gt; &lt;button type="button" class="btn btn-sm btn-success js-save-unit" data-line-id="${unit.line_id}"&gt;Enregistrer dessin&lt;/button&gt; &lt;button type="button" class="btn btn-sm btn-secondary js-rename-unit" data-line-id="${unit.line_id}"&gt;Renommer&lt;/button&gt; &lt;button type="button" class="btn btn-sm btn-danger js-clear-unit" data-line-id="${unit.line_id}"&gt;Supprimer&lt;/button&gt;`; }
                 function refreshLayerText(layer, unit) { layer.unbindTooltip(); layer.bindTooltip(unitDisplayLabel(unit), {permanent:true, direction:'center', className:'unit-label'}); layer.unbindPopup(); layer.bindPopup(popupHtml(unit)); }
-                function registerLayer(layer, unit) { layer.meta = unit; layer.setStyle(styleFor(unit)); refreshLayerText(layer, unit); drawnItems.addLayer(layer); unitLayers.push(layer); }
+                function registerLayer(layer, unit) { layer.meta = unit; layer.setStyle(styleFor(unit)); refreshLayerText(layer, unit); layer.on('click', function() { selectDrawnUnit(layer); }); drawnItems.addLayer(layer); unitLayers.push(layer); }
                 function registerPhaseLayer(layer) { if (phaseLayer &amp;&amp; drawnItems.hasLayer(phaseLayer)) drawnItems.removeLayer(phaseLayer); phaseLayer = layer; phaseLayer.meta = {type:'phase'}; phaseLayer.setStyle(phaseStyle()); phaseLayer.bindTooltip('Phase : ' + (document.querySelector('h3') ? document.querySelector('h3').innerText.split('—')[0].trim() : 'Projet'), {permanent:true, direction:'center', className:'unit-label'}); phaseLayer.bindPopup('&lt;b&gt;Phase du projet&lt;/b&gt;&lt;br/&gt;Utilisez “Modifier dessin” puis “Enregistrer dessin” pour ajuster la phase.'); drawnItems.addLayer(phaseLayer); }
-                function savePhaseLayer(layer) { if (!layer) { alert('Dessinez d’abord la phase.'); return; } const geometry = layer.toGeoJSON().geometry; rpc(`/property/unit-map/save-phase/${PROJECT_ID}`, {geojson: geometry, map_type: MAP_TYPE}).then(res =&gt; { if (res.error) { alert(res.error); return; } phaseGeojson = geometry; if (layer.editing) layer.editing.disable(); clearEditingAreaDisplay(); activeLayer = null; setStatus('Dessin de la phase enregistré. Vous pouvez maintenant dessiner les lots/unités.'); document.getElementById('draw_type').value = 'unit'; }); }
+                function savePhaseLayer(layer) { if (!layer) { alert('Dessinez d’abord la phase.'); return; } const geometry = layer.toGeoJSON().geometry; rpc(`/property/unit-map/save-phase/${PROJECT_ID}`, {geojson: geometry, map_type: MAP_TYPE}).then(res =&gt; { if (res.error) { alert(res.error); return; } if (res.auto_unit) { location.reload(); return; } phaseGeojson = geometry; if (layer.editing) layer.editing.disable(); clearEditingAreaDisplay(); activeLayer = null; setStatus('Dessin de la phase enregistré. Vous pouvez maintenant dessiner les lots/unités.'); document.getElementById('draw_type').value = 'unit'; }); }
                 function enablePhaseEdit() { if (!phaseLayer) { setStatus('Aucun dessin de phase existant. Dessinez une nouvelle phase.'); return; } disableEditing(phaseLayer); if (phaseLayer.editing) phaseLayer.editing.enable(); activeLayer = phaseLayer; activeEditHandler = function() { updateEditingAreaDisplay(phaseLayer); }; phaseLayer.on('edit', activeEditHandler); updateEditingAreaDisplay(phaseLayer); setStatus('Mode édition activé pour la phase.'); }
                 function refreshSelect() { const select = document.getElementById('unit_select'); select.innerHTML = '&lt;option value=""&gt;Sélectionner une unité...&lt;/option&gt;'; units.filter(u =&gt; !u.geojson).forEach(u =&gt; { const opt = document.createElement('option'); opt.value = u.line_id; opt.textContent = (u.code ? u.code + ' - ' : '') + (unitDisplayLabel(u)); select.appendChild(opt); }); }
-                function askUnitLabel(unit) { const label = prompt("Introduire le label de l'unité :", unit.label || unit.code || unit.name || ''); if (!label || !label.trim()) { alert('Le label est obligatoire.'); return false; } return label.trim(); }
+                function selectDrawnUnit(layer) { if (!layer || !layer.meta) return; activeLayer = layer; document.getElementById('draw_type').value = 'unit'; const select = document.getElementById('unit_select'); if (![...select.options].some(opt =&gt; String(opt.value) === String(layer.meta.line_id))) { const opt = document.createElement('option'); opt.value = layer.meta.line_id; opt.textContent = (layer.meta.code ? layer.meta.code + ' - ' : '') + unitDisplayLabel(layer.meta) + ' (dessiné)'; opt.dataset.drawn = '1'; select.appendChild(opt); } select.value = layer.meta.line_id; setStatus('Unité sélectionnée : ' + unitDisplayLabel(layer.meta) + '. Vous pouvez modifier, renommer ou supprimer ce dessin.'); }
+                function askUnitLabel(unit) { const label = prompt("Introduire la référence plan de l'unité :", unit.label || unit.code || unit.name || ''); if (!label || !label.trim()) { alert('La référence plan est obligatoire.'); return false; } return label.trim(); }
                 function disableEditing(except) { unitLayers.forEach(l =&gt; { if (l !== except &amp;&amp; l.editing) l.editing.disable(); }); if (phaseLayer &amp;&amp; phaseLayer !== except &amp;&amp; phaseLayer.editing) phaseLayer.editing.disable(); clearEditingAreaDisplay(); }
                 function enableEdit(lineId) { const layer = findLayer(lineId); if (!layer) { setStatus('Aucun dessin existant pour cette unité. Dessinez un nouveau polygone.'); return; } disableEditing(layer); if (layer.editing) layer.editing.enable(); activeLayer = layer; document.getElementById('unit_select').value = lineId; layer.closePopup(); activeEditHandler = function() { updateEditingAreaDisplay(layer); }; layer.on('edit', activeEditHandler); updateEditingAreaDisplay(layer); }
-                function saveLayer(layer) { if (!layer) return; const unit = layer.meta || findUnit(document.getElementById('unit_select').value); if (!unit) { alert('Sélectionnez une unité.'); return; } if (!unit.label) { const label = askUnitLabel(unit); if (!label) return; unit.label = label; } const geometry = layer.toGeoJSON().geometry; rpc(SAVE_ROUTE(unit.line_id), {geojson: geometry, label: unit.label}).then(res =&gt; { if (res.error) { alert(res.error); return; } unit.geojson = geometry; layer.meta = unit; refreshLayerText(layer, unit); refreshSelect(); if (layer.editing) layer.editing.disable(); clearEditingAreaDisplay(); activeLayer = null; setStatus('Dessin enregistré pour ' + unitDisplayLabel(unit) + '. Surface dessinée : ' + formatArea(calculateArea(geometry))); }); }
-                function renameUnit(lineId) { const unit = findUnit(lineId); if (!unit) return; const label = askUnitLabel(unit); if (!label) return; unit.label = label; const layer = findLayer(lineId); if (layer) { layer.meta = unit; refreshLayerText(layer, unit); saveLayer(layer); } }
+                function saveLayer(layer, requestedLabel) { if (!layer) return; const unit = layer.meta || findUnit(document.getElementById('unit_select').value); if (!unit) { alert('Sélectionnez une unité.'); return; } let label = requestedLabel || unit.label || ''; if (!label) { label = askUnitLabel(unit); if (!label) return; } const geometry = layer.toGeoJSON().geometry; rpc(SAVE_ROUTE(unit.line_id), {geojson: geometry, label: label}).then(res =&gt; { if (res.error) { alert(res.error); return; } unit.geojson = geometry; unit.label = res.label || label; layer.meta = unit; refreshLayerText(layer, unit); refreshSelect(); if (layer.editing) layer.editing.disable(); clearEditingAreaDisplay(); activeLayer = null; setStatus('Dessin enregistré pour ' + unitDisplayLabel(unit) + '. Surface dessinée : ' + formatArea(calculateArea(geometry))); }); }
+                function renameUnit(lineId) { const unit = findUnit(lineId); if (!unit) { alert('Sélectionnez une unité dessinée.'); return; } const label = askUnitLabel(unit); if (!label) return; const layer = findLayer(lineId); if (layer) saveLayer(layer, label); }
                 function clearUnit(lineId) { if (!lineId) { alert('Sélectionnez une unité.'); return; } if (!confirm('Supprimer le dessin de cette unité ?')) return; rpc(CLEAR_ROUTE(lineId), {}).then(() =&gt; location.reload()); }
                 function clearPhase() { if (!confirm('Effacer le dessin de la phase ?')) return; rpc(`/property/unit-map/clear-phase/${PROJECT_ID}`, {map_type: MAP_TYPE}).then(() =&gt; location.reload()); }
 
@@ -1091,11 +1155,11 @@
                 document.getElementById('btn_search_place').addEventListener('click', function() { const q = document.getElementById('search_place').value; if (!q) { alert('Veuillez saisir un lieu ou des coordonnées.'); return; } const coords = q.split(',').map(x =&gt; parseFloat(x.trim())); if (coords.length === 2 &amp;&amp; !isNaN(coords[0]) &amp;&amp; !isNaN(coords[1])) { map.setView([coords[0], coords[1]], 18); return; } fetch(`https://nominatim.openstreetmap.org/search?format=json&amp;limit=1&amp;q=${encodeURIComponent(q)}`).then(r =&gt; r.json()).then(results =&gt; { if (!results.length) { alert('Terrain introuvable.'); return; } map.setView([parseFloat(results[0].lat), parseFloat(results[0].lon)], 18); }); });
                 document.getElementById('btn_use_position').addEventListener('click', function() { if (!navigator.geolocation) { alert('Géolocalisation non supportée par ce navigateur.'); return; } navigator.geolocation.getCurrentPosition(function(pos) { map.setView([pos.coords.latitude, pos.coords.longitude], 18); }); });
 
-                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Supprimer dessin”.'); drawnItems.removeLayer(event.layer); return; } const layer = event.layer; registerPhaseLayer(layer); savePhaseLayer(layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord une unité.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; unit.label = label; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); const layer = event.layer; registerLayer(layer, unit); saveLayer(layer); });
+                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Supprimer dessin”.'); drawnItems.removeLayer(event.layer); return; } const layer = event.layer; registerPhaseLayer(layer); savePhaseLayer(layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord une unité.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); const layer = event.layer; registerLayer(layer, unit); saveLayer(layer, label); });
                 document.getElementById('btn_edit_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') enablePhaseEdit(); else enableEdit(document.getElementById('unit_select').value); });
                 document.getElementById('btn_save_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') savePhaseLayer(activeLayer || phaseLayer); else saveLayer(activeLayer || findLayer(document.getElementById('unit_select').value)); });
-                document.getElementById('btn_rename_selected').addEventListener('click', () =&gt; renameUnit(document.getElementById('unit_select').value));
-                document.getElementById('btn_clear_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') clearPhase(); else clearUnit(document.getElementById('unit_select').value); });
+                document.getElementById('btn_rename_selected').addEventListener('click', () =&gt; renameUnit(document.getElementById('unit_select').value || (activeLayer &amp;&amp; activeLayer.meta ? activeLayer.meta.line_id : false)));
+                document.getElementById('btn_clear_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') clearPhase(); else clearUnit(document.getElementById('unit_select').value || (activeLayer &amp;&amp; activeLayer.meta ? activeLayer.meta.line_id : false)); });
                 document.addEventListener('click', function(ev) { const edit = ev.target.closest('.js-edit-unit'); const save = ev.target.closest('.js-save-unit'); const rename = ev.target.closest('.js-rename-unit'); const clear = ev.target.closest('.js-clear-unit'); if (edit) enableEdit(edit.dataset.lineId); if (save) saveLayer(findLayer(save.dataset.lineId)); if (rename) renameUnit(rename.dataset.lineId); if (clear) clearUnit(clear.dataset.lineId); });
             </script>
         </t>
@@ -1116,7 +1180,11 @@
                     const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
                     const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
                     const map = L.map('preview_unit_map_esri').setView([-18.8792, 47.5079], 16);
-                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles © Esri', maxZoom:19 }).addTo(map);
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri',
+                        maxNativeZoom: 19,
+                        maxZoom: 24,
+                    }).addTo(map);
                     const all = new L.FeatureGroup().addTo(map);
                     function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
                     function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }
@@ -1154,7 +1222,11 @@
                 const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
                 const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
                 const map = L.map('public_unit_map_esri').setView([-18.8792, 47.5079], 16);
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles © Esri', maxZoom:19 }).addTo(map);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles © Esri',
+                    maxNativeZoom: 19,
+                    maxZoom: 24,
+                }).addTo(map);
                 const all = new L.FeatureGroup().addTo(map);
                 function rpc(route, params) { return fetch(route, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0', method:'call', params: params || {}})}).then(r =&gt; r.json()).then(r =&gt; r.result || r); }
                 function toFeature(geojson) { if (!geojson) return null; if (geojson.type === 'Feature') return geojson; return {type:'Feature', properties:{}, geometry: geojson}; }

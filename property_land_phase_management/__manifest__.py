@@ -7,6 +7,7 @@
     'author': 'SysAdaptPro',
     'depends': ['property_unit_mapping'],
     'data': [
+        'views/property_land_phase_views.xml',
         'views/land_phase_templates.xml',
     ],
     'installable': True,

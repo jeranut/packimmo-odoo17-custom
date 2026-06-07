@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class PropertySubProject(models.Model):
     _inherit = 'property.sub.project'
+
+    land_phase_map_background = fields.Selection(
+        related='property_project_id.land_phase_map_background',
+        string='Fond de carte terrain',
+        readonly=True,
+    )
 
     def _is_land_subproject_for_phase(self):
         self.ensure_one()
@@ -30,7 +36,11 @@ class PropertySubProject(models.Model):
             }
         return super().action_view_unit_map_website()
 
-    @api.depends('property_type')
+    @api.depends(
+        'property_type',
+        'land_phase_map_background',
+        'property_project_id.unit_map_image',
+    )
     def _compute_unit_map_preview_html(self):
         super()._compute_unit_map_preview_html()
         for rec in self:

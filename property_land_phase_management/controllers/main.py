@@ -25,6 +25,23 @@ def _geo_defaults(record):
     }
 
 
+def _background_project(record):
+    return getattr(record, 'property_project_id', False) or record
+
+
+def _map_config(record):
+    project = _background_project(record)
+    mode = getattr(project, 'land_phase_map_background', False) or 'esri'
+    return {
+        'map_mode': mode,
+        'image_url': (
+            '/property/unit-map/image/project/%s' % project.id
+            if mode == 'image' and project.unit_map_image
+            else False
+        ),
+    }
+
+
 def _unit_payload(line):
     prop = line.property_id
     price = getattr(prop, 'price', 0) or getattr(prop, 'rent_unit', 0) or 0
@@ -66,10 +83,29 @@ class PropertyLandPhaseController(http.Controller):
         project = request.env['property.project'].browse(project_id).exists()
         if not project or not _is_land(project):
             return request.not_found()
+
+        land_subprojects = request.env['property.sub.project'].search_count([
+            ('property_project_id', '=', project.id),
+            ('property_type', '=', 'land'),
+        ])
+        if not land_subprojects:
+            project.action_prepare_unit_map_lines()
+            template = (
+                'property_unit_mapping.unit_map_designer_template'
+                if project.land_phase_map_background == 'image'
+                else 'property_unit_mapping.unit_map_esri_designer_template'
+            )
+            return request.render(template, {
+                'project': project,
+                'map_type': 'project',
+            })
+
         return request.render('property_land_phase_management.land_phase_project_designer_template', {
             'project': project,
             'map_type': 'project',
             'designer_mode': True,
+            'show_draft': True,
+            **_map_config(project),
         })
 
     @http.route('/property/land-phase/subproject/esri-designer/<int:subproject_id>', type='http', auth='user', website=True)
@@ -82,16 +118,21 @@ class PropertyLandPhaseController(http.Controller):
             'project': subproject,
             'main_project': subproject.property_project_id,
             'map_type': 'subproject',
+            **_map_config(subproject),
         })
 
     @http.route('/property/land-phase/project/<int:project_id>/map', type='http', auth='public', website=True, sitemap=True)
-    def project_public_map(self, project_id, **kwargs):
+    def project_public_map(self, project_id, show_draft=False, **kwargs):
         project = request.env['property.project'].sudo().browse(project_id).exists()
         if not project or not _is_land(project):
             return request.not_found()
         return request.render('property_land_phase_management.land_phase_public_map_template', {
             'project': project,
             'designer_mode': False,
+            'show_draft': bool(
+                show_draft and request.env.user.has_group('base.group_user')
+            ),
+            **_map_config(project),
         })
 
     @http.route('/property/land-phase/project/<int:project_id>/preview', type='http', auth='user', website=True)
@@ -102,6 +143,7 @@ class PropertyLandPhaseController(http.Controller):
         return request.render('property_land_phase_management.land_phase_preview_template', {
             'project': project,
             'data_route': '/property/land-phase/project/data/%s' % project.id,
+            **_map_config(project),
         })
 
     @http.route('/property/land-phase/subproject/<int:subproject_id>/preview', type='http', auth='user', website=True)
@@ -112,6 +154,7 @@ class PropertyLandPhaseController(http.Controller):
         return request.render('property_land_phase_management.land_phase_preview_template', {
             'project': subproject,
             'data_route': '/property/land-phase/subproject/data/%s' % subproject.id,
+            **_map_config(subproject),
         })
 
     @http.route('/property/land-phase/project/data/<int:project_id>', type='json', auth='public', methods=['POST'], website=True)
@@ -127,6 +170,8 @@ class PropertyLandPhaseController(http.Controller):
 
         lines = request.env['property.unit.map.line'].sudo().search([
             ('project_id', '=', project.id),
+            '|',
+            ('subproject_id', '=', False),
             ('subproject_id', 'in', subprojects.ids),
         ], order='sequence, id')
         if exclude_draft:
@@ -136,7 +181,7 @@ class PropertyLandPhaseController(http.Controller):
             'project': {
                 'id': project.id,
                 'name': project.name,
-                'map_mode': 'esri',
+                **_map_config(project),
                 **_geo_defaults(project),
             },
             'current_phase': False,
@@ -173,7 +218,7 @@ class PropertyLandPhaseController(http.Controller):
                 'name': subproject.name,
                 'main_project_id': subproject.property_project_id.id,
                 'main_project_name': subproject.property_project_id.name,
-                'map_mode': 'esri',
+                **_map_config(subproject),
                 **_geo_defaults(subproject),
             },
             'current_phase': _phase_payload(subproject, current_id=subproject.id) if subproject.phase_polygon_json else False,

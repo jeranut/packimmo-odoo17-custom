@@ -17,19 +17,19 @@
                         name="action_prepare_unit_map_lines"
                         type="object"
                         class="btn-secondary"
-                        invisible="not has_multiple_units"/>
+                        invisible="not has_multiple_units and property_type != 'land'"/>
 
                 <button string="Dessiner la cartographie"
                         name="action_open_unit_map_editor"
                         type="object"
                         class="btn-primary"
-                        invisible="not has_multiple_units"/>
+                        invisible="not has_multiple_units and property_type != 'land'"/>
 
                 <button name="action_view_unit_map_website"
                         string="Voir côté site web"
                         type="object"
                         class="btn-primary"
-                        invisible="not has_multiple_units"/>
+                        invisible="not has_multiple_units and property_type != 'land'"/>
             </xpath>
 
             <xpath expr="//sheet/notebook" position="inside">

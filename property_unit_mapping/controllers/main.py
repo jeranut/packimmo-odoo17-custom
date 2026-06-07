@@ -3,7 +3,10 @@ import json
 import base64
 import mimetypes
 
+from psycopg2 import IntegrityError
+
 from odoo import http
+from odoo.exceptions import ValidationError
 from odoo.http import request
 
 
@@ -236,17 +239,27 @@ class PropertyUnitMapWebsite(http.Controller):
         if not geojson:
             return {'error': 'Dessin vide'}
 
-        vals = {
-            'polygon_json': json.dumps(geojson),
+        try:
+            with request.env.cr.savepoint():
+                if label:
+                    line.property_id.write({
+                        'unit_map_label': label,
+                    })
+
+                line.write({
+                    'polygon_json': json.dumps(geojson),
+                })
+        except ValidationError as error:
+            return {'error': str(error)}
+        except IntegrityError:
+            return {
+                'error': 'Cette référence plan existe déjà dans ce sous-projet.',
+            }
+
+        return {
+            'ok': True,
+            'label': line.property_id.unit_map_label or '',
         }
-        line.write(vals)
-
-        if label:
-            line.property_id.write({
-                'unit_map_label': label,
-            })
-
-        return {'ok': True}
 
     @http.route('/property/unit-map/clear/<int:line_id>', type='json', auth='user', methods=['POST'], website=True)
     def unit_map_clear(self, line_id, **kw):
@@ -318,11 +331,33 @@ class PropertyUnitMapWebsite(http.Controller):
         if not record:
             return {'error': 'Phase introuvable'}
 
-        record.write({
-            'phase_polygon_json': json.dumps(geojson)
-        })
+        auto_unit = False
+        polygon_json = json.dumps(geojson)
 
-        return {'ok': True}
+        with request.env.cr.savepoint():
+            record.write({
+                'phase_polygon_json': polygon_json,
+            })
+
+            if map_type == 'project' and getattr(record, 'property_type', False) == 'land':
+                direct_properties = request.env['property.details'].sudo().search([
+                    ('property_project_id', '=', record.id),
+                    ('subproject_id', '=', False),
+                ])
+                if len(direct_properties) == 1:
+                    record.action_prepare_unit_map_lines()
+                    unit_line = request.env['property.unit.map.line'].sudo().search([
+                        ('project_id', '=', record.id),
+                        ('property_id', '=', direct_properties.id),
+                    ], limit=1)
+                    if unit_line:
+                        unit_line.write({'polygon_json': polygon_json})
+                        auto_unit = True
+
+        return {
+            'ok': True,
+            'auto_unit': auto_unit,
+        }
 
     @http.route('/property/unit-map/clear-phase/<int:record_id>', type='json', auth='user', methods=['POST'],
                 website=True)
@@ -335,8 +370,22 @@ class PropertyUnitMapWebsite(http.Controller):
         if not record:
             return {'error': 'Phase introuvable'}
 
-        record.write({
-            'phase_polygon_json': False
-        })
+        with request.env.cr.savepoint():
+            record.write({
+                'phase_polygon_json': False,
+            })
+
+            if map_type == 'project' and getattr(record, 'property_type', False) == 'land':
+                direct_properties = request.env['property.details'].sudo().search([
+                    ('property_project_id', '=', record.id),
+                    ('subproject_id', '=', False),
+                ])
+                if len(direct_properties) == 1:
+                    unit_line = request.env['property.unit.map.line'].sudo().search([
+                        ('project_id', '=', record.id),
+                        ('property_id', '=', direct_properties.id),
+                    ], limit=1)
+                    if unit_line:
+                        unit_line.write({'polygon_json': False})
 
         return {'ok': True}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="property_project_view_form_inherit_land_phase_background" model="ir.ui.view">
+        <field name="name">property.project.form.inherit.land.phase.background</field>
+        <field name="model">property.project</field>
+        <field name="inherit_id" ref="property_unit_mapping.property_project_view_form_inherit_unit_mapping"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_open_import_unit_map_wizard']" position="attributes">
+                <attribute name="string">Importer une image de fond</attribute>
+                <attribute name="invisible">(not has_multiple_units and property_type != 'land') or (property_type == 'land' and land_phase_map_background != 'image')</attribute>
+            </xpath>
+            <xpath expr="//field[@name='unit_map_image']" position="before">
+                <field name="land_phase_map_background"
+                       string="Fond de carte"
+                       invisible="property_type != 'land'"/>
+            </xpath>
+            <xpath expr="//field[@name='unit_map_image']" position="attributes">
+                <attribute name="invisible">property_type == 'land' and land_phase_map_background != 'image'</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="property_sub_project_view_form_inherit_land_phase_background" model="ir.ui.view">
+        <field name="name">property.sub.project.form.inherit.land.phase.background</field>
+        <field name="model">property.sub.project</field>
+        <field name="inherit_id" ref="property_unit_mapping.property_sub_project_view_form_inherit_unit_mapping"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='unit_map_image']" position="before">
+                <field name="land_phase_map_background"
+                       string="Fond de carte du projet"
+                       invisible="property_type != 'land'"/>
+                <div class="alert alert-info"
+                     invisible="property_type != 'land' or land_phase_map_background != 'image'">
+                    L’image de fond est configurée sur le projet principal afin que toutes les phases
+                    utilisent le même repère.
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
