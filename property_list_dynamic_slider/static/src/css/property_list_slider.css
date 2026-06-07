@@ -270,6 +270,20 @@
     font-size: 14px;
 }
 
+.pack-property-description {
+    min-height: 54px;
+    max-height: 54px;
+    margin-bottom: 22px;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.pack-property-description p:last-child {
+    margin-bottom: 0;
+}
+
 .pack-property-feature {
     display: inline-flex;
     align-items: center;
