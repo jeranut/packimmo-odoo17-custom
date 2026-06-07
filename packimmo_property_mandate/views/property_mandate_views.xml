@@ -198,7 +198,8 @@
 
 
                     </group>
-                    <group string="Exclusivité">
+                    <group string="Exclusivité"
+                        invisible="mandate_type in ['simple', 'exclusive']">
                         <field name="exclusive" />
                         <field name="priority_processing" />
                         <field name="commission_due_if_owner_rents" />

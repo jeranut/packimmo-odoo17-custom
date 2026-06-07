@@ -664,15 +664,11 @@ class PropertyMandate(models.Model):
     @api.depends("mandate_type")
     def _compute_exclusive_flags(self):
         for rec in self:
-            is_exclusive = rec.mandate_type in (
-                "exclusive",
-                "exclusive_absolute",
-            )
+            is_exclusive_absolute = rec.mandate_type == "exclusive_absolute"
 
-            rec.exclusive = is_exclusive
-            rec.priority_processing = is_exclusive
-
-            rec.commission_due_if_owner_rents = rec.mandate_type == "exclusive_absolute"
+            rec.exclusive = is_exclusive_absolute
+            rec.priority_processing = is_exclusive_absolute
+            rec.commission_due_if_owner_rents = is_exclusive_absolute
 
     @api.model_create_multi
     def create(self, vals_list):
