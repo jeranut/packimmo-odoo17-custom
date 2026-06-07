@@ -1368,6 +1368,19 @@ class PropertyMandate(models.Model):
 
 
     def write(self, vals):
+        if "mandate_type" in vals:
+            locked_mandates = self.filtered(
+                lambda mandate: mandate.state != "draft"
+                and mandate.mandate_type != vals["mandate_type"]
+            )
+            if locked_mandates:
+                raise ValidationError(
+                    _(
+                        "Le type de mandat ne peut être modifié qu'à l'état brouillon. "
+                        "Veuillez d'abord remettre le mandat en brouillon."
+                    )
+                )
+
         if vals.get("state") == "completed":
             unpaid_mandates = self.filtered(
                 lambda mandate: mandate.invoice_payment_status != "paid"

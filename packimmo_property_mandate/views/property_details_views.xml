@@ -60,6 +60,10 @@
                 <attribute name="invisible">stage == 'draft' or mandate_type in ['simple', 'exclusive'] or has_simple_mandate</attribute>
             </xpath>
 
+            <xpath expr="//button[@name='action_in_sale']" position="attributes">
+                <attribute name="invisible">stage != 'available' or sale_lease != 'for_sale' or mandate_type in ['simple', 'exclusive']</attribute>
+            </xpath>
+
         </field>
     </record>
 </odoo>
