@@ -37,6 +37,11 @@
     margin-bottom: 10px;
     border-bottom: 1px solid #999;
     padding-bottom: 3px;
+    page-break-after: avoid;
+}
+
+.pk-section-title + p {
+    page-break-inside: avoid;
 }
 
 .pk-mandate-type {

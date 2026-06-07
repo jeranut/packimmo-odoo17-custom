@@ -686,143 +686,167 @@
                         <!-- SECTION II -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            II — Engagement du mandataire
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                II — Engagement du mandataire
+                            </h4>
 
-                        <p>
-                            Pour mener à bien sa mission, le mandataire aura la faculté de
-                            rechercher
-                            des locataires pour le bien ci-dessus désigné. Pour cela, il lui est
-                            autorisé
-                            d’utiliser tous moyens publicitaires, à ses frais, sans pouvoir en
-                            réclamer
-                            remboursement même partiel auprès du mandant. Il établira le contrat de
-                            location
-                            selon le prix, les charges et conditions convenues avec le mandant
-                            ci-dessus mentionné
-                            et recueillir l’acceptation du locataire.
-                        </p>
+                            <p>
+                                Pour mener à bien sa mission, le mandataire aura la faculté de
+                                rechercher
+                                des locataires pour le bien ci-dessus désigné. Pour cela, il lui est
+                                autorisé
+                                d’utiliser tous moyens publicitaires, à ses frais, sans pouvoir en
+                                réclamer
+                                remboursement même partiel auprès du mandant. Il établira le contrat
+                                de
+                                location
+                                selon le prix, les charges et conditions convenues avec le mandant
+                                ci-dessus mentionné
+                                et recueillir l’acceptation du locataire.
+                            </p>
+                        </div>
 
                         <!-- ===================================== -->
                         <!-- SECTION III -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            III — Engagement du mandant pour un mandat simple non exclusif
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                III — Engagement du mandant pour un mandat simple non exclusif
+                            </h4>
 
-                        <p>
-                            Le mandant s’engage à faciliter la visite des lieux, notamment en cas
-                            d’occupation des lieux.
-                            Il donne toute liberté au mandataire de rechercher un locataire,
-                            cependant, il a la faculté
-                            de rechercher lui-même ou par tierce personne un preneur pour le bien
-                            ci-dessus désigné.
-                            Dans le cas où le mandant trouve preneur, il s’engage à avertir le
-                            mandataire sous 48 heures.
-                        </p>
+                            <p>
+                                Le mandant s’engage à faciliter la visite des lieux, notamment en cas
+                                d’occupation des lieux.
+                                Il donne toute liberté au mandataire de rechercher un locataire,
+                                cependant, il a la faculté
+                                de rechercher lui-même ou par tierce personne un preneur pour le bien
+                                ci-dessus désigné.
+                                Dans le cas où le mandant trouve preneur, il s’engage à avertir le
+                                mandataire sous 48 heures.
+                            </p>
+                        </div>
 
                         <!-- ===================================== -->
                         <!-- SECTION IV -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            IV — Engagement du mandant pour un mandat exclusif standard
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                IV — Engagement du mandant pour un mandat exclusif standard
+                            </h4>
 
-                        <p>
-                            Le mandant s’engage à faciliter la visite des lieux, notamment
-                            en cas d’occupation des lieux. Il donne toute liberté au mandataire de
-                            rechercher un locataire et il s’engage à ne pas proposer le bien désigné
-                            ci-dessus à d’autres agences immobilières. Cependant, pour ce type de
-                            mandat,
-                            le mandant aura la possibilité de chercher lui-même un preneur pour le
-                            bien
-                            désigné ci-dessus. Le mandant s’engage également à accepter la
-                            transaction
-                            aux conditions mentionnées ci-dessus à toute personne présentée par
-                            le mandataire pour le bien ci-dessus désigné.
-                        </p>
+                            <p>
+                                Le mandant s’engage à faciliter la visite des lieux, notamment
+                                en cas d’occupation des lieux. Il donne toute liberté au mandataire de
+                                rechercher un locataire et il s’engage à ne pas proposer le bien
+                                désigné
+                                ci-dessus à d’autres agences immobilières. Cependant, pour ce type de
+                                mandat,
+                                le mandant aura la possibilité de chercher lui-même un preneur pour
+                                le bien
+                                désigné ci-dessus. Le mandant s’engage également à accepter la
+                                transaction
+                                aux conditions mentionnées ci-dessus à toute personne présentée par
+                                le mandataire pour le bien ci-dessus désigné.
+                            </p>
+                        </div>
 
                         <!-- ===================================== -->
                         <!-- SECTION V -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            V — Engagement du mandant pour un mandat exclusif absolu
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                V — Engagement du mandant pour un mandat exclusif absolu
+                            </h4>
 
-                        <p>
-                            Le mandat exclusif absolu permet au propriétaire de se décharger
-                            complètement
-                            de la location de son bien, confié exclusivement à PACKIMMO, qui mettra
-                            en œuvre
-                            un ensemble de moyens publicitaires figurant au verso du présent mandat.
-                            S’il réalise la location de son bien par ses propres moyens, il sera
-                            tenu,
-                            cependant, de verser la commission d’agence à PACKIMMO.
-                        </p>
+                            <p>
+                                Le mandat exclusif absolu permet au propriétaire de se décharger
+                                complètement
+                                de la location de son bien, confié exclusivement à PACKIMMO, qui
+                                mettra
+                                en œuvre
+                                un ensemble de moyens publicitaires figurant au verso du présent
+                                mandat.
+                                S’il réalise la location de son bien par ses propres moyens, il sera
+                                tenu,
+                                cependant, de verser la commission d’agence à PACKIMMO.
+                            </p>
+                        </div>
 
                         <!-- ===================================== -->
                         <!-- SECTION VI -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            VI — Durée du mandat
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                VI — Durée du mandat
+                            </h4>
 
-                        <t t-if="not doc.tacit_renewal">
-                            <p> Le présent mandat exclusif ou non exclusif est donné à compter de ce
-                                jour pour une durée de <strong>
-                                    <span t-field="doc.duration_months" /> mois</strong>, soit du <strong>
-                                    <span t-field="doc.start_date" />
-                                </strong>
-                                au <strong>
-                                    <span t-field="doc.end_date" />
-                                </strong>
-                                . </p>
-                        </t>
+                            <t t-if="not doc.tacit_renewal">
+                                <p> Le présent mandat exclusif ou non exclusif est donné à compter de
+                                    ce
+                                    jour pour une durée de <strong>
+                                        <span t-field="doc.duration_months" /> mois</strong>, soit du
+                                    <strong>
+                                        <span t-field="doc.start_date" />
+                                    </strong>
+                                    au <strong>
+                                        <span t-field="doc.end_date" />
+                                    </strong>
+                                    . </p>
+                            </t>
 
-                        <t t-if="doc.tacit_renewal">
-                            <p> Le présent mandat exclusif ou non exclusif est donné à compter de ce
-                                jour pour une durée de <strong>
-                                    <span t-field="doc.duration_months" /> mois</strong> et se
-                                renouvellera par tacite reconduction, sauf dénonciation par l’une ou
-                                l’autre des parties, cinq jours ouvrables avant la fin de la
-                                période. </p>
-                        </t>
+                            <t t-if="doc.tacit_renewal">
+                                <p> Le présent mandat exclusif ou non exclusif est donné à compter de
+                                    ce
+                                    jour pour une durée de <strong>
+                                        <span t-field="doc.duration_months" /> mois</strong> et se
+                                    renouvellera par tacite reconduction, sauf dénonciation par l’une
+                                    ou
+                                    l’autre des parties, cinq jours ouvrables avant la fin de la
+                                    période. </p>
+                            </t>
+                        </div>
 
                         <!-- ===================================== -->
                         <!-- SECTION VII -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            VII — Honoraires
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                VII — Honoraires
+                            </h4>
 
-                        <p> Les honoraires de l’agence PACKIMMO seront de <strong>
-                                <span t-esc="doc.fee_calculation_label or ''" />
-                            </strong>
-                            , <span t-esc="doc.fee_amount_in_words" /> , à la charge du futur
-                            locataire, conformément à notre barème. </p>
+                            <p> Les honoraires de l’agence PACKIMMO seront de <strong>
+                                    <span t-esc="doc.fee_calculation_label or ''" />
+                                </strong>
+                                , <span t-esc="doc.fee_amount_in_words" /> , à la charge du futur
+                                locataire, conformément à notre barème. </p>
+                        </div>
 
 
                         <!-- ===================================== -->
                         <!-- SECTION VIII -->
                         <!-- ===================================== -->
 
-                        <h4>
-                            VIII — Attribution de juridiction
-                        </h4>
+                        <div class="pk-section-start">
+                            <h4>
+                                VIII — Attribution de juridiction
+                            </h4>
 
-                        <p>
-                            Toutes contestations pouvant s’élever à l’exécution des présentes seront
-                            soumises
-                            à une commission d’arbitrage et en cas de non conciliation, il sera fait
-                            attribution
-                            de juridiction auprès du Tribunal d’Antananarivo.
-                        </p>
+                            <p>
+                                Toutes contestations pouvant s’élever à l’exécution des présentes
+                                seront
+                                soumises
+                                à une commission d’arbitrage et en cas de non conciliation, il sera
+                                fait
+                                attribution
+                                de juridiction auprès du Tribunal d’Antananarivo.
+                            </p>
+                        </div>
 
                         <!-- ===================================== -->
                         <!-- SIGNATURE -->

@@ -6,12 +6,14 @@ from odoo.exceptions import ValidationError, UserError
 
 class PropertyDetails(models.Model):
     _inherit = "property.details"
+    _check_company_auto = True
 
     mandate_id = fields.Many2one(
         "property.mandate",
         string="Mandat",
         tracking=True,
         ondelete="set null",
+        check_company=True,
     )
 
     mandate_type = fields.Selection(
@@ -87,6 +89,7 @@ class PropertyDetails(models.Model):
                     "rent" if self.sale_lease == "for_tenancy" else "sale"
                 ),
                 "default_property_ids": [(6, 0, [self.id])],
+                "default_company_id": self.company_id.id,
             },
         }
 

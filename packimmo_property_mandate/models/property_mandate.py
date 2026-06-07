@@ -11,6 +11,7 @@ class PropertyMandate(models.Model):
     _description = "Mandat immobilier"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
+    _check_company_auto = True
 
     name = fields.Char(
         string="Référence",
@@ -36,6 +37,15 @@ class PropertyMandate(models.Model):
         "property.details",
         "mandate_id",
         string="Biens / Unités",
+        check_company=True,
+    )
+
+    company_id = fields.Many2one(
+        "res.company",
+        string="Société",
+        required=True,
+        default=lambda self: self.env.company,
+        index=True,
     )
 
     property_count = fields.Integer(
@@ -159,7 +169,9 @@ class PropertyMandate(models.Model):
     currency_id = fields.Many2one(
         "res.currency",
         string="Devise",
-        default=lambda self: self.env.company.currency_id.id,
+        related="company_id.currency_id",
+        store=True,
+        readonly=True,
     )
 
     billed_to = fields.Selection(
@@ -291,6 +303,7 @@ class PropertyMandate(models.Model):
         "account.move",
         string="Facture honoraires",
         tracking=True,
+        check_company=True,
     )
 
     payment_status = fields.Selection(
@@ -329,6 +342,7 @@ class PropertyMandate(models.Model):
         string="Factures honoraires",
         readonly=True,
         copy=False,
+        check_company=True,
     )
     invoice_count = fields.Integer(
         string="Nombre de factures",
@@ -352,6 +366,7 @@ class PropertyMandate(models.Model):
     string="Contrat exclusif",
     copy=False,
     readonly=True,
+    check_company=True,
 )
 
     contract_start_date = fields.Date(
@@ -639,9 +654,23 @@ class PropertyMandate(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not vals.get("company_id"):
+                property_ids = []
+                for command in vals.get("property_ids", []):
+                    if command[0] == 4:
+                        property_ids.append(command[1])
+                    elif command[0] == 6:
+                        property_ids.extend(command[2])
+                property_rec = self.env["property.details"].browse(property_ids[:1])
+                if property_rec:
+                    vals["company_id"] = property_rec.company_id.id
+
+            company = self.env["res.company"].browse(
+                vals.get("company_id")
+            ) or self.env.company
 
             if vals.get("name", _("Nouveau")) == _("Nouveau"):
-                vals["name"] = self.env["ir.sequence"].next_by_code(
+                vals["name"] = self.env["ir.sequence"].with_company(company).next_by_code(
                     "property.mandate"
                 ) or _("Nouveau")
 
@@ -667,6 +696,20 @@ class PropertyMandate(models.Model):
                         "La date de fin du mandat doit être supérieure "
                         "ou égale à la date de début."
                     )
+                )
+
+    @api.constrains("company_id", "property_ids")
+    def _check_property_companies(self):
+        for rec in self:
+            invalid_properties = rec.property_ids.filtered(
+                lambda property_rec: property_rec.company_id != rec.company_id
+            )
+            if invalid_properties:
+                raise ValidationError(
+                    _(
+                        "Tous les biens du mandat doivent appartenir à la société %s."
+                    )
+                    % rec.company_id.display_name
                 )
 
     # =========================================================
@@ -748,6 +791,7 @@ class PropertyMandate(models.Model):
             "context": {
                 "default_mandate_id": self.id,
                 "default_landlord_id": self.owner_id.id,
+                "default_company_id": self.company_id.id,
             },
         }
 
@@ -892,6 +936,7 @@ class PropertyMandate(models.Model):
                     "res_model": rec._name,
                     "res_id": rec.id,
                     "mimetype": "application/pdf",
+                    "company_id": rec.company_id.id,
                 }
             )
 
@@ -1092,10 +1137,10 @@ class PropertyMandate(models.Model):
             rec.message_post(body=_("Mandat terminé et facture(s) d’honoraires générée(s)."))
 
     def _create_fee_invoices(self):
-        AccountMove = self.env["account.move"]
-        Product = self.env["product.product"]
-
         for rec in self:
+            AccountMove = self.env["account.move"].with_company(rec.company_id)
+            Product = self.env["product.product"].with_company(rec.company_id)
+
             if rec.invoice_ids:
                 raise ValidationError(_("Des factures existent déjà pour ce mandat."))
 
@@ -1108,13 +1153,22 @@ class PropertyMandate(models.Model):
             if rec.billed_to in ("tenant_buyer", "both") and not rec.client_id:
                 raise ValidationError(_("Veuillez renseigner le locataire / acheteur trouvé."))
 
-            product = Product.search([("name", "=", "Honoraire Agence")], limit=1)
+            product = Product.search(
+                [
+                    ("name", "=", "Honoraire Agence"),
+                    "|",
+                    ("company_id", "=", False),
+                    ("company_id", "=", rec.company_id.id),
+                ],
+                limit=1,
+            )
             if not product:
                 product = Product.create({
                     "name": "Honoraire Agence",
                     "type": "service",
                     "invoice_policy": "order",
                     "list_price": rec.total_fee_amount,
+                    "company_id": rec.company_id.id,
                 })
 
             label = _("Honoraires mandat immobilier")
@@ -1157,40 +1211,41 @@ class PropertyMandate(models.Model):
                     "amount": client_amount,
                 })
 
-        created_invoices = AccountMove
+            created_invoices = AccountMove
 
-        for data in invoice_data:
-            invoice = AccountMove.create({
-                "move_type": "out_invoice",
-                "partner_id": data["partner_id"],
-                "invoice_date": fields.Date.context_today(self),
-                "invoice_origin": rec.name,
-                "ref": rec.name,
-                "invoice_line_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "product_id": product.id,
-                            "name": label,
-                            "quantity": 1.0,
-                            "price_unit": data["amount"],
-                        },
-                    )
-                ],
+            for data in invoice_data:
+                invoice = AccountMove.create({
+                    "move_type": "out_invoice",
+                    "company_id": rec.company_id.id,
+                    "partner_id": data["partner_id"],
+                    "invoice_date": fields.Date.context_today(self),
+                    "invoice_origin": rec.name,
+                    "ref": rec.name,
+                    "invoice_line_ids": [
+                        (
+                            0,
+                            0,
+                            {
+                                "product_id": product.id,
+                                "name": label,
+                                "quantity": 1.0,
+                                "price_unit": data["amount"],
+                            },
+                        )
+                    ],
+                })
+
+                created_invoices |= invoice
+
+            rec.write({
+                "invoice_ids": [(6, 0, created_invoices.ids)],
+                "invoice_id": created_invoices[:1].id if created_invoices else False,
             })
 
-            created_invoices |= invoice
-
-        rec.write({
-            "invoice_ids": [(6, 0, created_invoices.ids)],
-            "invoice_id": created_invoices[:1].id if created_invoices else False,
-        })
-
-        rec.message_post(
-            body=_("Facture(s) d’honoraires créée(s) : %s")
-            % ", ".join(created_invoices.mapped("name"))
-        )
+            rec.message_post(
+                body=_("Facture(s) d’honoraires créée(s) : %s")
+                % ", ".join(created_invoices.mapped("name"))
+            )
 
     @api.depends("invoice_id.payment_state")
     def _compute_payment_status(self):
@@ -1214,6 +1269,17 @@ class PropertyMandate(models.Model):
                     )
                 )
     
+    def _get_exclusive_contract_report(self):
+        self.ensure_one()
+        property_rec = self.property_ids[:1]
+        report_xmlid = (
+            "packimmo_property_mandate."
+            "action_report_exclusive_mandate_commercial_contract"
+            if property_rec.type == "commercial"
+            else "packimmo_property_mandate.action_report_exclusive_mandate_contract"
+        )
+        return self.env.ref(report_xmlid)
+
     def action_print_exclusive_contract(self):
         for rec in self:
             if rec.mandate_type != "exclusive":
@@ -1243,9 +1309,7 @@ class PropertyMandate(models.Model):
                     _("La date fin contrat doit être supérieure ou égale à la date début contrat.")
                 )
 
-            report = self.env.ref(
-                "packimmo_property_mandate.action_report_exclusive_mandate_contract"
-            )
+            report = rec._get_exclusive_contract_report()
 
             pdf_content, content_type = report._render_qweb_pdf(
                 report.report_name,
@@ -1253,12 +1317,14 @@ class PropertyMandate(models.Model):
             )
 
             attachment = self.env["ir.attachment"].create({
-                "name": "Contrat_Mandat_Exclusif_%s.pdf" % (rec.name or "Mandat"),
+                "name": "%s_%s.pdf"
+                % (report.name.replace(" ", "_"), rec.name or "Mandat"),
                 "type": "binary",
                 "datas": base64.b64encode(pdf_content),
                 "res_model": rec._name,
                 "res_id": rec.id,
                 "mimetype": "application/pdf",
+                "company_id": rec.company_id.id,
             })
 
             rec.message_post(

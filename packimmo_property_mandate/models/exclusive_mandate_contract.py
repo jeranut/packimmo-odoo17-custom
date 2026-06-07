@@ -10,12 +10,23 @@ class PropertyMandateExclusiveContract(models.Model):
     _name = "property.mandate.exclusive.contract"
     _description = "Informations contrat mandat exclusif"
     _rec_name = "mandate_id"
+    _check_company_auto = True
 
     mandate_id = fields.Many2one(
         "property.mandate",
         string="Mandat exclusif",
         required=True,
         ondelete="cascade",
+        index=True,
+        check_company=True,
+    )
+
+    company_id = fields.Many2one(
+        "res.company",
+        string="Société",
+        related="mandate_id.company_id",
+        store=True,
+        readonly=True,
         index=True,
     )
 

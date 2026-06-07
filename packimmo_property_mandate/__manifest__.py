@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "PACKIMMO Property Mandate",
-    "version": "17.0.1.0.0",
+    "version": "17.0.1.1.0",
     "category": "Real Estate",
     "summary": "Gestion des mandats immobiliers liés aux biens PACKIMMO",
     "description": """
@@ -22,6 +22,7 @@ Gestion des mandats immobiliers PACKIMMO.
         "packimmo_rental_custom_fields",
     ],
     "data": [
+        "security/security.xml",
         "security/ir.model.access.csv",
         "data/mandate_sequence.xml",
         "wizard/contract_wizard_views.xml",

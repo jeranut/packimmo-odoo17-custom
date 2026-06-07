@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <tree string="Mandats">
                 <field name="name" />
+                <field name="company_id" groups="base.group_multi_company" />
                 <field name="owner_id" />
                 <field name="mandate_type" />
                 <field name="operation_type" />
@@ -33,6 +34,7 @@
         <field name="arch" type="xml">
             <form string="Mandat immobilier">
                 <header>
+                    <field name="company_id" invisible="1" />
                     <button name="action_submit" type="object" string="Soumettre"
                         class="btn-primary" invisible="state != 'draft'" />
                     <button name="action_approve" type="object" string="Approuver"
@@ -102,6 +104,9 @@
                     </div>
                     <group>
                         <group string="Informations générales">
+                            <field name="company_id"
+                                groups="base.group_multi_company"
+                                options="{'no_create': True}" />
                             <field name="owner_id" readonly="1" />
                             <field name="mandate_type" />
                             <field name="operation_type" />
@@ -253,9 +258,11 @@
                     <notebook>
                         <page string="Biens / Unités" name="properties">
                             <field name="property_ids"
-                                context="{'default_mandate_id': id, 'default_landlord_id': owner_id}">
+                                domain="[('company_id', '=', company_id)]"
+                                context="{'default_mandate_id': id, 'default_landlord_id': owner_id, 'default_company_id': company_id}">
                                 <tree editable="bottom">
                                     <field name="name" />
+                                    <field name="company_id" groups="base.group_multi_company" />
                                     <field name="landlord_id" />
                                     <field name="sale_lease" />
                                     <field name="stage" />
@@ -294,6 +301,7 @@
         <field name="arch" type="xml">
             <search string="Mandats">
                 <field name="name" />
+                <field name="company_id" groups="base.group_multi_company" />
                 <field name="owner_id" />
                 <filter name="simple" string="Simple" domain="[('mandate_type','=','simple')]" />
                 <filter name="exclusive" string="Exclusif"
@@ -304,6 +312,9 @@
                     <filter name="group_state" string="État" context="{'group_by':'state'}" />
                     <filter name="group_owner" string="Propriétaire"
                         context="{'group_by':'owner_id'}" />
+                    <filter name="group_company" string="Société"
+                        context="{'group_by':'company_id'}"
+                        groups="base.group_multi_company" />
                 </group>
             </search>
         </field>

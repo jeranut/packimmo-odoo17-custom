@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="property_mandate_company_rule" model="ir.rule">
+        <field name="name">Mandats par société</field>
+        <field name="model_id" ref="model_property_mandate"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="property_mandate_exclusive_contract_company_rule" model="ir.rule">
+        <field name="name">Contrats de mandat exclusif par société</field>
+        <field name="model_id" ref="model_property_mandate_exclusive_contract"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

@@ -45,6 +45,11 @@
     margin-bottom: 10px;
     border-bottom: 1px solid #999;
     padding-bottom: 3px;
+    page-break-after: avoid;
+}
+
+.pk-section-start {
+    page-break-inside: avoid;
 }
 
 .pk-highlight {

@@ -27,6 +27,17 @@
             ref="packimmo_property_mandate.paperformat_exclusive_mandate_contract" />
     </record>
 
+    <record id="action_report_exclusive_mandate_commercial_contract" model="ir.actions.report">
+        <field name="name">Contrat mandat exclusif commercial</field>
+        <field name="model">property.mandate</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">packimmo_property_mandate.report_exclusive_mandate_commercial_contract</field>
+        <field name="report_file">packimmo_property_mandate.report_exclusive_mandate_commercial_contract</field>
+        <field name="print_report_name">'Contrat_Mandat_Exclusif_Commercial_%s' % (object.name)</field>
+        <field name="paperformat_id"
+            ref="packimmo_property_mandate.paperformat_exclusive_mandate_contract" />
+    </record>
+
     <template id="report_exclusive_mandate_contract">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
@@ -37,7 +48,11 @@
 
 
                     <div class="text-center mb-4 pack-title">
-                            <h2>CONTRAT DE LOCATION UNIQUE À USAGE D'HABITATION</h2>
+                            <h2 t-if="prop and prop.type == 'commercial'">
+                                CONTRAT DE LOCATION UNIQUE À USAGE
+                                COMMERCIAL, INDUSTRIEL, PROFESSIONNEL OU D'ENTREPÔT
+                            </h2>
+                            <h2 t-else="">CONTRAT DE LOCATION UNIQUE À USAGE D'HABITATION</h2>
                             <div class="pk-small">
                                 (Régi par les dispositions du Code Civil applicable à Madagascar, du
                         Code Général des Impôts et des textes réglementaires en vigueur)
@@ -415,25 +430,56 @@
                     <p
                             class="pk-highlight">IL A ÉTÉ ARRÊTÉ ET CONVENU CE QUI SUIT :</p>
 
+                    <div class="pk-section-start">
                     <div
                             class="pk-section-title">ARTICLE 1. OBJET ET DESTINATION</div>
-                    <p
+                    <p t-if="not prop or prop.type != 'commercial'"
                             class="pk-text-justify">Le Bailleur donne en location, pour la durée et
                         aux conditions définies ci-après, au Preneur qui accepte, le logement
                             dont la consistance est détaillée à l'Article 2. Le bien immobilier
                         faisant l'objet du présent bail est loué à usage exclusif d’habitation
                         personnelle et bourgeoise. Tout usage commercial, professionnel,
                             industriel ou artisanal est strictement interdit.</p>
+                    <t t-if="prop and prop.type == 'commercial'">
+                        <t t-set="property_subtype"
+                            t-value="prop.property_subtype_id if prop.property_subtype_id else False" />
+                        <p class="pk-text-justify">
+                            Le Bailleur donne à bail à loyer, à titre professionnel, au Preneur qui
+                            accepte, les locaux dont il est propriétaire et qui sont désignés à
+                            l'Article 2. Les parties conviennent expressément que leur destination
+                            exclusive sera celle décrite ci-après.
+                        </p>
+                        <p t-if="property_subtype and property_subtype.category == 'commercial'"
+                            class="pk-text-justify">
+                            Activité commerciale :
+                            <strong>
+                                <span t-esc="prop.commercial_activity if 'commercial_activity' in prop._fields else ''" />
+                            </strong>
+                        </p>
+                        <p t-elif="property_subtype and property_subtype.category == 'bureaux'"
+                            class="pk-text-justify">
+                            Usage de bureaux professionnels, activités administratives, services
+                            tertiaires ou siège social.
+                        </p>
+                        <p t-elif="property_subtype and property_subtype.category == 'stockage'"
+                            class="pk-text-justify">
+                            Usage de stockage, logistique, dépôt de matériel ou production
+                            artisanale autorisée.
+                        </p>
+                    </t>
+                    </div>
 
+                    <div class="pk-section-start">
                     <div
                             class="pk-section-title">ARTICLE 2. DÉSIGNATION DU BIEN</div>
                     <p
                             class="pk-text-justify">Le Preneur déclare parfaitement connaître les
                         lieux pour les avoir vus et visités en vue des présentes, et les trouve
-                            dans les conditions nécessaires à l'usage auquel ils sont destinés. TEST TEST </p>
+                            dans les conditions nécessaires à l'usage auquel ils sont destinés.</p>
+                    </div>
 
                             
-                    <div
+                    <div t-if="not prop or prop.type != 'commercial'"
                             class="pk-property-details">
                             <t t-set="property_rec" t-value="doc.property_ids[:1]" />
 
@@ -706,6 +752,79 @@
                                 </p>
                             </t>
                         </div>
+                    <div t-if="prop and prop.type == 'commercial'" class="pk-property-details">
+                        <t t-set="property_rec" t-value="prop" />
+                        <t t-set="project_rec"
+                            t-value="property_rec.property_project_id if property_rec.property_project_id else False" />
+                        <t t-set="subproject_rec"
+                            t-value="property_rec.subproject_id if 'subproject_id' in property_rec._fields and property_rec.subproject_id else False" />
+                        <t t-set="property_subtype"
+                            t-value="property_rec.property_subtype_id if property_rec.property_subtype_id else False" />
+                        <t t-set="project_property_count"
+                            t-value="len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id)])) if project_rec else 0" />
+                        <t t-set="subproject_property_count"
+                            t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else 0" />
+                        <t t-set="is_independent_property"
+                            t-value="project_rec and not subproject_rec and project_property_count == 1" />
+                        <t t-set="is_common_property"
+                            t-value="(project_rec and not subproject_rec and project_property_count &gt; 1) or (subproject_rec and subproject_property_count &gt; 1)" />
+
+                        <p>
+                            <strong>Description :</strong>
+                            <span t-esc="property_rec.display_name or ''" />
+                        </p>
+                        <p t-if="is_independent_property">
+                            <strong>Bien indépendant :</strong>
+                            <span t-esc="property_subtype.name if property_subtype else '[   ]'" />
+                        </p>
+                        <p t-if="is_common_property">
+                            <strong>Bien situé dans un ensemble immobilier :</strong>
+                            lot / porte
+                            <span t-esc="property_rec.unit_map_label if 'unit_map_label' in property_rec._fields and property_rec.unit_map_label else '[   ]'" />,
+                            projet <span t-esc="project_rec.name if project_rec else '[   ]'" />
+                            <t t-if="subproject_rec">
+                                / sous-projet <span t-esc="subproject_rec.name" />
+                            </t>
+                        </p>
+                        <p>
+                            <strong>Localisation :</strong>
+                            <span t-esc="' '.join(filter(None, [
+                                property_rec.street or '',
+                                property_rec.street2 or '',
+                                property_rec.city_id.name if property_rec.city_id else '',
+                                property_rec.zip or ''
+                            ]))" />
+                        </p>
+                        <p>
+                            <strong>Surfaces :</strong>
+                            totale <span t-esc="property_rec.total_area or 0" /> m²
+                            <t t-if="'usable_area' in property_rec._fields and property_rec.usable_area">
+                                / utile <span t-esc="property_rec.usable_area" /> m²
+                            </t>
+                        </p>
+                        <p>
+                            <strong>Composition :</strong>
+                            pièces <span t-esc="property_rec.bed or 0" />
+                            / salles d'eau <span t-esc="property_rec.bathroom or 0" />
+                            / parkings <span t-esc="property_rec.parking or 0" />
+                        </p>
+                        <p t-if="'room_measurement_ids' in property_rec._fields and property_rec.room_measurement_ids">
+                            <strong>Détail des surfaces :</strong>
+                            <t t-foreach="property_rec.room_measurement_ids" t-as="measure">
+                                <span t-esc="measure.section_id.name if measure.section_id else ''" />
+                                = <span t-esc="measure.carpet_area or 0" /> m²<t t-if="not measure_last">, </t>
+                            </t>
+                        </p>
+                        <p t-if="'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
+                            <strong>Commodités :</strong>
+                            <span t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" />
+                        </p>
+                        <p t-if="'commercial_activity' in property_rec._fields and property_rec.commercial_activity">
+                            <strong>Informations commerciales :</strong>
+                            <span t-esc="property_rec.commercial_activity" />
+                        </p>
+                    </div>
+                    <div class="pk-section-start">
                     <div
                             class="pk-section-title">
                             ARTICLE 3. DURÉE ET RÉSILIATION ANTICIPÉE
@@ -724,7 +843,8 @@
                                     t-esc="doc.contract_end_date.strftime('%d/%m/%Y') if doc.contract_end_date else ''" />
                             </strong>.
                         À défaut de dénonciation, il se reconduit tacitement pour une durée égale à
-                        la période initiale. </p>
+                            la période initiale. </p>
+                    </div>
                     <p class="pk-text-justify">Chacune des parties peut
                         toutefois mettre fin au
                             présent bail à tout moment moyennant un préavis obligatoire de DEUX (02)
@@ -732,8 +852,7 @@
                             avec accusé de réception ou par exploit d'huissier. Le loyer et les
                         charges restent intégralement dus par le Preneur durant toute la période
                             du préavis.</p>
-                            <div style="page-break-before: always;"></div>
-                        
+                    <div class="pk-section-start">
                     <div
                             class="pk-section-title">ARTICLE 4. LOYER ET
                             MODALITÉS DE PAIEMENT
@@ -741,7 +860,8 @@
                     <p class="pk-text-justify">Le présent bail est
                         accepté moyennant un loyer
                             mensuel fixé selon l'une des options exclusives ci-dessous (cocher la
-                        variante applicable) :</p>
+                            variante applicable) :</p>
+                    </div>
                         <!-- LOYER EN MGA -->
                         <!-- LOYER EN MGA -->
 <t t-if="doc.rent_type == 'ariary'">
@@ -859,6 +979,7 @@
                             retard, calculés au jour le jour jusqu'au complet paiement, sans
                         préjudice de l'application de la clause résolutoire.</p>
 
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 5. RÉVISION DU LOYER</div>
 
@@ -913,7 +1034,9 @@
                         Preneur.
                             </p>
                         </t>
+                        </div>
 
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 6. DÉPÔT DE GARANTIE</div>
                         <t
@@ -922,6 +1045,7 @@
                         <p
                             class="pk-text-justify"> Pour garantir la parfaite exécution de toutes
                         ses obligations contractuelles,</p>
+                        </div>
                         <p class="pk-text-justify"> le Preneur
                         verse à la signature du présent contrat la somme de : <strong>
                                 <span
@@ -945,6 +1069,7 @@
                         garantie ne pourra servir de compensation pour le règlement du dernier
                             mois de loyer ou de la période de préavis.</p>
 
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 7. CHARGES ET CONSOMMATIONS
                             PERSONNELLES (JIRAMA)</div>
@@ -954,6 +1079,7 @@
                         sa charge exclusive et devront être acquittées directement auprès des
                         prestataires. Les modalités de gestion des compteurs sont arrêtées comme
                             suit :</p>
+                        </div>
                        
                            <t t-if="doc.jirama_charge == 'tenant'">
                             <p>
@@ -975,15 +1101,15 @@
                                 ou relevés de consommation correspondants.
                             </p>
                         </t>
-                        <div
-                            style="page-break-before: always;"></div>
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 8. RÉPARTITION DES TRAVAUX ET DE
                         L'ENTRETIEN</div>
                         <p>Les obligations d'entretien et de réparation sont
                         strictement réparties
                             entre les parties selon les dispositions légales et les usages
-                        contractuels :</p>
+                            contractuels :</p>
+                        </div>
                        <table class="pk-work-table">
                             <tr>
                                 <th>OBLIGATIONS DU MANDANT</th>
@@ -1009,6 +1135,7 @@
                             ne préfère exiger la remise en état primitif aux frais exclusifs du
                         Preneur.</p>
 
+                        <div class="pk-section-start">
                         <div class="pk-section-title">ARTICLE 9. RÈGLES DE VIE COMMUNE,
                         SÉCURITÉ ET
                             VOISINAGE</div>
@@ -1019,6 +1146,7 @@
                         Le niveau sonore devra être réduit de manière stricte à partir de 21h00.
                         Toute organisation de festivité ou réunion devra faire l'objet d'une
                         information écrite préalable adressée au gestionnaire ou au propriétaire.</p>
+                        </div>
                         <p
                             class="pk-text-justify">
                             <strong>9.2. Règlement des litiges de voisinage :</strong> En cas de
@@ -1043,6 +1171,7 @@
                         l'intégralité des loyers, charges et à l'exécution de toutes les clauses du
                         contrat.</p>
 
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 10. ASSURANCES ET ALÉAS
                             CLIMATIQUES
@@ -1054,6 +1183,7 @@
                         couvrant l'incendie, les explosions, le vol et les dégâts des eaux, ainsi
                         que le recours des voisins. Il s'engage à en remettre une copie ou
                         attestation au Bailleur dès la signature.</p>
+                        </div>
                         <p
                             class="pk-text-justify">
                             <span class="pk-checkbox">☐</span>
@@ -1068,14 +1198,17 @@
                         partielle ou temporaire et dépasse trente (30) jours, le contrat pourra être
                         résilié sans préavis par l'une ou l'autre des parties.</p>
 
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 11. CESSION ET SOUS-LOCATION</div>
                         <p
                             class="pk-text-justify">La cession des droits au présent bail, la
                         sous-location totale ou partielle, ou le prêt des locaux à titre gratuit
                             à un tiers sont strictement interdits, sous peine de résiliation
-                        immédiate du contrat aux torts exclusifs du Preneur.</p>
+                            immédiate du contrat aux torts exclusifs du Preneur.</p>
+                        </div>
 
+                        <div class="pk-section-start">
                         <div
                             class="pk-section-title">ARTICLE 12. DROIT DE VISITE RÉGLEMENTÉ</div>
                         <p
@@ -1087,7 +1220,9 @@
                             accompagnés par le Bailleur ou l'agence PACKIMMO S.A., les jours
                         ouvrables de 09h00 à 12h00 et de 14h00 à 17h00, moyennant un préavis de
                         courtoisie de 24 heures.</p>
+                        </div>
 
+                        <div class="pk-section-start">
                         <div class="pk-section-title">ARTICLE 13.
                         ENREGISTREMENT FISCAL ET FRAIS
                             (OPTIONNEL)</div>
@@ -1102,7 +1237,9 @@
                         de timbre et honoraires de rédaction engendrés par les présentes sont à la
                         charge exclusive du Preneur qui s'y oblige. Ces frais ne sont pas
                         remboursables.</p>
+                        </div>
 
+                        <div class="pk-section-start">
                         <div class="pk-section-title">ARTICLE 14. CLAUSE
                         RÉSOLUTOIRE ET EXPULSION</div>
                         <p class="pk-text-justify">À défaut de
@@ -1113,6 +1250,7 @@
                         quinze (15) jours (ou [ ] un mois) après un simple commandement de payer
                             ou une sommation d'exécuter délivré par exploit d'huissier resté
                         infructueux.</p>
+                        </div>
                         <p class="pk-text-justify">Si le Preneur refusait d'évacuer
                         les locaux après
                             résiliation, son expulsion immédiate serait obtenue par simple
@@ -1123,12 +1261,14 @@
                             cours, calculée au prorata temporis, jusqu’à la libération totale des
                         lieux.</p>
 
+                        <div class="pk-section-start">
                         <div class="pk-section-title">ARTICLE 15. ÉLECTION DE DOMICILE</div>
                         <p
                             class="pk-text-justify">Pour l'exécution des présentes et de leurs
                         suites, le Bailleur élit domicile à l'adresse de son siège social ou de
                             son mandataire gestionnaire (si applicable), et le Preneur élit domicile
                         de plein droit dans les locaux loués.</p>
+                        </div>
 
                         <div class="pk-signature-section">
                             <p> Fait à Antananarivo, le <span class="pk-highlight">
@@ -1158,5 +1298,9 @@
                 </t>
             </t>
         </t>
+    </template>
+
+    <template id="report_exclusive_mandate_commercial_contract">
+        <t t-call="packimmo_property_mandate.report_exclusive_mandate_contract" />
     </template>
 </odoo>
