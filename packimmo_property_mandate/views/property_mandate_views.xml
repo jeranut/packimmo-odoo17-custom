@@ -279,6 +279,10 @@
                                     placeholder="Obligations de PACKIMMO..." />
                             </group>
                         </page>
+                        <page string="Particularités du mandat" name="mandate_particularities">
+                            <field name="mandate_particularities"
+                                placeholder="Saisir les particularités éventuelles du mandat..." />
+                        </page>
                         <page string="Documents" name="documents">
                             <field name="attachment_ids" widget="many2many_binary" />
                         </page>

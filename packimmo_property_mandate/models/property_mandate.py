@@ -203,6 +203,10 @@ class PropertyMandate(models.Model):
 
     owner_obligations = fields.Html(string="Obligations du mandant")
     agency_obligations = fields.Html(string="Obligations du mandataire")
+    mandate_particularities = fields.Html(
+        string="Particularité éventuelle du mandat",
+        tracking=True,
+    )
     notes = fields.Text(string="Notes internes")
 
     fee_base_amount = fields.Monetary(

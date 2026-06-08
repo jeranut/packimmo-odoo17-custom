@@ -280,9 +280,9 @@
                                     <t t-esc="property.bathroom"/>
                                     SDB
                                 </span>
-                                <span t-if="property.total_area" class="pack-property-feature">
+                                <span t-if="property.usable_area" class="pack-property-feature">
                                     <i class="fa fa-expand" aria-hidden="true"/>
-                                    <t t-esc="'{:,.1f}'.format(property.total_area).replace(',', ' ').replace('.', ',')"/>
+                                    <t t-esc="'{:,.1f}'.format(property.usable_area).replace(',', ' ').replace('.', ',')"/>
                                     m²
                                 </span>
                                 <span t-if="property.type != 'land' and property.parking" class="pack-property-feature">

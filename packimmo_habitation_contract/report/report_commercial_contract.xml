@@ -498,19 +498,16 @@
                             <t t-set="property_subtype"
                                 t-value="property_rec.property_subtype_id if property_rec and property_rec.property_subtype_id else False" />
 
-                            <t t-set="project_property_count"
-                                t-value="len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id)])) if project_rec else 0" />
-
-                            <t t-set="subproject_property_count"
-                                t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else 0" />
-
-                            <t t-set="is_independent_property"
-                                t-value="project_rec and not subproject_rec and project_property_count == 1" />
+                            <t t-set="group_property_count"
+                                t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else (len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id), ('subproject_id', '=', False)])) if project_rec else 1)" />
 
                             <t t-set="is_common_property"
-                                t-value="(project_rec and not subproject_rec and project_property_count > 1) or (subproject_rec and subproject_property_count > 1)" />
+                                t-value="group_property_count > 1" />
 
-                            <t t-if="is_independent_property">
+                            <t t-set="is_independent_property"
+                                t-value="not is_common_property" />
+
+                            <t t-if="property_rec and is_independent_property">
                                 <p>
                                     <span
                                         t-esc="property_subtype.name if property_subtype else '[   ]'" />
@@ -549,7 +546,7 @@
                                 </t>
                             </t>
 
-                            <t t-if="is_common_property">
+                            <t t-if="property_rec and is_common_property">
 
                                 <p>
                                     <span t-esc="property_subtype.name if property_subtype else '[   ]'" />

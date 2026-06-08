@@ -41,7 +41,7 @@
                         </div>
                         <div class="pk-hero-meta">
                             <span t-if="property_id.unit_type"><i class="fa fa-home"/> <span t-field="property_id.unit_type"/></span>
-                            <span t-if="property_id.total_area"><i class="fa fa-expand"/> <span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></span>
+                            <span t-if="property_id.usable_area"><i class="fa fa-expand"/> <span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></span>
                             <span t-if="property_id.bed"><i class="fa fa-bed"/> <span t-field="property_id.bed"/> Chambres</span>
                         </div>
                     </div>
@@ -96,8 +96,8 @@
                                     <strong t-else="" t-field="property_id.sale_lease"/>
                                 </div>
                                 <div class="pk-info" t-if="property_id.property_seq"><small>Référence</small><strong t-field="property_id.property_seq"/></div>
-                                <div class="pk-info" t-if="property_id.total_area"><small>Surface totale</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
-                                <div class="pk-info" t-if="property_id.usable_area"><small>Surface habitable</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
+                                <div class="pk-info" t-if="property_id.total_area"><small>Surface habitable</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
+                                <div class="pk-info" t-if="property_id.usable_area"><small>Surface totale</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>
                                 <div class="pk-info" t-if="property_id.type == 'residential' and property_id.total_floor"><small>Étages</small><strong t-field="property_id.total_floor"/></div>
                                 <div class="pk-info" t-if="property_id.type == 'residential' and property_id.parking"><small>Parking</small><strong t-field="property_id.parking"/></div>

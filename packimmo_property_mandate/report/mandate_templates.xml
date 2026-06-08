@@ -86,168 +86,90 @@
 
                         <t t-set="partner" t-value="doc.owner_id" />
 
-                        <!-- PERSONNE PHYSIQUE -->
+                        <!-- PROPRIÉTAIRE : PERSONNE PHYSIQUE -->
                         <t t-if="partner and partner.company_type == 'person'">
+                            <p>
+                                Monsieur / Madame / Mademoiselle :
+                                <span class="pack-value">
+                                    <t t-esc="partner.display_name or ''" />
+                                </span>
+                            </p>
+
                             <table class="pk-table" style="width:100%;">
                                 <tr>
-                                    <td style="width:18%;">
-                                        <strong>Nom Complet:</strong>
-                                    </td>
+                                    <td style="width:18%;"><strong>Nationalité :</strong></td>
                                     <td style="width:32%;">
-                                        <span t-esc="partner.display_name or ''" />
+                                        <span t-esc="partner.nationality_id.name if 'nationality_id' in partner._fields and partner.nationality_id else ''" />
                                     </td>
-                                    <td style="width:18%;">
-                                        <strong>Profession:</strong>
-                                    </td>
-                                    <td style="width:32%;">
-                                        <span t-esc="partner.function or ''" />
+                                    <td style="width:18%;"><strong>Profession :</strong></td>
+                                    <td style="width:32%;"><span t-esc="partner.function or ''" /></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CIN / Passeport N° :</strong></td>
+                                    <td><span t-esc="partner.cin if 'cin' in partner._fields else ''" /></td>
+                                    <td><strong>Délivré(e) le :</strong></td>
+                                    <td>
+                                        <span t-esc="partner.cin_delivery_date.strftime('%d/%m/%Y') if 'cin_delivery_date' in partner._fields and partner.cin_delivery_date else ''" />
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <strong>Nationalité:</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.nationality_id.name if 'nationality_id' in partner._fields and partner.nationality_id else ''" />
-                                    </td>
-                                    <td>
-                                        <strong>Téléphone:</strong>
-                                    </td>
-                                    <td>
-                                        <span t-esc="partner.phone or partner.mobile or ''" />
-                                    </td>
+                                    <td><strong>À :</strong></td>
+                                    <td><span t-esc="partner.cin_delivery_place if 'cin_delivery_place' in partner._fields else ''" /></td>
+                                    <td><strong>Téléphone :</strong></td>
+                                    <td><span t-esc="partner.phone or partner.mobile or ''" /></td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <strong>CIN:</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.cin if 'cin' in partner._fields else ''" />
-                                    </td>
-                                    <td>
-                                        <strong>Délivrée le:</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.cin_delivery_date.strftime('%d/%m/%Y') if 'cin_delivery_date' in partner._fields and partner.cin_delivery_date else ''" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>Lieu délivrance:</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.cin_delivery_place if 'cin_delivery_place' in partner._fields else ''" />
-                                    </td>
-                                    <td>
-                                        <strong>Email:</strong>
-                                    </td>
-                                    <td>
-                                        <span t-esc="partner.email or ''" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>Adresse:</strong>
-                                    </td>
-                                    <td colspan="3">
-                                        <span
-                                            t-esc="partner.contact_address or partner.street or ''" />
-                                    </td>
+                                    <td><strong>E-mail :</strong></td>
+                                    <td><span t-esc="partner.email or ''" /></td>
+                                    <td><strong>Adresse :</strong></td>
+                                    <td><span t-esc="partner.contact_address or partner.street or ''" /></td>
                                 </tr>
                             </table>
                         </t>
 
-                        <!-- SOCIÉTÉ -->
+                        <!-- PROPRIÉTAIRE : SOCIÉTÉ / PERSONNE MORALE -->
                         <t t-if="partner and partner.company_type == 'company'">
+                            <p>
+                                <strong>La Société / Raison Sociale :</strong>
+                                <span><t t-esc="partner.name or ''" /></span>
+                            </p>
+
                             <table class="pk-table" style="width:100%;">
                                 <tr>
-                                    <td style="width:20%;">
-                                        <strong>Société :</strong>
-                                    </td>
+                                    <td style="width:20%;"><strong>Forme juridique :</strong></td>
                                     <td style="width:30%;">
-                                        <span t-esc="partner.name or ''" />
+                                        <span t-esc="partner.legal_form_id.name if 'legal_form_id' in partner._fields and partner.legal_form_id else ''" />
                                     </td>
-                                    <td style="width:20%;">
-                                        <strong>Forme juridique :</strong>
-                                    </td>
+                                    <td style="width:20%;"><strong>Capital :</strong></td>
                                     <td style="width:30%;">
-                                        <span
-                                            t-esc="partner.legal_form_id.name if 'legal_form_id' in partner._fields and partner.legal_form_id else ''" />
+                                        <span t-esc="'{:,.0f}'.format(partner.share_capital).replace(',', ' ') if 'share_capital' in partner._fields and partner.share_capital else ''" />
+                                        <t t-if="'share_capital' in partner._fields and partner.share_capital"> Ar</t>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <strong>NIF :</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.nif if 'nif' in partner._fields else ''" />
-                                    </td>
-                                    <td>
-                                        <strong>STAT :</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.stat if 'stat' in partner._fields else ''" />
-                                    </td>
+                                    <td><strong>Siège social :</strong></td>
+                                    <td colspan="3"><span t-esc="partner.contact_address or partner.street or ''" /></td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <strong>RCS :</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.rcs if 'rcs' in partner._fields else ''" />
-                                    </td>
-                                    <td>
-                                        <strong>Capital :</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="'{:,.0f}'.format(partner.share_capital).replace(',', ' ') if 'share_capital' in partner._fields and partner.share_capital else ''" />
-                                        Ar </td>
+                                    <td><strong>NIF :</strong></td>
+                                    <td><span t-esc="partner.nif if 'nif' in partner._fields else ''" /></td>
+                                    <td><strong>STAT :</strong></td>
+                                    <td><span t-esc="partner.stat if 'stat' in partner._fields else ''" /></td>
                                 </tr>
                                 <tr>
-                                    <td>
-                                        <strong>Représenté par :</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.representative_id.display_name if 'representative_id' in partner._fields and partner.representative_id else ''" />
-                                    </td>
-                                    <td>
-                                        <strong>Qualité :</strong>
-                                    </td>
-                                    <td>
-                                        <span
-                                            t-esc="partner.quality_id.name if 'quality_id' in partner._fields and partner.quality_id else ''" />
-                                    </td>
+                                    <td><strong>RCS :</strong></td>
+                                    <td><span t-esc="partner.rcs if 'rcs' in partner._fields else ''" /></td>
+                                    <td><strong>Téléphone :</strong></td>
+                                    <td><span t-esc="partner.phone or partner.mobile or ''" /></td>
                                 </tr>
                                 <tr>
+                                    <td><strong>Représentée par :</strong></td>
                                     <td>
-                                        <strong>Adresse :</strong>
+                                        <span t-esc="partner.representative_id.display_name if 'representative_id' in partner._fields and partner.representative_id else ''" />
                                     </td>
-                                    <td colspan="3">
-                                        <span
-                                            t-esc="partner.contact_address or partner.street or ''" />
-                                    </td>
-                                </tr>
-                                <tr>
+                                    <td><strong>En qualité de :</strong></td>
                                     <td>
-                                        <strong>Téléphone :</strong>
-                                    </td>
-                                    <td>
-                                        <span t-esc="partner.phone or partner.mobile or ''" />
-                                    </td>
-                                    <td>
-                                        <strong>Email :</strong>
-                                    </td>
-                                    <td>
-                                        <span t-esc="partner.email or ''" />
+                                        <span t-esc="partner.quality_id.name if 'quality_id' in partner._fields and partner.quality_id else ''" />
                                     </td>
                                 </tr>
                             </table>
@@ -275,108 +197,76 @@
                         <!-- SECTION I -->
                         <!-- ===================================== -->
 
-                        <h4 style="margin-top:25px;">
-                            I — Désignation et adresse du bien proposé
-                        </h4>
-                        <!-- ===================================================== -->
-                        <!-- I BIS — CARACTÉRISTIQUES DU BIEN -->
-                        <!-- ===================================================== -->
-
                         <t t-set="property" t-value="doc.property_ids[:1]" />
 
                         <t t-if="property">
 
                             <h4 class="pk-section-title">
-                                I Désignation, adresse et caractéristiques du bien proposé:
+                                I — Désignation, adresse et caractéristiques du bien proposé
                             </h4>
 
                             <!-- TERRAIN -->
                             <t t-if="property.type == 'land'">
-                                <p class="pk-property-details">
-                                    <strong>Nom propriété :</strong>
-
-                                    <span
-                                        t-esc="property.land_name if 'land_name' in property._fields and property.land_name else property.name or ''" />
-                                    / <strong> Titre :</strong>
-
-                                    <span
-                                        t-esc="property.title if 'title' in property._fields and property.title else ''" />
-                                    / <strong>Superficie :</strong>
-
-                                    <span
-                                        t-esc="property.total_area or 0" /> m² / <strong>Localisation
-                                    :</strong>
-
-                                    <span
-                                        t-esc="property.city_id.name if property.city_id else property.city or ''" />
-                                    / <strong>Aménagements :</strong>
-
-                                    <span
-                                        t-esc="property.land_facilities if 'land_facilities' in property._fields and property.land_facilities else ''" />
-
+                                <p class="pk-property-details"
+                                    t-if="(property.property_project_id and (property.property_project_id.property_land_name or property.property_project_id.property_title_number)) or property.total_area or ('land_facilities' in property._fields and property.land_facilities)">
+                                    <t
+                                        t-if="property.property_project_id and property.property_project_id.property_land_name">
+                                        <strong>Nom propriété :</strong>
+                                        <span t-esc="property.property_project_id.property_land_name" />
+                                        /
+                                    </t>
+                                    <t
+                                        t-if="property.property_project_id and property.property_project_id.property_title_number">
+                                        <strong>Titre :</strong>
+                                        <span
+                                            t-esc="property.property_project_id.property_title_number" />
+                                        /
+                                    </t>
+                                    <t t-if="property.total_area">
+                                        <strong>Superficie :</strong>
+                                        <span t-esc="property.total_area" /> m² /
+                                    </t>
+                                    <t
+                                        t-if="'land_facilities' in property._fields and property.land_facilities">
+                                        <strong>Aménagements :</strong>
+                                        <span t-esc="property.land_facilities" />
+                                    </t>
                                 </p>
-                                <t t-if="property.property_project_id">
+                                <t>
+                                    <t t-set="address_source"
+                                        t-value="property.subproject_id or property.property_project_id or property" />
                                     <p class="pk-property-location">
                                         <strong>se situant à</strong>
-
                                         <span
                                             t-esc="' '.join(filter(None, [
-                property.property_project_id.street or '',
-                property.property_project_id.street2 or '',
-                property.property_project_id.city_id.name if property.property_project_id.city_id else '',
-                property.property_project_id.zip or ''
-            ]))" />
-
+                                                address_source.street or '',
+                                                address_source.street2 or '',
+                                                address_source.city_id.name if address_source.city_id else (address_source.city if 'city' in address_source._fields else ''),
+                                                address_source.zip or ''
+                                            ]))" />
                                     </p>
                                     <t t-if="doc.operation_type == 'rent' and property">
-
-                                        <p>
-                                            <strong>Loyer mensuel :</strong>
-
-                                            <!-- Cas devise étrangère -->
-                                            <t
-                                                t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
-                                                ( <span t-esc="doc.rental_price_text or ''" /> ) </t>
-
-                                            <!-- Cas Ariary uniquement -->
-                                            <t t-else="">
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="doc.currency_id.symbol or 'Ar'" /> ( <span
-                                                    t-esc="doc.rental_price_text or ''" /> ) </t>
+                                        <p
+                                            t-if="'price_per_area' in property._fields and property.price_per_area">
+                                            <strong>Loyer au m² :</strong>
+                                            <span
+                                                t-esc="'{:,.0f}'.format(property.price_per_area).replace(',', ' ')" />
+                                            <span t-esc="doc.currency_id.symbol or 'Ar'" /> / m²
                                         </p>
 
-                                        <!-- Affichage équivalent Ariary uniquement si devise
-                                        étrangère -->
-                                        <t
-                                            t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                            <p>
-                                                <strong>Loyer en Ariary :</strong>
-
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                Ar ( <span
-                                                    t-esc="doc.rental_price_ariary_text or ''" /> ) </p>
-
-                                            <p class="pk-note">
-                                                <strong>NB :</strong> Lorsque le loyer est fixé en
-                                                devise étrangère, son équivalent en Ariary sera
-                                                calculé sur la base du cours MID du jour publié par
-                                                la Banque Centrale de Madagascar à la date
-                                                d’exigibilité ou de paiement du loyer. </p>
-
-                                        </t>
+                                        <p
+                                            t-if="property.price">
+                                            <strong>Loyer mensuel total :</strong>
+                                            <span
+                                                t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')" />
+                                            <span t-esc="doc.currency_id.symbol or 'Ar'" />
+                                            <t t-if="doc.rental_price_ariary_text">
+                                                (<span t-esc="doc.rental_price_ariary_text" />)
+                                            </t>
+                                        </p>
 
                                     </t>
-                                    <p>
+                                    <p t-if="doc.deposit_amount">
                                         <strong>Caution :</strong>
 
                                         <span
@@ -384,15 +274,18 @@
 
                                         <span t-esc="doc.currency_id.symbol or 'Ar'" />
 
-                                        <t t-if="doc.deposit_type == 'fixed'"> ( <span
-                                                t-esc="doc.deposit_amount_text or ''" /> ) </t>
+                                        <t
+                                            t-if="doc.deposit_type == 'fixed' and doc.deposit_amount_text">
+                                            (<span t-esc="doc.deposit_amount_text" />)
+                                        </t>
 
                                         <t
-                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent']">
-                                            ( <span t-esc="doc.deposit_calculation_label or ''" /> ) </t>
+                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent'] and doc.deposit_calculation_label">
+                                            (<span t-esc="doc.deposit_calculation_label" />)
+                                        </t>
                                     </p>
 
-                                    <t t-if="doc.deposit_type == 'fixed'">
+                                    <t t-if="doc.deposit_type == 'fixed' and doc.deposit_amount">
                                         <p>
                                             Caution fixée d’un commun accord entre les deux parties.
                                         </p>
@@ -402,7 +295,9 @@
 
                             <!-- RÉSIDENTIEL -->
                             <t t-if="property.type in ['residential', 'commercial']">
-                                <p class="pk-property-details">
+                                <t t-set="has_property_details"
+                                    t-value="(property.type == 'residential' and (('residence_type' in property._fields and property.residence_type) or ('unit_type' in property._fields and property.unit_type))) or (property.type == 'commercial' and (('property_subtype_id' in property._fields and property.property_subtype_id) or ('commercial_activity' in property._fields and property.commercial_activity))) or ('bed' in property._fields and property.bed) or ('bathroom' in property._fields and property.bathroom) or ('living_room_count' in property._fields and property.living_room_count) or ('room_measurement_ids' in property._fields and property.room_measurement_ids) or ('floor' in property._fields and property.floor is not False) or ('total_floor' in property._fields and property.total_floor) or ('unit_map_label' in property._fields and property.unit_map_label) or ('furnishing_id' in property._fields and property.furnishing_id) or ('total_square_ft' in property._fields and property.total_square_ft) or property.total_area or ('usable_square_ft' in property._fields and property.usable_square_ft) or property.usable_area or ('amenities_ids' in property._fields and property.amenities_ids)" />
+                                <p class="pk-property-details" t-if="has_property_details">
 
                                     <!-- BIEN RÉSIDENTIEL -->
                                     <t t-if="property.type == 'residential'">
@@ -544,7 +439,7 @@
                                             <strong>Type :</strong> Villa basse / </t>
 
                                         <t
-                                            t-elif="'total_floor' in property._fields and property.total_floor > 0">
+                                            t-elif="property.subproject_id and 'total_floor' in property._fields and property.total_floor > 0">
                                             <strong>Situé au :</strong>
                                             <t t-if="property.floor == 0">
                                             RDC</t>
@@ -578,7 +473,7 @@
 
                                     <t
                                         t-if="('total_square_ft' in property._fields and property.total_square_ft) or property.total_area">
-                                        <strong>Surface totale :</strong>
+                                        <strong>Surface habitable :</strong>
 
                                         <span
                                             t-esc="property.total_square_ft if 'total_square_ft' in property._fields and property.total_square_ft else property.total_area" />
@@ -586,7 +481,7 @@
 
                                     <t
                                         t-if="('usable_square_ft' in property._fields and property.usable_square_ft) or property.usable_area">
-                                        <strong>Surface habitable :</strong>
+                                        <strong>Surface totale :</strong>
 
                                         <span
                                             t-esc="property.usable_square_ft if 'usable_square_ft' in property._fields and property.usable_square_ft else property.usable_area" />
@@ -605,22 +500,23 @@
 
                                 </p>
 
-                                <t t-if="property.property_project_id">
+                                <t>
+                                    <t t-set="address_source"
+                                        t-value="property.subproject_id or property.property_project_id or property" />
                                     <p class="pk-property-location">
                                         <strong>Se situant à</strong>
-
                                         <span
                                             t-esc="' '.join(filter(None, [
-                property.property_project_id.street or '',
-                property.property_project_id.street2 or '',
-                property.property_project_id.city_id.name if property.property_project_id.city_id else '',
-                property.property_project_id.zip or ''
-            ]))" />
-
+                                                address_source.street or '',
+                                                address_source.street2 or '',
+                                                address_source.city_id.name if address_source.city_id else (address_source.city if 'city' in address_source._fields else ''),
+                                                address_source.zip or ''
+                                            ]))" />
                                     </p>
                                     <t t-if="doc.operation_type == 'rent' and property">
 
-                                        <p>
+                                        <p
+                                            t-if="('foreign_price' in property._fields and property.foreign_price) or property.price">
                                             <strong>Loyer mensuel :</strong>
 
                                             <!-- Cas devise étrangère -->
@@ -631,16 +527,21 @@
                                                     t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
                                                 <span
                                                     t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
-                                                ( <span t-esc="doc.rental_price_text or ''" /> ) </t>
+                                                <t t-if="doc.rental_price_text">
+                                                    (<span t-esc="doc.rental_price_text" />)
+                                                </t>
+                                            </t>
 
                                             <!-- Cas Ariary uniquement -->
                                             <t t-else="">
 
                                                 <span
                                                     t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="doc.currency_id.symbol or 'Ar'" /> ( <span
-                                                    t-esc="doc.rental_price_text or ''" /> ) </t>
+                                                <span t-esc="doc.currency_id.symbol or 'Ar'" />
+                                                <t t-if="doc.rental_price_text">
+                                                    (<span t-esc="doc.rental_price_text" />)
+                                                </t>
+                                            </t>
                                         </p>
 
                                         <!-- Affichage équivalent Ariary uniquement si devise
@@ -658,7 +559,7 @@
                                         </t>
 
                                     </t>
-                                    <p>
+                                    <p t-if="doc.deposit_amount">
                                         <strong>Caution :</strong>
 
                                         <span
@@ -666,15 +567,18 @@
 
                                         <span t-esc="doc.currency_id.symbol or 'Ar'" />
 
-                                        <t t-if="doc.deposit_type == 'fixed'"> ( <span
-                                                t-esc="doc.deposit_amount_text or ''" /> ) </t>
+                                        <t
+                                            t-if="doc.deposit_type == 'fixed' and doc.deposit_amount_text">
+                                            (<span t-esc="doc.deposit_amount_text" />)
+                                        </t>
 
                                         <t
-                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent']">
-                                            ( <span t-esc="doc.deposit_calculation_label or ''" /> ) </t>
+                                            t-elif="doc.deposit_type in ['monthly_multiple', 'annual_percent'] and doc.deposit_calculation_label">
+                                            (<span t-esc="doc.deposit_calculation_label" />)
+                                        </t>
                                     </p>
 
-                                    <t t-if="doc.deposit_type == 'fixed'">
+                                    <t t-if="doc.deposit_type == 'fixed' and doc.deposit_amount">
                                         <p>
                                             Caution fixée d’un commun accord entre les deux parties.
                                         </p>
@@ -687,7 +591,7 @@
                         <!-- ===================================== -->
 
                         <div class="pk-section-start">
-                            <h4>
+                            <h4 class="pk-section-title">
                                 II — Engagement du mandataire
                             </h4>
 
@@ -712,7 +616,7 @@
                         <!-- ===================================== -->
 
                         <div class="pk-section-start">
-                            <h4>
+                            <h4 class="pk-section-title">
                                 III — Engagement du mandant pour un mandat simple non exclusif
                             </h4>
 
@@ -733,7 +637,7 @@
                         <!-- ===================================== -->
 
                         <div class="pk-section-start">
-                            <h4>
+                            <h4 class="pk-section-title">
                                 IV — Engagement du mandant pour un mandat exclusif standard
                             </h4>
 
@@ -758,7 +662,7 @@
                         <!-- ===================================== -->
 
                         <div class="pk-section-start">
-                            <h4>
+                            <h4 class="pk-section-title">
                                 V — Engagement du mandant pour un mandat exclusif absolu
                             </h4>
 
@@ -781,8 +685,29 @@
                         <!-- ===================================== -->
 
                         <div class="pk-section-start">
-                            <h4>
-                                VI — Durée du mandat
+                            <h4 class="pk-section-title">
+                                VI — Particularité éventuelle du mandat
+                            </h4>
+
+                            <t t-if="doc.mandate_particularities">
+                                <div class="pk-mandate-particularities"
+                                    t-field="doc.mandate_particularities" />
+                            </t>
+                            <t t-else="">
+                                <p>
+                                    ***********************************************************<br />
+                                    ***********************************************************
+                                </p>
+                            </t>
+                        </div>
+
+                        <!-- ===================================== -->
+                        <!-- SECTION VII -->
+                        <!-- ===================================== -->
+
+                        <div class="pk-section-start">
+                            <h4 class="pk-section-title">
+                                VII — Durée du mandat
                             </h4>
 
                             <t t-if="not doc.tacit_renewal">
@@ -812,29 +737,34 @@
                         </div>
 
                         <!-- ===================================== -->
-                        <!-- SECTION VII -->
-                        <!-- ===================================== -->
-
-                        <div class="pk-section-start">
-                            <h4>
-                                VII — Honoraires
-                            </h4>
-
-                            <p> Les honoraires de l’agence PACKIMMO seront de <strong>
-                                    <span t-esc="doc.fee_calculation_label or ''" />
-                                </strong>
-                                , <span t-esc="doc.fee_amount_in_words" /> , à la charge du futur
-                                locataire, conformément à notre barème. </p>
-                        </div>
-
-
-                        <!-- ===================================== -->
                         <!-- SECTION VIII -->
                         <!-- ===================================== -->
 
                         <div class="pk-section-start">
-                            <h4>
-                                VIII — Attribution de juridiction
+                            <h4 class="pk-section-title">
+                                VIII — Honoraires
+                            </h4>
+
+                            <p t-if="doc.fee_calculation_label or doc.fee_amount_in_words">
+                                Les honoraires de l’agence PACKIMMO seront de
+                                <strong t-if="doc.fee_calculation_label">
+                                    <span t-esc="doc.fee_calculation_label" />
+                                </strong>
+                                <t t-if="doc.fee_amount_in_words">
+                                    , <span t-esc="doc.fee_amount_in_words" />
+                                </t>
+                                , à la charge du futur locataire, conformément à notre barème.
+                            </p>
+                        </div>
+
+
+                        <!-- ===================================== -->
+                        <!-- SECTION IX -->
+                        <!-- ===================================== -->
+
+                        <div class="pk-section-start">
+                            <h4 class="pk-section-title">
+                                IX — Attribution de juridiction
                             </h4>
 
                             <p>
@@ -909,6 +839,110 @@
 
                         </div>
 
+                        <div class="pk-owner-information-note">
+                            <h2>Note d’information aux propriétaires</h2>
+
+                            <h3>Pourquoi faire appel à un professionnel ?</h3>
+                            <p>Pour de nombreuses raisons, il est vivement conseillé de faire appel à une agence immobilière.</p>
+                            <p>En effet, contrairement à ce que l'on pourrait penser, louer de particulier à particulier ne représente en aucun cas une économie, et ne permet généralement pas de louer son logement plus cher.</p>
+                            <p>Les agents immobiliers connaissent bien les prix du marché et conseillent les propriétaires au mieux de leurs intérêts. Ni surévalué, ni sous-évalué, un logement a de plus grandes chances d'être bien vendu dans des délais raisonnables.</p>
+                            <p>Faire appel à un agent immobilier permet de se décharger de la lourdeur du déroulement d’une transaction, et souvent de ne pas se tromper sur la qualité du locataire. C’est aussi une possibilité de confidentialité pour le propriétaire.</p>
+                            <p>À moins de disposer de beaucoup de temps et d'être très au courant du marché de l'immobilier, vous aurez du mal à être aussi efficace !</p>
+
+                            <h3>Les différents types de mandats (LOCATION)</h3>
+                            <p><strong>*** Le mandat simple (non exclusif) :</strong></p>
+                            <p>Il confère à de multiples professionnels, la mise en location du bien pour une période déterminée renouvelable par tacite reconduction. Le propriétaire peut également louer par ses propres moyens ;</p>
+                            <p><strong>*** Le mandat exclusif standard :</strong></p>
+                            <p>Le mandat exclusif standard confère à PACKIMMO uniquement la mise en location du bien pendant une période déterminée renouvelable par tacite reconduction. Le propriétaire peut également trouver lui-même un locataire.</p>
+                            <p><strong>*** Le mandat exclusif absolu :</strong></p>
+                            <p>La signature d’un mandat exclusif absolu permet au propriétaire de se décharger complètement de la location de son bien. En retour, il doit organiser l’ensemble des démarches de façon exclusive chez PACKIMMO et doit une commission à PACKIMMO même s’il loue par lui-même le bien.</p>
+
+                            <h3 class="pk-owner-information-centered">Les avantages de l’exclusivité</h3>
+                            <p>Par la signature d’un mandat exclusive absolu, vous bénéficiez d’un traitement prioritaire de votre bien par nos équipes et vous bénéficiez de vos divers supports de promotion :</p>
+                            <ul>
+                                <li>Priorité pour les tournées des négociateurs commerciaux et pour l’organisation</li>
+                            </ul>
+
+                            <h3>Les obligations des deux parties</h3>
+                            <p>Tous les types de mandats confèrent aux mandants et aux mandataires des droits et des obligations.</p>
+                            <p><strong>Obligations du mandant (le propriétaire):</strong> Fournir toutes les pièces pouvant concourir à la bonne commercialisation de l'immeuble : plan, situation juridique, duplicata du titre, photocopie CIN, autorisation de transaction,… Sincérité des déclarations. Facilitation des visites. Respect des clauses d’exclusivité. Informer PACKIMMO de l’identité du preneur et la date de transaction si le mandant a trouvé un preneur par ses propres moyens. Aviser l’agence en cas de révision de prix.</p>
+                            <p>Selon la législation en vigueur, le mandant s’engage à prévoir les frais relatifs à l’impôt sur la plus-value immobilière afférent à la transaction de sa propriété</p>
+                            <p>Pour être enregistrés dans notre base d’affaires, tous les dossiers mandats doivent désormais être dûment complétés, et accompagnés des pièces justificatives nécessaires, avant d’être soumis à la signature de la Direction de PACKIMMO.</p>
+                            <p><strong>Obligation du mandataire (PACKIMMO) :</strong> Mettre en œuvre toutes les démarches nécessaires à la réalisation de la transaction (activation de son réseau, prospection, promotion, communication, visites...).</p>
+                            <p><strong>L’agence PACKIMMO se charge de tout :</strong></p>
+                            <p>* Elle prépare le descriptif, fait passer les annonces nécessaires dans les médias et sur Internet.</p>
+                            <p>* Elle reçoit les appels, gère le carnet de rendez-vous et se charge des visites.</p>
+                            <p>* Elle est de plus un intermédiaire actif lors de la négociation, se charge des états des lieux.</p>
+                            <p>* Elle établit le contrat de bail, ou la promesse de vente et vous assiste dans les différentes formalités.</p>
+                            <p><strong>ATTENTION :</strong> L’agence PACKIMMO a une obligation de moyens, et non de résultats.</p>
+                            <p>Par ailleurs, la direction de PACKIMMO se réserve le droit de refuser tout mandat dont les critères ne correspondent pas aux exigences du marché (selon statistiques et barèmes PACKIMMO2007) ou dont la nature (type de bien, emplacement,) ne saurait correspondre à une demande clairement identifiée auprès de sa clientèle existante. En cas de divergences concernant l'estimation d'un bien, nous vous recommandons de vous munir d'une estimation récente de votre bien (à noter que PACKIMMO peut également proposer ses services dans le domaine de l'expertise de biens immobiliers, selon ses tarifs en vigueur).</p>
+
+                            <h3>Les avantages de l’exclusivité</h3>
+                            <p>Par la signature d’un mandat exclusif, vous bénéficiez d’un traitement prioritaire de votre bien par nos équipes et vous bénéficiez de nos divers supports de promotion :</p>
+                            <p>·· Priorité pour les tournées des négociateurs commerciaux et pour l’organisation des visites</p>
+                            <p>- Mention de votre bien avec photo sur notre Site Web,</p>
+                            <p>Pour les MANDATS EXCLUSIFS, ou pour les biens en GESTION- SYNDIC, vous bénéficiez de l’accès mensuel à la situation des visites et des actions menées sur votre bien. Vous nous communiquez les références de votre mandat, et PACKIMMO vous communique sous 24 heures la situation de commercialisation de votre bien (nombre de visites effectuées et résultat, actions de communication / promotion réalisées).</p>
+                        </div>
+
+                        <div class="pk-identification-sheet">
+                            <div class="text-center mb-4 pack-title">
+                                <h2>FICHE SIGNALETIQUE LOCATION Mandat N° <span t-field="doc.name" /></h2>
+                            </div>
+
+                            <table style="width:100%; margin-bottom:25px;">
+                                <tr>
+                                    <td style="width:33%; text-align:center;">
+                                        <strong><t t-if="doc.mandate_type == 'simple'">[X]</t><t t-else="">☐</t> NON EXCLUSIF</strong>
+                                    </td>
+                                    <td style="width:33%; text-align:center;">
+                                        <strong><t t-if="doc.mandate_type == 'exclusive'">[X]</t><t t-else="">☐</t> EXCLUSIF STANDARD</strong>
+                                    </td>
+                                    <td style="width:33%; text-align:center;">
+                                        <strong><t t-if="doc.mandate_type == 'exclusive_absolute'">[X]</t><t t-else="">☐</t> EXCLUSIF ABSOLU</strong>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p>Nom du Propriétaire ou personne mandatée par le propriétaire :</p>
+                            <t t-set="signaletic_partner"
+                                t-value="partner.representative_id if partner and partner.company_type == 'company' and 'representative_id' in partner._fields and partner.representative_id else (partner if partner and partner.company_type != 'company' else False)" />
+                            <table class="pk-table" style="width:100%;">
+                                <tr>
+                                    <td style="width:20%;"><strong>Mandant :</strong></td>
+                                    <td style="width:30%;"><span t-esc="signaletic_partner.display_name if signaletic_partner else ''" /></td>
+                                    <td style="width:20%;"><strong>Qualité :</strong></td>
+                                    <td style="width:30%;">
+                                        <t t-if="partner and partner.company_type == 'company'">
+                                            <span t-esc="partner.quality_id.name if 'quality_id' in partner._fields and partner.quality_id else ''" />
+                                        </t>
+                                        <t t-else="">Propriétaire / représentant habilité</t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Adresse :</strong></td>
+                                    <td><span t-esc="signaletic_partner.contact_address or signaletic_partner.street or '' if signaletic_partner else ''" /></td>
+                                    <td><strong>Téléphone :</strong></td>
+                                    <td><span t-esc="signaletic_partner.phone or signaletic_partner.mobile or '' if signaletic_partner else ''" /></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email :</strong></td>
+                                    <td><span t-esc="signaletic_partner.email or '' if signaletic_partner else ''" /></td>
+                                    <td><strong>CIN :</strong></td>
+                                    <td>
+                                        <span t-esc="signaletic_partner.cin if signaletic_partner and 'cin' in signaletic_partner._fields else ''" />
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <h4 class="pk-section-title">Désignation et adresse du bien proposé</h4>
+                            <t t-set="signaletic_property" t-value="doc.property_ids[:1]" />
+                            <t t-if="signaletic_property">
+                                <t t-set="property_rec" t-value="signaletic_property" />
+                                <t t-call="packimmo_property_mandate.signaletic_property_description" />
+                            </t>
+                            <t t-else=""><p>Aucun bien n’est encore rattaché à ce mandat.</p></t>
+                        </div>
+
                     </div>
 
                 </t>
@@ -916,6 +950,137 @@
             </t>
 
         </t>
+    </template>
+
+    <template id="signaletic_property_description">
+        <t t-set="project_rec"
+            t-value="property_rec.property_project_id if property_rec and property_rec.property_project_id else False" />
+        <t t-set="subproject_rec"
+            t-value="property_rec.subproject_id if property_rec and property_rec.subproject_id else False" />
+        <t t-set="property_subtype"
+            t-value="property_rec.property_subtype_id if property_rec and property_rec.property_subtype_id else False" />
+        <t t-set="group_property_count"
+            t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else (len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id), ('subproject_id', '=', False)])) if project_rec else 1)" />
+        <t t-set="is_common_property" t-value="group_property_count > 1" />
+        <t t-set="room_lines"
+            t-value="property_rec.room_measurement_ids if property_rec and 'room_measurement_ids' in property_rec._fields else False" />
+        <t t-set="address_source"
+            t-value="subproject_rec or project_rec or property_rec" />
+        <t t-set="bed_lines"
+            t-value="room_lines.filtered(lambda m: m.section_id and m.section_id.type == 'room') if room_lines else False" />
+
+        <table class="pk-signaletic-property-table pk-signaletic-description-table"
+            t-if="property_rec">
+            <tr>
+                <th>Bien</th>
+                <td><span t-esc="property_rec.display_name or ''" /></td>
+            </tr>
+            <tr>
+                <th>Type de bien</th>
+                <td>
+                    <span t-esc="property_subtype.name if property_subtype else dict(property_rec._fields['type'].selection).get(property_rec.type, '')" />
+                    <t t-if="property_rec.type == 'residential' and 'unit_type' in property_rec._fields and property_rec.unit_type">
+                        -
+                        <span t-esc="dict(property_rec._fields['unit_type'].selection).get(property_rec.unit_type, '')" />
+                    </t>
+                </td>
+            </tr>
+            <tr t-if="is_common_property">
+                <th>Localisation dans l'immeuble</th>
+                <td>
+                    Porte / Lot N°
+                    <span t-esc="property_rec.unit_map_label if 'unit_map_label' in property_rec._fields and property_rec.unit_map_label else '[   ]'" />
+                    -
+                    <t t-if="'floor' in property_rec._fields and property_rec.floor == 0">RDC</t>
+                    <t t-elif="'floor' in property_rec._fields and property_rec.floor == 1">1er étage</t>
+                    <t t-elif="'floor' in property_rec._fields and property_rec.floor">
+                        <span t-esc="str(property_rec.floor) + 'ème étage'" />
+                    </t>
+                    <t t-else="">Étage non renseigné</t>
+                    <t t-if="subproject_rec or project_rec">
+                        -
+                        <span t-esc="subproject_rec.name if subproject_rec else project_rec.name" />
+                    </t>
+                </td>
+            </tr>
+            <tr>
+                <th>Adresse</th>
+                <td>
+                    <span t-esc="' '.join(filter(None, [
+                        address_source.street or '',
+                        address_source.street2 or '',
+                        address_source.city_id.name if address_source.city_id else (address_source.city if 'city' in address_source._fields else ''),
+                        address_source.zip or ''
+                    ]))" />
+                </td>
+            </tr>
+            <tr t-if="property_rec.type == 'commercial' and 'commercial_activity' in property_rec._fields and property_rec.commercial_activity">
+                <th>Activité commerciale</th>
+                <td><span t-esc="property_rec.commercial_activity" /></td>
+            </tr>
+            <tr t-if="('bed' in property_rec._fields and property_rec.bed) or (property_rec.type == 'residential' and 'living_room_count' in property_rec._fields and property_rec.living_room_count) or ('bathroom' in property_rec._fields and property_rec.bathroom) or ('parking' in property_rec._fields and property_rec.parking) or (property_rec.type == 'residential' and 'garage_count' in property_rec._fields and property_rec.garage_count)">
+                <th>Composition</th>
+                <td>
+                    <t t-if="'bed' in property_rec._fields and property_rec.bed">
+                        <strong t-if="property_rec.type == 'residential'">Chambres :</strong>
+                        <strong t-else="">Pièces :</strong>
+                        <span t-esc="property_rec.bed" />
+                        <t t-if="bed_lines">
+                            (<t t-foreach="bed_lines" t-as="measure"><span t-esc="measure.section_id.name" /> : <span t-esc="measure.carpet_area" /> m²<t t-if="not measure_last">, </t></t>)
+                        </t>
+                    </t>
+                    <t t-if="property_rec.type == 'residential' and 'living_room_count' in property_rec._fields and property_rec.living_room_count">
+                        <t t-if="'bed' in property_rec._fields and property_rec.bed"> | </t>
+                        <strong>Séjour :</strong> <span t-esc="property_rec.living_room_count" />
+                    </t>
+                    <t t-if="'bathroom' in property_rec._fields and property_rec.bathroom">
+                        | <strong>Salle d'eau / bains :</strong> <span t-esc="property_rec.bathroom" />
+                    </t>
+                    <t t-if="'parking' in property_rec._fields and property_rec.parking">
+                        | <strong>Parking :</strong> <span t-esc="property_rec.parking" />
+                    </t>
+                    <t t-if="property_rec.type == 'residential' and 'garage_count' in property_rec._fields and property_rec.garage_count">
+                        | <strong>Garage :</strong> <span t-esc="property_rec.garage_count" />
+                    </t>
+                </td>
+            </tr>
+            <tr t-if="'total_area' in property_rec._fields and property_rec.total_area">
+                <th>Surface habitable</th>
+                <td><span t-esc="property_rec.total_area" /> m²</td>
+            </tr>
+            <tr t-if="'usable_area' in property_rec._fields and property_rec.usable_area">
+                <th>Surface totale</th>
+                <td><span t-esc="property_rec.usable_area" /> m²</td>
+            </tr>
+            <tr t-if="'amenities_ids' in property_rec._fields and property_rec.amenities_ids">
+                <th>Commodités</th>
+                <td><span t-esc="', '.join(property_rec.amenities_ids.mapped('display_name'))" /></td>
+            </tr>
+            <tr t-if="'is_facilities' in property_rec._fields and property_rec.is_facilities and 'property_specification_ids' in property_rec._fields and property_rec.property_specification_ids">
+                <th>Spécifications</th>
+                <td>
+                    <t t-foreach="property_rec.property_specification_ids" t-as="specification">
+                        <strong t-esc="specification.title or ''" />
+                        <t t-if="specification.description">
+                            : <span t-esc="specification.description" />
+                        </t>
+                        <t t-if="not specification_last"><br /></t>
+                    </t>
+                </td>
+            </tr>
+            <tr t-if="'nearby_connectivity' in property_rec._fields and property_rec.nearby_connectivity and 'connectivity_ids' in property_rec._fields and property_rec.connectivity_ids">
+                <th>À proximité</th>
+                <td>
+                    <t t-foreach="property_rec.connectivity_ids" t-as="connectivity">
+                        <strong t-esc="connectivity.connectivity_id.display_name or connectivity.name or ''" />
+                        <t t-if="connectivity.distance">
+                            : <span t-esc="connectivity.distance" />
+                        </t>
+                        <t t-if="not connectivity_last"><br /></t>
+                    </t>
+                </td>
+            </tr>
+        </table>
     </template>
 
     <template id="report_property_mandate_document">

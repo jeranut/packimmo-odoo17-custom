@@ -452,9 +452,19 @@
                             class="pk-property-details">
                             <t t-set="property_rec"
                                 t-value="doc.property_id if 'property_id' in doc._fields and doc.property_id else False" />
+                            <t t-set="project_rec"
+                                t-value="property_rec.property_project_id if property_rec and property_rec.property_project_id else False" />
+                            <t t-set="subproject_rec"
+                                t-value="property_rec.subproject_id if property_rec and property_rec.subproject_id else False" />
+                            <t t-set="group_property_count"
+                                t-value="len(env['property.details'].sudo().search([('subproject_id', '=', subproject_rec.id)])) if subproject_rec else (len(env['property.details'].sudo().search([('property_project_id', '=', project_rec.id), ('subproject_id', '=', False)])) if project_rec else 1)" />
+                            <t t-set="is_common_property"
+                                t-value="group_property_count > 1" />
+                            <t t-set="is_independent_property"
+                                t-value="not is_common_property" />
 
                             <t
-                                t-if="property_rec and property_rec.type == 'residential' and property_rec.property_category == 'independant'">
+                                t-if="property_rec and property_rec.type == 'residential' and is_independent_property">
 
                                 <p>
                                     <span
@@ -572,7 +582,7 @@
 
                             </t>
                             <t
-                                t-if="property_rec and property_rec.type == 'residential' and property_rec.property_category == 'commune'">
+                                t-if="property_rec and property_rec.type == 'residential' and is_common_property">
                                 <p>
                                     <strong>APPARTEMENT EN COPROPRIÉTÉ / RÉSIDENCE</strong>
                                 </p>

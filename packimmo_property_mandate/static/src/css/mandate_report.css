@@ -90,6 +90,17 @@
     text-align: justify;
 }
 
+.pk-mandate-particularities {
+    text-align: justify;
+}
+
+.pk-mandate-particularities p,
+.pk-mandate-particularities div,
+.pk-mandate-particularities li {
+    text-align: justify !important;
+    text-align-last: left;
+}
+
 .pk-property-details {
     font-size: 13px;
     line-height: 1.7;
@@ -147,4 +158,83 @@
 .pk-obligation-cell p {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
+}
+
+.pk-owner-information-note {
+    page-break-before: always;
+    page-break-inside: avoid;
+    break-before: page;
+    break-inside: avoid;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    line-height: 1.28;
+    color: #000;
+}
+
+.pk-owner-information-note h2 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.pk-owner-information-note h3 {
+    margin: 7px 0 3px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.pk-owner-information-note p {
+    margin: 0 0 3px;
+    text-align: justify;
+}
+
+.pk-owner-information-note ul {
+    margin: 0 0 3px;
+    padding-left: 22px;
+}
+
+.pk-owner-information-note li {
+    margin: 0;
+    padding: 0;
+}
+
+.pk-owner-information-centered {
+    text-align: center;
+}
+
+.pk-identification-sheet {
+    page-break-before: always;
+    break-before: page;
+}
+
+.pk-signaletic-property-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.pk-signaletic-property-table th,
+.pk-signaletic-property-table td {
+    border: 1px solid #999;
+    padding: 7px;
+    vertical-align: top;
+}
+
+.pk-signaletic-property-table th {
+    background-color: #faf8fb;
+    font-weight: bold;
+    text-align: left;
+}
+
+.pk-signaletic-description-table {
+    margin-bottom: 14px;
+}
+
+.pk-signaletic-description-table th {
+    width: 24%;
+}
+
+.pk-signaletic-description-table td {
+    line-height: 1.45;
 }
