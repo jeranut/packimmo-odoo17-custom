@@ -594,12 +594,10 @@
                                         t-esc="dict(property_rec._fields['unit_type'].selection).get(property_rec.unit_type, '[   ]')" />,
                         Porte N° <span
                                         t-esc="property_rec.unit_map_label if 'unit_map_label' in property_rec._fields and property_rec.unit_map_label else '[   ]'" />,
-                        situé au <t t-if="property_rec.floor == 0">RDC</t>
-    <t
-                                        t-elif="property_rec.floor == 1">1er étage</t>
-    <t t-else="">
-                                        <t t-esc="str(property_rec.floor) + 'ème étage'" />
-                                    </t>
+                        <t t-if="'floor_occupation' in property_rec._fields and property_rec.floor_occupation == 'whole_building'">
+                            constituant l'immeuble entier
+                        </t>
+                        <t t-else="">situé au <span t-field="property_rec.floor_selection" /></t>
                         de l'Immeuble / Résidence dénommé(e) : <span
                                         t-esc="property_rec.property_project_id.name if property_rec.property_project_id else '__________________'" />
                         sis <span

@@ -12,4 +12,22 @@
             </div>
         </xpath>
     </template>
+
+    <template id="property_details_website_floor_selection"
+        inherit_id="rental_management.rental_property_details"
+        name="Property Details Website Floor Selection">
+        <xpath expr="//div[hasclass('spec-box')][.//span[normalize-space()='Situé au']]"
+            position="replace">
+            <div class="spec-box" t-if="property_id.floor_occupation">
+                <span class="text-muted text-uppercase prop-fs-10">
+                    <t t-if="property_id.floor_occupation == 'multiple_floors'">Situé au</t>
+                    <t t-else="">Occupation</t>
+                </span>
+                <div class="prop-details">
+                    <t t-if="property_id.floor_occupation == 'whole_building'">Immeuble entier</t>
+                    <span t-else="" t-field="property_id.floor_selection" />
+                </div>
+            </div>
+        </xpath>
+    </template>
 </odoo>

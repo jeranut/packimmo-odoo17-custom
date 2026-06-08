@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "PACKIMMO Rental Custom Fields",
-    "version": "17.0.1.0.0",
+    "version": "17.0.1.2.0",
     "summary": "Customisation des champs du module Rental Management",
     "description": """
 Module d'extension pour customiser les champs liés à rental_management.
@@ -21,6 +21,7 @@ Première personnalisation : ajout du CIN client sur res.partner.
         "views/property_project_views.xml",
         "views/property_details_views.xml",
         "views/properties_list_templates.xml",
+        "report/property_details_report.xml",
         "views/property_vendor_views.xml",
         "views/res_users_views.xml",
         "views/res_company_views.xml",

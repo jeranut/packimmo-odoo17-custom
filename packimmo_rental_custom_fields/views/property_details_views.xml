@@ -131,6 +131,49 @@
         </field>
     </record>
 
+    <record id="property_details_view_form_inherit_measure_per_floor" model="ir.ui.view">
+        <field name="name">property.details.view.form.inherit.measure.per.floor</field>
+        <field name="model">property.details</field>
+        <field name="inherit_id" ref="rental_management.property_details_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='room_measurement_ids']/tree/field[@name='section_id']"
+                position="after">
+                <field name="property_total_floor" column_invisible="1" />
+                <field name="property_floor_occupation" column_invisible="1" />
+                <field name="property_floor_level_id" column_invisible="1" />
+                <field name="measure_per_floor"
+                    string="Étage"
+                    domain="[('id', '=', property_floor_level_id)] if property_floor_occupation in ['plain_pied', 'multiple_floors'] else [('is_villa_basse', '=', False), ('number', '&gt;=', 0), ('number', '&lt;=', property_total_floor)]"
+                    readonly="property_floor_occupation in ['plain_pied', 'multiple_floors']"
+                    options="{'no_create': True, 'no_open': True}" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="property_details_view_form_inherit_floor_selection" model="ir.ui.view">
+        <field name="name">property.details.view.form.inherit.floor.selection</field>
+        <field name="model">property.details</field>
+        <field name="inherit_id" ref="rental_management.property_details_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='floor']" position="replace">
+                <field name="floor_occupation"
+                    string="Occupation"
+                    readonly="1"
+                    invisible="type in ['land','industrial'] or total_floor != 0" />
+                <field name="building_floor_occupation"
+                    string="Occupation"
+                    required="total_floor &gt; 0"
+                    invisible="type in ['land','industrial'] or total_floor == 0" />
+                <field name="floor_level_id"
+                    string="Situé au"
+                    domain="[('is_villa_basse', '=', False), ('number', '&gt;=', 0), ('number', '&lt;=', total_floor)]"
+                    required="floor_occupation == 'multiple_floors'"
+                    options="{'no_create': True, 'no_open': True}"
+                    invisible="type in ['land','industrial'] or floor_occupation != 'multiple_floors'" />
+            </xpath>
+        </field>
+    </record>
+
     <record id="property_details_view_form_inherit_address_placeholders" model="ir.ui.view">
         <field name="name">property.details.view.form.inherit.address.placeholders</field>
         <field name="model">property.details</field>

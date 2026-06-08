@@ -302,26 +302,17 @@
                                                 </t>) /
                                             </t>
 
+                                            <t t-if="'floor_occupation' in property._fields and property.floor_occupation == 'whole_building'">
+                                                <strong>Occupation :</strong> Immeuble entier /
+                                            </t>
                                             <t
-                                                t-if="'floor' in property._fields and property.floor is not False">
+                                                t-elif="'floor_selection' in property._fields and property.floor_selection">
+                                                <strong>Situé au :</strong>
+                                                <span t-field="property.floor_selection" /> /
                                                 <t
-                                                    t-if="'total_floor' in property._fields and property.total_floor == 0">
-                                                    <strong>Type :</strong> Villa basse /
-                                                </t>
-                                                <t
-                                                    t-elif="property.subproject_id and 'total_floor' in property._fields and property.total_floor &gt; 0">
-                                                    <strong>Situé au :</strong>
-                                                    <t t-if="property.floor == 0">RDC</t>
-                                                    <t t-elif="property.floor == 1">1er étage</t>
-                                                    <t t-else="">
-                                                        <span
-                                                            t-esc="str(property.floor) + 'ème étage'" />
-                                                    </t> /
-                                                    <t
-                                                        t-if="'unit_map_label' in property._fields and property.unit_map_label">
-                                                        <strong>Porte/Lot N° :</strong>
-                                                        <span t-esc="property.unit_map_label" /> /
-                                                    </t>
+                                                    t-if="'unit_map_label' in property._fields and property.unit_map_label">
+                                                    <strong>Porte/Lot N° :</strong>
+                                                    <span t-esc="property.unit_map_label" /> /
                                                 </t>
                                             </t>
 

@@ -11,6 +11,7 @@
         "mail",
         "account",
         "rental_management",
+        "packimmo_rental_custom_fields",
     ],
     "data": [
         "report/report_habitation_contract.xml",

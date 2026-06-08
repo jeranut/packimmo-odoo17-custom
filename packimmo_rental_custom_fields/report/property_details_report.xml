@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="property_details_report_floor_occupation"
+        inherit_id="rental_management.property_details_qweb_report_template"
+        name="Property Details Report Floor Occupation">
+        <xpath expr="//t[@t-if='doc.total_floor']" position="replace">
+            <t t-if="doc.floor_occupation == 'plain_pied'">
+                <t t-set="items"
+                    t-value="items + [('Occupation des étages', 'Bien de plain-pied', '')]" />
+            </t>
+            <t t-elif="doc.floor_occupation == 'whole_building'">
+                <t t-set="items"
+                    t-value="items + [('Occupation des étages', 'Immeuble entier', ''), ('Nombre d’étages', doc.total_floor, '')]" />
+            </t>
+            <t t-else="">
+                <t t-set="items"
+                    t-value="items + [('Situé au', doc.floor_level_id.name or '', ''), ('Nombre d’étages', doc.total_floor, '')]" />
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-if='doc.floor']" position="replace" />
+    </template>
+</odoo>

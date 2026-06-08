@@ -85,7 +85,7 @@
                         </section>
 
                         <section class="pk-section"
-                                 t-if="property_id.unit_type or property_id.sale_lease or property_id.property_seq or property_id.total_area or property_id.usable_area or property_id.facing or (property_id.type == 'residential' and (property_id.total_floor or property_id.parking or property_id.bed or property_id.bathroom))">
+                                 t-if="property_id.unit_type or property_id.sale_lease or property_id.property_seq or property_id.total_area or property_id.usable_area or property_id.facing or (property_id.type != 'land' and property_id.floor_occupation) or (property_id.type == 'residential' and (property_id.parking or property_id.bed or property_id.bathroom))">
                             <h3>Caractéristiques du bien</h3>
                             <div class="pk-property-features-grid">
                                 <div class="pk-info" t-if="property_id.unit_type"><small>Type de bien</small><strong t-field="property_id.unit_type"/></div>
@@ -99,7 +99,13 @@
                                 <div class="pk-info" t-if="property_id.total_area"><small>Surface habitable</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.usable_area"><small>Surface totale</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>
-                                <div class="pk-info" t-if="property_id.type == 'residential' and property_id.total_floor"><small>Étages</small><strong t-field="property_id.total_floor"/></div>
+                                <div class="pk-info" t-if="property_id.type != 'land' and property_id.floor_occupation">
+                                    <small>Occupation des étages</small>
+                                    <strong t-if="property_id.floor_occupation == 'whole_building'">Immeuble entier</strong>
+                                    <strong t-elif="property_id.floor_occupation == 'plain_pied'">Bien de plain-pied</strong>
+                                    <strong t-else="" t-field="property_id.floor_selection"/>
+                                </div>
+                                <div class="pk-info" t-if="property_id.type != 'land' and property_id.total_floor"><small>Nombre d'étages</small><strong t-field="property_id.total_floor"/></div>
                                 <div class="pk-info" t-if="property_id.type == 'residential' and property_id.parking"><small>Parking</small><strong t-field="property_id.parking"/></div>
                                 <div class="pk-info" t-if="property_id.type == 'residential' and property_id.bed"><small>Chambres</small><strong t-field="property_id.bed"/></div>
                                 <div class="pk-info" t-if="property_id.type == 'residential' and property_id.bathroom"><small>Salles de bain</small><strong t-field="property_id.bathroom"/></div>

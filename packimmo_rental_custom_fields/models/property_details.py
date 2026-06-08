@@ -2,8 +2,136 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 
+def _floor_level_name(number):
+    if number == 0:
+        return "RDC"
+    if number == 1:
+        return "1er étage"
+    return f"{number}ème étage"
+
+
+def _property_floor_selection(model):
+    return [
+        ("villa_basse", "Bien de plain-pied"),
+        ("0", "RDC"),
+        *[
+            (str(number), _floor_level_name(number))
+            for number in range(1, 101)
+        ],
+    ]
+
+
+class PropertyFloorLevel(models.Model):
+    _name = "property.floor.level"
+    _description = "Property Floor Level"
+    _order = "number"
+
+    name = fields.Char(required=True)
+    number = fields.Integer(required=True)
+    is_villa_basse = fields.Boolean(string="Bien de plain-pied")
+    active = fields.Boolean(default=True)
+
+    _sql_constraints = [
+        (
+            "property_floor_level_number_unique",
+            "unique(number)",
+            "Le numéro d'étage doit être unique.",
+        ),
+    ]
+
+    @api.model
+    def ensure_levels(self, total_floor):
+        total_floor = max(int(total_floor or 0), 0)
+        villa_level = self.sudo().with_context(active_test=False).search(
+            [("is_villa_basse", "=", True)],
+            limit=1,
+        )
+        if villa_level:
+            if villa_level.name != "Bien de plain-pied":
+                villa_level.name = "Bien de plain-pied"
+        else:
+            self.sudo().create(
+                {
+                    "name": "Bien de plain-pied",
+                    "number": -1,
+                    "is_villa_basse": True,
+                }
+            )
+
+        existing_levels = (
+            self.sudo()
+            .with_context(active_test=False)
+            .search(
+                [
+                    ("is_villa_basse", "=", False),
+                    ("number", "<=", total_floor),
+                ]
+            )
+        )
+        for level in existing_levels:
+            expected_name = _floor_level_name(level.number)
+            if level.name != expected_name:
+                level.name = expected_name
+
+        existing_numbers = set(existing_levels.mapped("number"))
+        missing_levels = [
+            {"name": _floor_level_name(number), "number": number}
+            for number in range(total_floor + 1)
+            if number not in existing_numbers
+        ]
+        if missing_levels:
+            self.sudo().create(missing_levels)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+                SELECT COALESCE(MAX(total_floor), 0)
+                  FROM property_details
+            """
+        )
+        highest_floor = self.env.cr.fetchone()[0]
+        self.ensure_levels(highest_floor)
+
+
 class PropertyDetails(models.Model):
     _inherit = "property.details"
+
+    floor_occupation = fields.Selection(
+        [
+            ("plain_pied", "Bien de plain-pied"),
+            ("multiple_floors", "Plusieurs étages"),
+            ("whole_building", "Immeuble entier"),
+        ],
+        string="Occupation des étages",
+        default="plain_pied",
+        required=True,
+    )
+    building_floor_occupation = fields.Selection(
+        [
+            ("multiple_floors", "Plusieurs étages"),
+            ("whole_building", "Immeuble entier"),
+        ],
+        string="Occupation des étages",
+        compute="_compute_building_floor_occupation",
+        inverse="_inverse_building_floor_occupation",
+        readonly=False,
+    )
+    floor_selection = fields.Selection(
+        selection=_property_floor_selection,
+        string="Situé au",
+        compute="_compute_floor_selection",
+        inverse="_inverse_floor_selection",
+        store=True,
+        readonly=False,
+    )
+    floor_level_id = fields.Many2one(
+        "property.floor.level",
+        string="Situé au",
+        compute="_compute_floor_level_id",
+        inverse="_inverse_floor_level_id",
+        store=True,
+        readonly=False,
+    )
 
     stage = fields.Selection(
         selection_add=[
@@ -337,7 +465,19 @@ class PropertyDetails(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        self.env["property.floor.level"].ensure_levels(
+            max((vals.get("total_floor", 0) for vals in vals_list), default=0)
+        )
         for vals in vals_list:
+            total_floor = vals.get("total_floor", 0)
+            if total_floor == 0:
+                vals["floor_occupation"] = "plain_pied"
+                vals["floor"] = 0
+            elif vals.get("floor_occupation") in (False, None, "plain_pied"):
+                vals["floor_occupation"] = "multiple_floors"
+            elif vals.get("floor_occupation") == "whole_building":
+                vals["floor"] = 0
+
             vals.setdefault("website_price_currency", "ariary")
 
             property_type = (
@@ -352,7 +492,219 @@ class PropertyDetails(models.Model):
 
         records = super().create(vals_list)
         records._copy_address_from_project_or_subproject()
+        self.env["property.floor.level"].ensure_levels(
+            max(records.mapped("total_floor"), default=0)
+        )
         return records
+
+    def write(self, vals):
+        if "total_floor" in vals:
+            self.env["property.floor.level"].ensure_levels(vals["total_floor"])
+            if vals["total_floor"] == 0:
+                vals.update(
+                    {
+                        "floor_occupation": "plain_pied",
+                        "floor": 0,
+                    }
+                )
+            elif vals.get("floor_occupation") == "plain_pied" or (
+                "floor_occupation" not in vals
+                and all(rec.floor_occupation == "plain_pied" for rec in self)
+            ):
+                vals["floor_occupation"] = "multiple_floors"
+
+        if vals.get("floor_occupation") == "plain_pied":
+            vals.update({"total_floor": 0, "floor": 0})
+        elif vals.get("floor_occupation") == "whole_building":
+            vals["floor"] = 0
+
+        floor_changed_records = self.filtered(
+            lambda rec: "total_floor" in vals
+            and rec.total_floor != vals["total_floor"]
+        )
+        measurements_to_clear = floor_changed_records.mapped("room_measurement_ids")
+        if floor_changed_records:
+            vals["room_measurement_ids"] = [fields.Command.clear()]
+        sync_floor_measurements = bool(
+            {"floor_occupation", "floor_level_id", "floor", "total_floor"} & vals.keys()
+        )
+        records = (
+            self.with_context(skip_floor_measurement_constraints=True)
+            if sync_floor_measurements
+            else self
+        )
+        if measurements_to_clear:
+            measurements_to_clear.with_context(
+                skip_floor_measurement_constraints=True
+            ).unlink()
+        result = super(PropertyDetails, records).write(vals)
+        records._sync_measurement_floors()
+        if sync_floor_measurements:
+            self._check_measurement_floor()
+        return result
+
+    @api.onchange("total_floor", "floor_occupation", "floor_level_id")
+    def _onchange_total_floor_levels(self):
+        for rec in self:
+            if (
+                rec._origin
+                and rec.total_floor != rec._origin.total_floor
+                and rec.room_measurement_ids
+            ):
+                rec.room_measurement_ids = [fields.Command.clear()]
+
+            self.env["property.floor.level"].ensure_levels(rec.total_floor)
+            if rec.total_floor == 0:
+                rec.floor_occupation = "plain_pied"
+                rec.floor = 0
+            elif rec.floor_occupation == "plain_pied":
+                rec.floor_occupation = "multiple_floors"
+
+            if rec.floor_occupation == "whole_building":
+                rec.floor_level_id = False
+                rec.floor = 0
+
+    def _sync_measurement_floors(self):
+        FloorLevel = self.env["property.floor.level"]
+        for rec in self:
+            if not rec.room_measurement_ids:
+                continue
+
+            target_level = False
+            if rec.floor_occupation == "plain_pied":
+                target_level = FloorLevel.search(
+                    [("is_villa_basse", "=", True)],
+                    limit=1,
+                )
+            elif rec.floor_occupation == "multiple_floors":
+                target_level = rec.floor_level_id
+
+            if target_level:
+                rec.room_measurement_ids.write(
+                    {"measure_per_floor": target_level.id}
+                )
+
+    @api.depends("floor", "total_floor", "type", "floor_occupation")
+    def _compute_floor_selection(self):
+        for rec in self:
+            if rec.type == "land":
+                rec.floor_selection = False
+            elif rec.floor_occupation == "plain_pied":
+                rec.floor_selection = "villa_basse"
+            elif rec.floor_occupation == "whole_building":
+                rec.floor_selection = False
+            else:
+                rec.floor_selection = str(rec.floor or 0)
+
+    @api.depends("floor_occupation")
+    def _compute_building_floor_occupation(self):
+        for rec in self:
+            rec.building_floor_occupation = (
+                rec.floor_occupation
+                if rec.floor_occupation in ("multiple_floors", "whole_building")
+                else False
+            )
+
+    def _inverse_building_floor_occupation(self):
+        for rec in self:
+            if rec.building_floor_occupation:
+                rec.floor_occupation = rec.building_floor_occupation
+
+    @api.depends("floor", "total_floor", "type", "floor_occupation")
+    def _compute_floor_level_id(self):
+        FloorLevel = self.env["property.floor.level"]
+        for rec in self:
+            if rec.type == "land" or rec.floor_occupation == "whole_building":
+                rec.floor_level_id = False
+                continue
+
+            is_villa_basse = rec.floor_occupation == "plain_pied"
+            rec.floor_level_id = FloorLevel.search(
+                [
+                    ("is_villa_basse", "=", is_villa_basse),
+                    ("number", "=", -1 if is_villa_basse else rec.floor),
+                ],
+                limit=1,
+            )
+
+    def _inverse_floor_level_id(self):
+        for rec in self:
+            if not rec.floor_level_id:
+                continue
+            if rec.floor_level_id.is_villa_basse:
+                rec.floor_occupation = "plain_pied"
+                rec.floor = 0
+                rec.total_floor = 0
+            else:
+                rec.floor_occupation = "multiple_floors"
+                rec.floor = rec.floor_level_id.number
+
+    def _inverse_floor_selection(self):
+        for rec in self:
+            if rec.floor_selection == "villa_basse":
+                rec.floor_occupation = "plain_pied"
+                rec.floor = 0
+                rec.total_floor = 0
+            elif rec.floor_selection:
+                rec.floor_occupation = "multiple_floors"
+                rec.floor = int(rec.floor_selection)
+
+    @api.constrains(
+        "floor_occupation",
+        "floor_level_id",
+        "total_floor",
+        "room_measurement_ids",
+    )
+    def _check_measurement_floor(self):
+        if self.env.context.get("skip_floor_measurement_constraints"):
+            return
+        for rec in self:
+            if rec.total_floor == 0 and rec.floor_occupation != "plain_pied":
+                raise ValidationError(
+                    _("Un bien sans étage doit être un bien de plain-pied.")
+                )
+            if rec.total_floor > 0 and rec.floor_occupation == "plain_pied":
+                raise ValidationError(
+                    _("Un bien avec des étages ne peut pas être de plain-pied.")
+                )
+            if (
+                rec.floor_occupation == "multiple_floors"
+                and not rec.floor_level_id
+            ):
+                raise ValidationError(
+                    _("Veuillez renseigner l'emplacement du bien dans l'immeuble.")
+                )
+
+            invalid_lines = rec.room_measurement_ids.filtered(
+                lambda line: line.measure_per_floor
+                and (
+                    (
+                        rec.floor_occupation == "plain_pied"
+                        and line.measure_per_floor
+                        != rec.floor_level_id
+                    )
+                    or (
+                        rec.floor_occupation == "multiple_floors"
+                        and line.measure_per_floor
+                        != rec.floor_level_id
+                    )
+                    or (
+                        rec.floor_occupation == "whole_building"
+                        and (
+                            line.measure_per_floor.is_villa_basse
+                            or line.measure_per_floor.number < 0
+                            or line.measure_per_floor.number > rec.total_floor
+                        )
+                    )
+                )
+            )
+            if invalid_lines:
+                raise ValidationError(
+                    _(
+                        "Les étages utilisés dans les mesures doivent être "
+                        "compatibles avec le nombre total d'étages du bien."
+                    )
+                )
 
     def action_in_available(self):
 
@@ -371,7 +723,63 @@ class PropertyDetails(models.Model):
 class PropertyRoomMeasurement(models.Model):
     _inherit = "property.room.measurement"
 
+    measure_per_floor = fields.Many2one(
+        "property.floor.level",
+        string="Étage",
+        ondelete="restrict",
+    )
+    property_total_floor = fields.Integer(
+        related="room_measurement_id.total_floor",
+        readonly=True,
+    )
+    property_floor_occupation = fields.Selection(
+        related="room_measurement_id.floor_occupation",
+        readonly=True,
+    )
+    property_floor_level_id = fields.Many2one(
+        related="room_measurement_id.floor_level_id",
+        readonly=True,
+    )
     length = fields.Float(string="Length")
     width = fields.Float(string="Width")
     height = fields.Float(string="Height", default=1.0)
     carpet_area = fields.Float(string="Total Area", compute="_compute_carpet_area")
+
+    @api.constrains("measure_per_floor", "room_measurement_id")
+    def _check_measure_per_floor(self):
+        if self.env.context.get("skip_floor_measurement_constraints"):
+            return
+        for rec in self:
+            if not rec.measure_per_floor or not rec.room_measurement_id:
+                continue
+
+            occupation = rec.property_floor_occupation
+            invalid_fixed_level = occupation in ("plain_pied", "multiple_floors") and (
+                rec.measure_per_floor != rec.property_floor_level_id
+            )
+            invalid_whole_building = occupation == "whole_building" and (
+                rec.measure_per_floor.is_villa_basse
+                or rec.measure_per_floor.number < 0
+                or rec.measure_per_floor.number > rec.property_total_floor
+            )
+            if invalid_fixed_level or invalid_whole_building:
+                raise ValidationError(
+                    _(
+                        "L'étage de la mesure doit être compatible avec le "
+                        "nombre total d'étages du bien."
+                    )
+                )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            property_rec = self.env["property.details"].browse(
+                vals.get("room_measurement_id")
+            )
+            if (
+                property_rec
+                and property_rec.floor_occupation
+                in ("plain_pied", "multiple_floors")
+            ):
+                vals["measure_per_floor"] = property_rec.floor_level_id.id
+        return super().create(vals_list)

@@ -4,3 +4,4 @@ access_res_partner_nationality_user,res.partner.nationality.user,model_res_partn
 access_res_partner_quality_user,res.partner.quality.user,model_res_partner_quality,base.group_user,1,1,1,1
 access_res_company_bank_account_user,res.company.bank.account.user,model_res_company_bank_account,base.group_user,1,1,1,1
 access_res_partner_bank_account_user,res.partner.bank.account.user,model_res_partner_bank_account,base.group_user,1,1,1,1
+access_property_floor_level_user,property.floor.level.user,model_property_floor_level,base.group_user,1,0,0,0
