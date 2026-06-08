@@ -9,7 +9,7 @@ Première personnalisation : ajout du CIN client sur res.partner.
     """,
     "category": "Real Estate",
     "author": "PACKIMMO / SysAdaptPro",
-    "depends": ["rental_management", "portal"],
+    "depends": ["rental_management", "property_list_dynamic_slider", "portal"],
     "data": [
         "security/ir.model.access.csv",
         "data/legal_form_data.xml",
@@ -20,6 +20,7 @@ Première personnalisation : ajout du CIN client sur res.partner.
         "views/res_partner_views.xml",
         "views/property_project_views.xml",
         "views/property_details_views.xml",
+        "views/properties_list_templates.xml",
         "views/property_vendor_views.xml",
         "views/res_users_views.xml",
         "views/res_company_views.xml",

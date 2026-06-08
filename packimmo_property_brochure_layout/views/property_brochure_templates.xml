@@ -232,9 +232,10 @@
                                 <t t-else="">Prix</t>
                             </div>
                             <div class="pk-price">
-                                <span t-if="property_id.sale_lease == 'for_sale'" t-field="property_id.price"/>
+                                <span t-field="property_id.website_display_price"
+                                      t-options="{'widget': 'monetary', 'display_currency': property_id.website_display_currency_id}"/>
                                 <t t-if="property_id.sale_lease == 'for_tenancy'">
-                                    <span t-field="property_id.price"/> / <span t-field="property_id.rent_unit"/>
+                                    / <span t-field="property_id.rent_unit"/>
                                 </t>
                             </div>
                         </div>

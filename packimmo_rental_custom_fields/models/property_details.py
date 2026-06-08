@@ -56,12 +56,36 @@ class PropertyDetails(models.Model):
         default=lambda self: self.env.company.currency_id,
         required=True,
     )
+    foreign_currency_code = fields.Char(
+        related="foreign_currency_id.name",
+        readonly=True,
+    )
 
     foreign_price = fields.Monetary(
         string="Prix en devise",
         currency_field="foreign_currency_id",
     )
-   
+
+    website_price_currency = fields.Selection(
+        [
+            ("ariary", "Ariary"),
+            ("foreign", "Devise étrangère"),
+        ],
+        string="Prix affiché sur le site web",
+        default="ariary",
+    )
+    has_foreign_website_currency = fields.Boolean(
+        compute="_compute_has_foreign_website_currency",
+    )
+    website_display_currency_id = fields.Many2one(
+        "res.currency",
+        compute="_compute_website_price",
+    )
+    website_display_price = fields.Monetary(
+        compute="_compute_website_price",
+        currency_field="website_display_currency_id",
+    )
+
     company_currency_id = fields.Many2one(
         "res.currency",
         related="company_id.currency_id",
@@ -190,6 +214,52 @@ class PropertyDetails(models.Model):
                     f"{rate:,.2f} {rec.company_currency_id.name}"
                 )
 
+    @api.depends("foreign_currency_id", "foreign_currency_id.name")
+    def _compute_has_foreign_website_currency(self):
+        for rec in self:
+            rec.has_foreign_website_currency = bool(
+                rec.foreign_currency_id
+                and (rec.foreign_currency_id.name or "").upper() != "MGA"
+            )
+
+    @api.depends(
+        "price",
+        "company_currency_id",
+        "foreign_price",
+        "foreign_currency_id",
+        "foreign_currency_id.name",
+        "website_price_currency",
+    )
+    def _compute_website_price(self):
+        for rec in self:
+            has_foreign_currency = bool(
+                rec.foreign_currency_id
+                and (rec.foreign_currency_id.name or "").upper() != "MGA"
+            )
+            use_foreign_price = bool(
+                has_foreign_currency
+                and rec.website_price_currency == "foreign"
+                and rec.foreign_price
+            )
+
+            rec.website_display_currency_id = (
+                rec.foreign_currency_id
+                if use_foreign_price
+                else rec.company_currency_id
+            )
+            rec.website_display_price = (
+                rec.foreign_price if use_foreign_price else rec.price
+            )
+
+    @api.onchange("foreign_currency_id")
+    def _onchange_foreign_currency_website_price(self):
+        for rec in self:
+            if (
+                not rec.foreign_currency_id
+                or (rec.foreign_currency_id.name or "").upper() == "MGA"
+            ):
+                rec.website_price_currency = "ariary"
+
     @api.onchange("foreign_price", "foreign_currency_id", "pricing_type")
     def _onchange_foreign_price_currency(self):
         for rec in self:
@@ -268,6 +338,8 @@ class PropertyDetails(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            vals.setdefault("website_price_currency", "ariary")
+
             property_type = (
                 vals.get("type")
                 or self.env.context.get("default_type")

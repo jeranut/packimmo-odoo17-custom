@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="properties_list_website_price_currency"
+        inherit_id="property_list_dynamic_slider.properties_list_slider_template"
+        name="Property List Website Price Currency">
+        <xpath expr="//div[hasclass('pack-property-price')]" position="replace">
+            <div t-if="not hide_price and property.website_display_price and property.website_display_price &gt; 0"
+                class="pack-property-price">
+                <span t-field="property.website_display_price"
+                    t-options="{'widget': 'monetary', 'display_currency': property.website_display_currency_id}" />
+                <t t-if="property.sale_lease == 'for_tenancy'">&#160;/Mois</t>
+            </div>
+        </xpath>
+    </template>
+</odoo>

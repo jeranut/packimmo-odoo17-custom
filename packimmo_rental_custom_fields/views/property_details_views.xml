@@ -76,6 +76,12 @@
                         readonly="stage not in ['draft','available']" />
                     <field name="exchange_rate_label" readonly="1" />
                 </div>
+                <field name="foreign_currency_code" invisible="1" />
+                <field name="website_price_currency"
+                    widget="radio"
+                    options="{'horizontal': True}"
+                    readonly="stage not in ['draft','available']"
+                    invisible="not foreign_currency_code or foreign_currency_code == 'MGA'" />
 
             </xpath>
             <xpath expr="//field[@name='property_subtype_id']" position="after">

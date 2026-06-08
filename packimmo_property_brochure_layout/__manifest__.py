@@ -5,7 +5,12 @@
     "category": "Website/Real Estate",
     "summary": "Header image and right enquiry panel for property brochure",
     "author": "PACKIMMO",
-    "depends": ["rental_management", "website", "crm"],
+    "depends": [
+        "rental_management",
+        "packimmo_rental_custom_fields",
+        "website",
+        "crm",
+    ],
     "data": [
         "views/property_details_brochure_views.xml",
         "views/property_brochure_templates.xml",
