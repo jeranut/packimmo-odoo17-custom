@@ -205,7 +205,6 @@ class PropertyMandate(models.Model):
     agency_obligations = fields.Html(string="Obligations du mandataire")
     mandate_particularities = fields.Html(
         string="Particularité éventuelle du mandat",
-        tracking=True,
     )
     notes = fields.Text(string="Notes internes")
 
@@ -1180,23 +1179,23 @@ class PropertyMandate(models.Model):
             if rec.billed_to in ("tenant_buyer", "both") and not rec.client_id:
                 raise ValidationError(_("Veuillez renseigner le locataire / acheteur trouvé."))
 
-            product = Product.search(
-                [
-                    ("name", "=", "Honoraire Agence"),
-                    "|",
-                    ("company_id", "=", False),
-                    ("company_id", "=", rec.company_id.id),
-                ],
-                limit=1,
-            )
+            product = Product.search([
+                ("name", "=", "Honoraire Agence"),
+                "|",
+                ("company_id", "=", False),
+                ("company_id", "=", rec.company_id.id),
+            ], limit=1)
+
             if not product:
-                product = Product.create({
+                product_template = self.env["product.template"].with_company(rec.company_id).create({
                     "name": "Honoraire Agence",
                     "type": "service",
-                    "invoice_policy": "order",
                     "list_price": rec.total_fee_amount,
+                    "sale_ok": True,
+                    "purchase_ok": False,
                     "company_id": rec.company_id.id,
                 })
+                product = product_template.product_variant_id
 
             label = _("Honoraires mandat immobilier")
             if rec.operation_type == "rent":
@@ -1249,16 +1248,12 @@ class PropertyMandate(models.Model):
                     "invoice_origin": rec.name,
                     "ref": rec.name,
                     "invoice_line_ids": [
-                        (
-                            0,
-                            0,
-                            {
-                                "product_id": product.id,
-                                "name": label,
-                                "quantity": 1.0,
-                                "price_unit": data["amount"],
-                            },
-                        )
+                        (0, 0, {
+                            "product_id": product.id,
+                            "name": label,
+                            "quantity": 1.0,
+                            "price_unit": data["amount"],
+                        })
                     ],
                 })
 
@@ -1275,15 +1270,15 @@ class PropertyMandate(models.Model):
             )
 
     def _get_exclusive_contract_report(self):
-        self.ensure_one()
-        property_rec = self.property_ids[:1]
-        report_xmlid = (
-            "packimmo_property_mandate."
-            "action_report_exclusive_mandate_commercial_contract"
-            if property_rec.type == "commercial"
-            else "packimmo_property_mandate.action_report_exclusive_mandate_contract"
-        )
-        return self.env.ref(report_xmlid)
+            self.ensure_one()
+            property_rec = self.property_ids[:1]
+            report_xmlid = (
+                "packimmo_property_mandate."
+                "action_report_exclusive_mandate_commercial_contract"
+                if property_rec.type == "commercial"
+                else "packimmo_property_mandate.action_report_exclusive_mandate_contract"
+            )
+            return self.env.ref(report_xmlid)
 
     def action_print_exclusive_contract(self):
         for rec in self:
