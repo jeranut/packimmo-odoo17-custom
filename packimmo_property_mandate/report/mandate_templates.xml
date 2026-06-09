@@ -931,6 +931,231 @@
                                 <t t-call="packimmo_property_mandate.signaletic_property_description" />
                             </t>
                             <t t-else=""><p>Aucun bien n’est encore rattaché à ce mandat.</p></t>
+                            <t t-if="'rent_type' in doc._fields and doc.rent_type">
+
+    <!-- LOYER EN ARIARY -->
+                            <t t-if="doc.rent_type == 'ariary'">
+
+                                <p>
+                                    Montant du loyer:
+                                    <strong>
+                                        <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
+                                    </strong>
+                                    Ariary
+                                    (<span t-esc="doc.rental_price_ariary_text if 'rental_price_ariary_text' in doc._fields else ''" />).
+                                </p>
+
+                            </t>
+
+                            <!-- LOYER EN DEVISE AVEC TAUX FIXE -->
+                            <t t-if="doc.rent_type == 'fixed_forex'">
+
+                                <p>
+                                <strong>Montant du loyer:</strong>
+                                    
+                                        <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
+                                    
+                                    <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
+                                    (<span t-esc="doc.rental_price_text if 'rental_price_text' in doc._fields else ''" />),
+                                    converti au taux contractuel fixe et invariable de
+                                    
+                                        1
+                                        <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
+                                        =
+                                        <span t-esc="'{:,.0f}'.format((property_rec.price or 0.0) / (property_rec.foreign_price or 1.0)).replace(',', ' ')" />
+                                        Ariary,
+                                    soit un loyer mensuel net de
+                                
+                                        <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
+                                    Ariary
+                                    (<span t-esc="doc.rental_price_ariary_text if 'rental_price_ariary_text' in doc._fields else ''" />).
+                                </p>
+
+                            </t>
+
+                            <!-- LOYER INDEXÉ BCM / MID -->
+                            <t t-if="doc.rent_type == 'mid_forex'">
+
+                                <p>
+                                <strong>Le loyer mensuel est fixé à</strong>
+                                        <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
+                                    <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
+                                    (<span t-esc="doc.rental_price_text if 'rental_price_text' in doc._fields else ''" />).
+                                </p>
+
+                            </t>
+                            <div style="
+    margin-top:8px;
+    font-size:12px;
+    page-break-inside:avoid !important;
+    break-inside:avoid !important;
+">
+
+```
+<!-- Charges / Disponibilité -->
+<table style="width:100%; border-collapse:collapse; page-break-inside:avoid !important;">
+    <tr>
+        <td style="width:50%;">
+            <strong>Charges :</strong>
+            ___________________________
+        </td>
+        <td style="width:50%;">
+            <strong>Disponibilité :</strong>
+            ___________________________
+        </td>
+    </tr>
+</table>
+
+<!-- Conditions de visite -->
+<table style="width:100%; border-collapse:collapse; margin-top:4px;">
+    <tr>
+        <td>
+            <strong>Conditions de visite :</strong>
+            ________________________________________________
+        </td>
+    </tr>
+</table>
+
+<!-- Conditions particulières -->
+<table style="width:100%; border-collapse:collapse; margin-top:4px;">
+    <tr>
+        <td>
+            <strong>Conditions particulières :</strong>
+            ____________________________________________
+        </td>
+    </tr>
+</table>
+
+<!-- Publicité -->
+<table style="width:100%; border-collapse:collapse; margin-top:10px;">
+    <tr>
+        <td style="width:12%;">
+            <strong>Publicité :</strong>
+        </td>
+
+        <td style="width:18%; text-align:center;">
+            □ Site
+        </td>
+
+        <td style="width:20%; text-align:center;">
+            □ Internet
+        </td>
+
+        <td style="width:18%; text-align:center;">
+            □ Journaux
+        </td>
+
+        <td></td>
+    </tr>
+</table>
+
+<!-- Notation -->
+<table style="width:100%; border-collapse:collapse; margin-top:3px;">
+    <tr>
+
+        <td style="width:20%;">
+            <strong>Notation (*) :</strong>
+        </td>
+
+        <td style="width:40%;">
+            Prospecteur :
+            □0 □1 □2 □3 □4 □5
+        </td>
+
+        <td style="width:40%;">
+            Tour :
+            □0 □1 □2 □3 □4 □5
+        </td>
+
+    </tr>
+</table>
+
+<!-- Prospecteur / Photos -->
+<table style="width:100%; border-collapse:collapse; margin-top:3px;">
+    <tr>
+
+        <td style="width:45%;">
+            <strong>Prospecteur :</strong>
+            ____________________
+        </td>
+
+        <td style="width:15%; text-align:right;">
+            <strong>Photos :</strong>
+        </td>
+
+        <td style="width:15%;">
+            □ Oui
+        </td>
+
+        <td style="width:15%;">
+            □ Non
+        </td>
+
+    </tr>
+</table>
+
+<!-- SIGNATURES -->
+<table style="
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    page-break-inside:avoid !important;
+">
+    <tr>
+        <td colspan="3">
+            <strong><u>Signatures</u></strong> :
+        </td>
+    </tr>
+
+    <tr>
+        <td style="width:33%; text-align:center; padding-top:3px;">
+            Le Prospecteur
+        </td>
+
+        <td style="width:34%; text-align:center; padding-top:3px;">
+            Le Tour de reconnaissance
+        </td>
+
+        <td style="width:33%; text-align:center; padding-top:3px;">
+            Le Responsable Service
+        </td>
+    </tr>
+
+    <tr>
+    <td style="height:70px;"></td>
+    <td></td>
+    <td></td>
+</tr>
+</table>
+
+<!-- NOTE DE NOTATION -->
+<div style="
+    margin-top:5px;
+    font-size:10px;
+    line-height:1.2;
+    page-break-inside:avoid !important;
+">
+
+    <strong>(*) :</strong>
+    Critères de notation ETAT :
+    loyer, quartier, état et standing, accès, environnement, sécurité.
+
+    <br/>
+
+    <strong>Note :</strong>
+    0 = mauvais état,
+    1 = délabré,
+    2 = état moyen,
+    3 = état moyen,
+    4 = bon état,
+    5 = bon état et standing.
+
+</div>
+```
+
+</div>
+
+                        </t>    
                         </div>
 
                     </div>
@@ -1071,8 +1296,79 @@
                 </td>
             </tr>
         </table>
-    </template>
+        <!-- RÉPARTITION DES PIÈCES PAR ÉTAGE -->
+<t t-if="
+    'building_floor_occupation' in property._fields
+    and property.building_floor_occupation == 'whole_building'
+    and 'room_measurement_ids' in property._fields
+    and property.room_measurement_ids
+">
 
+    <t t-set="floor_measurements"
+       t-value="property.room_measurement_ids.filtered(lambda m: m.measure_per_floor)" />
+
+    <t t-if="floor_measurements">
+
+        <p class="pk-property-details" style="margin-top: 10px;">
+            <strong>Répartition des pièces par étage</strong>
+        </p>
+
+        <table class="table table-sm"
+               style="width:100%; border-collapse: collapse; margin-top: 6px; font-size: 12px;">
+
+            <thead>
+                <tr>
+                    <th style="border:1px solid #999; padding:5px; text-align:left;">Étage</th>
+                    <th style="border:1px solid #999; padding:5px; text-align:center;">Nombre de pièces</th>
+                    <th style="border:1px solid #999; padding:5px; text-align:left;">Détails des pièces</th>
+                    <th style="border:1px solid #999; padding:5px; text-align:right;">Surface totale</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <t t-set="floors"
+                   t-value="floor_measurements.mapped('measure_per_floor')" />
+
+                <t t-foreach="floors.sorted(key=lambda f: f.number or 0)"
+                   t-as="floor">
+
+                    <t t-set="floor_lines"
+                       t-value="floor_measurements.filtered(lambda m: m.measure_per_floor.id == floor.id)" />
+
+                    <tr>
+                        <td style="border:1px solid #999; padding:5px;">
+                            <span t-esc="floor.name" />
+                        </td>
+
+                        <td style="border:1px solid #999; padding:5px; text-align:center;">
+                            <span t-esc="sum(floor_lines.mapped('no_of_unit'))" />
+                        </td>
+
+                        <td style="border:1px solid #999; padding:5px;">
+                            <t t-foreach="floor_lines" t-as="measure">
+                                <span t-esc="measure.no_of_unit" />
+                                <span> </span>
+                                <span t-esc="measure.section_id.name if measure.section_id else 'Pièce'" />
+                                <span> : </span>
+                                <span t-esc="measure.carpet_area" />
+                                <span> m²</span>
+                                <t t-if="not measure_last">, </t>
+                            </t>
+                        </td>
+
+                        <td style="border:1px solid #999; padding:5px; text-align:right;">
+                            <span t-esc="sum(floor_lines.mapped('carpet_area'))" />
+                            <span> m²</span>
+                        </td>
+                    </tr>
+
+                </t>
+            </tbody>
+        </table>
+
+    </t>
+</t>
+    </template>
     <template id="report_property_mandate_document">
         <t t-if="docs and docs[0].operation_type == 'sale'"
             t-call="packimmo_property_mandate.report_property_mandate_sale_document" />

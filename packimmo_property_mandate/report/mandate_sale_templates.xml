@@ -650,7 +650,211 @@
                                     <t t-call="packimmo_property_mandate.signaletic_property_description" />
                                 </t>
                             </t>
+                             <t t-if="property.type == 'land'">
+                                        <p t-if="'price_per_area' in property._fields and property.price_per_area">
+                                            <strong>Prix de vente au m² :</strong>
+                                            <span
+                                                t-esc="'{:,.0f}'.format(property.price_per_area).replace(',', ' ')" />
+                                            <span t-esc="doc.currency_id.symbol or 'Ar'" /> / m²
+                                        </p>
+                                        <p t-if="property.price">
+                                            <strong>Prix de vente total :</strong>
+                                            <span
+                                                t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')" />
+                                            <span t-esc="doc.currency_id.symbol or 'Ar'" />
+                                        </p>
+                                    </t>
+
+                                    <!-- Prix des biens résidentiels et commerciaux -->
+                                    <p
+                                        t-if="property.type != 'land' and (('foreign_price' in property._fields and property.foreign_price) or property.price)">
+                                        <strong>Prix de vente :</strong>
+                                        <t
+                                            t-if="'foreign_price' in property._fields and property.foreign_price">
+                                            <span
+                                                t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
+                                            <span
+                                                t-esc="property.foreign_currency_id.symbol if property.foreign_currency_id else ''" />
+                                        </t>
+                                        <t t-else="">
+                                            <span
+                                                t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+                                            <span t-esc="doc.currency_id.symbol or 'Ar'" />
+                                        </t>
+                                    </p>
+                            
                             <t t-else=""><p>Aucun bien n’est encore rattaché à ce mandat.</p></t>
+                            <div style="
+    margin-top:8px;
+    font-size:12px;
+    page-break-inside:avoid !important;
+    break-inside:avoid !important;
+">
+
+```
+<!-- Charges / Disponibilité -->
+<table style="width:100%; border-collapse:collapse; page-break-inside:avoid !important;">
+    <tr>
+        <td style="width:50%;">
+            <strong>Charges :</strong>
+            ___________________________
+        </td>
+        <td style="width:50%;">
+            <strong>Disponibilité :</strong>
+            ___________________________
+        </td>
+    </tr>
+</table>
+
+<!-- Conditions de visite -->
+<table style="width:100%; border-collapse:collapse; margin-top:4px;">
+    <tr>
+        <td>
+            <strong>Conditions de visite :</strong>
+            ________________________________________________
+        </td>
+    </tr>
+</table>
+
+<!-- Conditions particulières -->
+<table style="width:100%; border-collapse:collapse; margin-top:4px;">
+    <tr>
+        <td>
+            <strong>Conditions particulières :</strong>
+            ____________________________________________
+        </td>
+    </tr>
+</table>
+
+<!-- Publicité -->
+<table style="width:100%; border-collapse:collapse; margin-top:10px;">
+    <tr>
+        <td style="width:12%;">
+            <strong>Publicité :</strong>
+        </td>
+
+        <td style="width:18%; text-align:center;">
+            □ Site
+        </td>
+
+        <td style="width:20%; text-align:center;">
+            □ Internet
+        </td>
+
+        <td style="width:18%; text-align:center;">
+            □ Journaux
+        </td>
+
+        <td></td>
+    </tr>
+</table>
+
+<!-- Notation -->
+<table style="width:100%; border-collapse:collapse; margin-top:3px;">
+    <tr>
+
+        <td style="width:20%;">
+            <strong>Notation (*) :</strong>
+        </td>
+
+        <td style="width:40%;">
+            Prospecteur :
+            □0 □1 □2 □3 □4 □5
+        </td>
+
+        <td style="width:40%;">
+            Tour :
+            □0 □1 □2 □3 □4 □5
+        </td>
+
+    </tr>
+</table>
+
+<!-- Prospecteur / Photos -->
+<table style="width:100%; border-collapse:collapse; margin-top:3px;">
+    <tr>
+
+        <td style="width:45%;">
+            <strong>Prospecteur :</strong>
+            ____________________
+        </td>
+
+        <td style="width:15%; text-align:right;">
+            <strong>Photos :</strong>
+        </td>
+
+        <td style="width:15%;">
+            □ Oui
+        </td>
+
+        <td style="width:15%;">
+            □ Non
+        </td>
+
+    </tr>
+</table>
+
+<!-- SIGNATURES -->
+<table style="
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    page-break-inside:avoid !important;
+">
+    <tr>
+        <td colspan="3">
+            <strong><u>Signatures</u></strong> :
+        </td>
+    </tr>
+
+    <tr>
+        <td style="width:33%; text-align:center; padding-top:3px;">
+            Le Prospecteur
+        </td>
+
+        <td style="width:34%; text-align:center; padding-top:3px;">
+            Le Tour de reconnaissance
+        </td>
+
+        <td style="width:33%; text-align:center; padding-top:3px;">
+            Le Responsable Service
+        </td>
+    </tr>
+
+   <tr>
+    <td style="height:70px;"></td>
+    <td></td>
+    <td></td>
+</tr> 
+</table>
+
+<!-- NOTE DE NOTATION -->
+<div style="
+    margin-top:5px;
+    font-size:10px;
+    line-height:1.2;
+    page-break-inside:avoid !important;
+">
+
+    <strong>(*) :</strong>
+    Critères de notation ETAT :
+    loyer, quartier, état et standing, accès, environnement, sécurité.
+
+    <br/>
+
+    <strong>Note :</strong>
+    0 = mauvais état,
+    1 = délabré,
+    2 = état moyen,
+    3 = état moyen,
+    4 = bon état,
+    5 = bon état et standing.
+
+</div>
+```
+
+</div>
+
                         </div>
                     </div>
                 </t>
