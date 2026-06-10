@@ -5,13 +5,19 @@
             <div class="pk-brochure-page">
                 <section class="pk-hero">
                     <t t-if="property_id.brochure_header_image">
-                        <img t-att-src="image_data_uri(property_id.brochure_header_image)" class="pk-hero-img" alt="Image d'entête"/>
+                        <img t-att-src="'/web/image/property.details/%s/brochure_header_image' % property_id.id"
+                                            loading="eager"
+                                            decoding="async" class="pk-hero-img" alt="Image d'entête"/>
                     </t>
                     <t t-elif="property_id.image">
-                        <img t-att-src="image_data_uri(property_id.image)" class="pk-hero-img" alt="Image du bien"/>
+                        <img t-att-src="'/web/image/property.details/%s/image' % property_id.id" loading="lazy" decoding="async" class="pk-hero-img" alt="Image du bien"/>
                     </t>
                     <t t-elif="property_id.is_images and property_id.property_images_ids">
-                        <img t-att-src="image_data_uri(property_id.property_images_ids[0].image)" class="pk-hero-img" alt="Image du bien"/>
+                        <img t-att-src="'/web/image/property.images/%s/image' % property_id.property_images_ids[0].id"
+                            loading="lazy"
+                            decoding="async"
+                            class="pk-hero-img"
+                            alt="Image du bien"/>
                     </t>
                     <t t-else="">
                         <div class="pk-hero-placeholder">Property Image</div>
@@ -82,7 +88,13 @@
                                     <div class="carousel-inner">
                                         <t t-foreach="property_id.property_images_ids" t-as="img">
                                             <div t-att-class="'carousel-item active' if img_index == 0 else 'carousel-item'">
-                                                <img t-att-src="image_data_uri(img.image)" class="pk-gallery-img" alt="Property Image"/>
+
+                                                <img t-att-src="'/web/image/property.images/%s/image' % img.id"
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    class="pk-gallery-img"
+                                                    alt="Property Image"/>
+
                                             </div>
                                         </t>
                                     </div>
@@ -100,7 +112,11 @@
                                 </div>
                             </t>
                             <t t-else="">
-                                <img t-if="property_id.image" t-att-src="image_data_uri(property_id.image)" class="pk-gallery-img" alt="Property Image"/>
+                                <img t-if="property_id.image" t-att-src="'/web/image/property.details/%s/image' % property_id.id"
+                                    class="pk-gallery-img"
+                                    loading="lazy"
+                                    decoding="async"
+                                    alt="Property Image"/>
                                 <div t-else="" class="pk-gallery-placeholder">Property Image</div>
                             </t>
                         </section>
