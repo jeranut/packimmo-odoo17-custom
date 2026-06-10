@@ -207,4 +207,21 @@
 
     </field>
 </record>
+<record id="property_details_view_form_show_unit_type_commercial" model="ir.ui.view">
+    <field name="name">property.details.view.form.show.unit.type.commercial</field>
+    <field name="model">property.details</field>
+    <field name="inherit_id" ref="rental_management.property_details_form_view"/>
+    <field name="arch" type="xml">
+
+        <xpath expr="//label[@for='unit_type']" position="attributes">
+            <attribute name="string">Type</attribute>
+            <attribute name="invisible">type in ['land','industrial']</attribute>
+        </xpath>
+
+        <xpath expr="//div[@name='unit_type']" position="attributes">
+            <attribute name="invisible">type in ['land','industrial']</attribute>
+        </xpath>
+
+    </field>
+</record>
 </odoo>

@@ -299,7 +299,6 @@
                                              invisible="type in ['land','industrial','commercial']">
                                             <field name="unit_type" class="oe_inline"
                                                    force_save="1"/>
-                                            Type
                                         </div>
                                     </group>
                                 </group>
