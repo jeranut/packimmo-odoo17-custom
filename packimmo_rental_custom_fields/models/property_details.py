@@ -650,27 +650,32 @@ class PropertyDetails(models.Model):
                 rec.floor = int(rec.floor_selection)
 
     @api.constrains(
-        "floor_occupation",
-        "floor_level_id",
-        "total_floor",
-        "room_measurement_ids",
-    )
+    "type",
+    "floor_occupation",
+    "floor_level_id",
+    "total_floor",
+    "room_measurement_ids",
+)
     def _check_measurement_floor(self):
         if self.env.context.get("skip_floor_measurement_constraints"):
             return
+
         for rec in self:
+            # Un terrain n'a pas de logique d'étage
+            if rec.type == "land":
+                continue
+
             if rec.total_floor == 0 and rec.floor_occupation != "plain_pied":
                 raise ValidationError(
                     _("Un bien sans étage doit être un bien de plain-pied.")
                 )
+
             if rec.total_floor > 0 and rec.floor_occupation == "plain_pied":
                 raise ValidationError(
                     _("Un bien avec des étages ne peut pas être de plain-pied.")
                 )
-            if (
-                rec.floor_occupation == "multiple_floors"
-                and not rec.floor_level_id
-            ):
+
+            if rec.floor_occupation == "multiple_floors" and not rec.floor_level_id:
                 raise ValidationError(
                     _("Veuillez renseigner l'emplacement du bien dans l'immeuble.")
                 )
@@ -679,14 +684,8 @@ class PropertyDetails(models.Model):
                 lambda line: line.measure_per_floor
                 and (
                     (
-                        rec.floor_occupation == "plain_pied"
-                        and line.measure_per_floor
-                        != rec.floor_level_id
-                    )
-                    or (
-                        rec.floor_occupation == "multiple_floors"
-                        and line.measure_per_floor
-                        != rec.floor_level_id
+                        rec.floor_occupation in ("plain_pied", "multiple_floors")
+                        and line.measure_per_floor != rec.floor_level_id
                     )
                     or (
                         rec.floor_occupation == "whole_building"
@@ -698,6 +697,7 @@ class PropertyDetails(models.Model):
                     )
                 )
             )
+
             if invalid_lines:
                 raise ValidationError(
                     _(
