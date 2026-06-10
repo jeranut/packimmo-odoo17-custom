@@ -39,17 +39,38 @@
                             <span t-elif="property_id.city" t-field="property_id.city"/>
                             <span t-if="property_id.region_id">, <span t-field="property_id.region_id"/></span>
                         </div>
-                        <div class="pk-hero-meta">
-                            <span t-if="property_id.type != 'land' and property_id.unit_type">
-                                <i class="fa fa-home"/> <span t-field="property_id.unit_type"/>
-                            </span>
-                            <span t-if="property_id.usable_area">
-                                <i class="fa fa-expand"/> <span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/>
-                            </span>
-                            <span t-if="property_id.type != 'land' and property_id.bed">
-                                <i class="fa fa-bed"/> <span t-field="property_id.bed"/> Chambres
-                            </span>
-                        </div>
+                       <div class="pk-hero-meta">
+
+                        <span t-if="property_id.type != 'land' and property_id.unit_type">
+                            <i class="fa fa-home"/>
+                            <span t-field="property_id.unit_type"/>
+                        </span>
+
+                        <span t-if="property_id.usable_area">
+                            <i class="fa fa-expand"/>
+                            <span t-field="property_id.usable_area"/>
+                            <span t-field="property_id.measure_unit"/>
+                        </span>
+
+                        <span t-if="property_id.type != 'land' and property_id.bed">
+
+                            <t t-if="property_id.type == 'commercial'">
+                                <i class="fa fa-th-large"/>
+                                <span t-field="property_id.bed"/>
+                                <t t-if="property_id.bed &gt; 1"> Espaces</t>
+                                <t t-else=""> Espace</t>
+                            </t>
+
+                            <t t-else="">
+                                <i class="fa fa-bed"/>
+                                <span t-field="property_id.bed"/>
+                                <t t-if="property_id.bed &gt; 1"> Chambres</t>
+                                <t t-else=""> Chambre</t>
+                            </t>
+
+                        </span>
+
+                    </div>
                     </div>
                 </section>
 
