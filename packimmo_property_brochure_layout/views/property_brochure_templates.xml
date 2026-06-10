@@ -40,9 +40,15 @@
                             <span t-if="property_id.region_id">, <span t-field="property_id.region_id"/></span>
                         </div>
                         <div class="pk-hero-meta">
-                            <span t-if="property_id.unit_type"><i class="fa fa-home"/> <span t-field="property_id.unit_type"/></span>
-                            <span t-if="property_id.usable_area"><i class="fa fa-expand"/> <span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></span>
-                            <span t-if="property_id.bed"><i class="fa fa-bed"/> <span t-field="property_id.bed"/> Chambres</span>
+                            <span t-if="property_id.type != 'land' and property_id.unit_type">
+                                <i class="fa fa-home"/> <span t-field="property_id.unit_type"/>
+                            </span>
+                            <span t-if="property_id.usable_area">
+                                <i class="fa fa-expand"/> <span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/>
+                            </span>
+                            <span t-if="property_id.type != 'land' and property_id.bed">
+                                <i class="fa fa-bed"/> <span t-field="property_id.bed"/> Chambres
+                            </span>
                         </div>
                     </div>
                 </section>
@@ -78,17 +84,20 @@
                             </t>
                         </section>
 
-                        <section class="pk-section">
+                       <section class="pk-section">
                             <h3>À propos de ce bien</h3>
-                            <p t-if="property_id.facilities" t-field="property_id.facilities"/>
-                            <p t-else="">Contactez-nous pour obtenir plus d'informations sur ce bien.</p>
+                            <div t-if="property_id.detail_description"
+                                t-field="property_id.detail_description"/>
+                            <p t-else="">
+                                Contactez-nous pour obtenir plus d'informations sur ce bien.
+                            </p>
                         </section>
 
                         <section class="pk-section"
                                  t-if="property_id.unit_type or property_id.sale_lease or property_id.property_seq or property_id.total_area or property_id.usable_area or property_id.facing or (property_id.type != 'land' and property_id.floor_occupation) or (property_id.type == 'residential' and (property_id.parking or property_id.bed or property_id.bathroom))">
                             <h3>Caractéristiques du bien</h3>
                             <div class="pk-property-features-grid">
-                                <div class="pk-info" t-if="property_id.unit_type"><small>Type de bien</small><strong t-field="property_id.unit_type"/></div>
+                                <div class="pk-info" t-if="property_id.type != 'land' and property_id.unit_type"><small>Type de bien</small><strong t-field="property_id.unit_type"/></div>
                                 <div class="pk-info" t-if="property_id.sale_lease">
                                     <small>Type d'opération</small>
                                     <strong t-if="property_id.sale_lease == 'for_sale'">À vendre</strong>
@@ -98,7 +107,7 @@
                                 <div class="pk-info" t-if="property_id.property_seq"><small>Référence</small><strong t-field="property_id.property_seq"/></div>
                                 <div class="pk-info" t-if="property_id.total_area"><small>Surface habitable</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.usable_area"><small>Surface totale</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
-                                <div class="pk-info" t-if="property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>
+                                <div class="pk-info" t-if="property_id.type != 'land' and property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>
                                 <div class="pk-info" t-if="property_id.type != 'land' and property_id.floor_occupation">
                                     <small>Occupation des étages</small>
                                     <strong t-if="property_id.floor_occupation == 'whole_building'">Immeuble entier</strong>

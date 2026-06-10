@@ -265,9 +265,14 @@
                                 <span t-esc="property.city or property.city_id.name"/>
                             </div>
 
-                            <div t-if="property.subproject_id and unit_count &gt; 1 and property.subproject_id.avail_description"
-                                 class="pack-property-description"
-                                 t-field="property.subproject_id.description"/>
+                            <div t-if="property.type == 'commercial' and property.detail_description"
+                                    class="pack-property-description">
+                                    <span t-field="property.detail_description"/>
+                                </div>
+
+                                <div t-elif="property.subproject_id and unit_count &gt; 1 and property.subproject_id.avail_description"
+                                    class="pack-property-description"
+                                    t-field="property.subproject_id.description"/>
 
                             <div t-else="" class="pack-property-features">
                                 <span t-if="property.type != 'land' and property.bed" class="pack-property-feature">

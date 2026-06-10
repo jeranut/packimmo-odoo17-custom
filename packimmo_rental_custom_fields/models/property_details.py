@@ -273,7 +273,14 @@ class PropertyDetails(models.Model):
         compute="_compute_exchange_rate",
         store=True,
     )
-    
+    avail_detail_description = fields.Boolean(
+        string="Description détaillée",
+        default=True,
+    )
+    detail_description = fields.Html(
+        string="Description détaillée"
+    )
+        
     @api.model
     def fields_get(self, allfields=None, attributes=None):
         res = super().fields_get(allfields, attributes)
