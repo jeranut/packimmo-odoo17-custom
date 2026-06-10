@@ -111,65 +111,124 @@
                                 <div class="pk-info" t-if="property_id.type == 'residential' and property_id.bathroom"><small>Salles de bain</small><strong t-field="property_id.bathroom"/></div>
                             </div>
                         </section>
+<!-- Terrain + Morcellement -->
+                        <t t-set="is_land_morcellement"
+                        t-value="property_id.type == 'land'
+                                    and property_id.property_subtype_id
+                                    and property_id.property_subtype_id.category == 'morcellement'"/>
 
-                        <section class="pk-section" t-if="property_id.amenities and property_id.amenities_ids">
+                        <!-- Commodités :
+                            1) amenities du bien si elles existent
+                            2) sinon amenities du sous-projet si terrain morcellement
+                        -->
+                        <t t-set="brochure_amenities"
+                        t-value="property_id.amenities_ids
+                                    if property_id.amenities_ids
+                                    else (
+                                        property_id.subproject_id.subproject_amenity_ids
+                                        if is_land_morcellement
+                                        and property_id.subproject_id
+                                        and property_id.subproject_id.avail_amenity
+                                        and property_id.subproject_id.subproject_amenity_ids
+                                        else False
+                                    )"/>
+
+                        <section class="pk-section" t-if="brochure_amenities">
                             <h3>Commodités</h3>
+
                             <div class="pk-amenities-grid">
-                                <t t-foreach="property_id.amenities_ids" t-as="amenity">
+                                <t t-foreach="brochure_amenities" t-as="amenity">
                                     <div class="pk-amenity-card" t-if="amenity.title">
                                         <div class="pk-amenity-logo">
                                             <img t-if="amenity.image"
-                                                 t-att-src="image_data_uri(amenity.image)"
-                                                 t-att-alt="amenity.title"/>
+                                                t-att-src="image_data_uri(amenity.image)"
+                                                t-att-alt="amenity.title"/>
                                             <i t-else="" class="fa fa-check" aria-hidden="true"/>
                                         </div>
+
                                         <strong t-field="amenity.title"/>
                                     </div>
                                 </t>
                             </div>
                         </section>
 
-                        <section class="pk-section" t-if="property_id.is_facilities and property_id.property_specification_ids">
-                            <h3>Caractéristiques</h3>
-                            <div class="pk-specifications-grid">
-                                <t t-foreach="property_id.property_specification_ids" t-as="specification">
-                                    <article class="pk-specification-card">
-                                        <div class="pk-specification-logo">
-                                            <img t-if="specification.image"
-                                                 t-att-src="image_data_uri(specification.image)"
-                                                 t-att-alt="specification.title or 'Caractéristique'"/>
-                                            <i t-else="" class="fa fa-home" aria-hidden="true"/>
-                                        </div>
-                                        <div class="pk-specification-content">
-                                            <strong t-if="specification.title" t-field="specification.title"/>
-                                            <p t-if="specification.description" t-field="specification.description"/>
-                                            <small t-if="specification.description_line1" t-field="specification.description_line1"/>
-                                            <small t-if="specification.description_line2" t-field="specification.description_line2"/>
-                                            <small t-if="specification.description_line3" t-field="specification.description_line3"/>
-                                        </div>
-                                    </article>
-                                </t>
-                            </div>
-                        </section>
+                       <t t-set="brochure_specifications"
+   t-value="property_id.property_specification_ids
+            if property_id.property_specification_ids
+            else (
+                property_id.subproject_id.subproject_specification_ids
+                if is_land_morcellement
+                and property_id.subproject_id
+                and property_id.subproject_id.avail_specification
+                and property_id.subproject_id.subproject_specification_ids
+                else False
+            )"/>
 
-                        <section class="pk-section" t-if="property_id.nearby_connectivity and property_id.connectivity_ids">
-                            <h3>Connectivités à proximité</h3>
-                            <div class="pk-connectivity-grid">
-                                <t t-foreach="property_id.connectivity_ids" t-as="connectivity">
-                                    <article class="pk-connectivity-card">
-                                        <div class="pk-connectivity-logo">
-                                            <img t-if="connectivity.image"
-                                                 t-att-src="image_data_uri(connectivity.image)"
-                                                 t-att-alt="connectivity.connectivity_id.name or 'Connectivité'"/>
-                                            <i t-else="" class="fa fa-map-marker" aria-hidden="true"/>
-                                        </div>
-                                        <strong t-if="connectivity.connectivity_id" t-field="connectivity.connectivity_id"/>
-                                        <span t-if="connectivity.name" class="pk-connectivity-name" t-field="connectivity.name"/>
-                                        <span t-if="connectivity.distance" class="pk-connectivity-distance" t-field="connectivity.distance"/>
-                                    </article>
-                                </t>
-                            </div>
-                        </section>
+<section class="pk-section" t-if="brochure_specifications">
+    <h3>Caractéristiques</h3>
+
+    <div class="pk-specifications-grid">
+        <t t-foreach="brochure_specifications" t-as="specification">
+            <article class="pk-specification-card">
+                <div class="pk-specification-logo">
+                    <img t-if="specification.image"
+                         t-att-src="image_data_uri(specification.image)"
+                         t-att-alt="specification.title or 'Caractéristique'"/>
+                    <i t-else="" class="fa fa-home" aria-hidden="true"/>
+                </div>
+
+                <div class="pk-specification-content">
+                    <strong t-if="specification.title" t-field="specification.title"/>
+                    <p t-if="specification.description" t-field="specification.description"/>
+                    <small t-if="specification.description_line1" t-field="specification.description_line1"/>
+                    <small t-if="specification.description_line2" t-field="specification.description_line2"/>
+                    <small t-if="specification.description_line3" t-field="specification.description_line3"/>
+                </div>
+            </article>
+        </t>
+    </div>
+</section>
+
+                        <t t-set="brochure_connectivity"
+   t-value="property_id.connectivity_ids
+            if property_id.connectivity_ids
+            else (
+                property_id.subproject_id.subproject_connectivity_ids
+                if is_land_morcellement
+                and property_id.subproject_id
+                and property_id.subproject_id.avail_nearby_connectivity
+                and property_id.subproject_id.subproject_connectivity_ids
+                else False
+            )"/>
+
+<section class="pk-section" t-if="brochure_connectivity">
+    <h3>Connectivités à proximité</h3>
+
+    <div class="pk-connectivity-grid">
+        <t t-foreach="brochure_connectivity" t-as="connectivity">
+            <article class="pk-connectivity-card">
+                <div class="pk-connectivity-logo">
+                    <img t-if="connectivity.image"
+                         t-att-src="image_data_uri(connectivity.image)"
+                         t-att-alt="connectivity.connectivity_id.name or 'Connectivité'"/>
+
+                    <i t-else="" class="fa fa-map-marker" aria-hidden="true"/>
+                </div>
+
+                <strong t-if="connectivity.connectivity_id"
+                        t-field="connectivity.connectivity_id"/>
+
+                <span t-if="connectivity.name"
+                      class="pk-connectivity-name"
+                      t-field="connectivity.name"/>
+
+                <span t-if="connectivity.distance"
+                      class="pk-connectivity-distance"
+                      t-field="connectivity.distance"/>
+            </article>
+        </t>
+    </div>
+</section>
 
                         <t t-set="floor_plans" t-value="property_id.floreplan_ids.filtered(lambda plan: plan.image)"/>
                         <section class="pk-section" t-if="property_id.is_floor_plan and floor_plans">
