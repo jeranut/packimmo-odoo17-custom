@@ -8,15 +8,34 @@ class UnitCreation(models.TransientModel):
     def action_create_property_unit(self):
         self.ensure_one()
 
-        if self.total_floors <= 0:
+        unit_from = self.env.context.get("unit_from")
+        active_id = self.env.context.get("active_id")
+
+        is_land_project = False
+
+        if unit_from == "project" and active_id:
+            project = self.env["property.project"].browse(active_id)
+            is_land_project = project.exists() and project.property_type == "land"
+
+        elif unit_from == "sub_project" and active_id:
+            project = self.env["property.sub.project"].browse(active_id)
+            is_land_project = project.exists() and project.property_type == "land"
+
+        if is_land_project:
+            self = self.with_context(default_type="land", default_property_type="land")
+
+        if not is_land_project and self.total_floors <= 0:
             self.total_floors = 1
 
-        if self.env.context.get("unit_from") == "project":
+        if unit_from == "project":
             requested_unit_count = self.total_floors * self.units_per_floor
-            project_id = self.env.context.get("active_id")
+
+            if is_land_project:
+                requested_unit_count = self.units_per_floor
+
             existing_unit_count = self.env["property.details"].search_count(
                 [
-                    ("property_project_id", "=", project_id),
+                    ("property_project_id", "=", active_id),
                     ("subproject_id", "=", False),
                 ]
             )
@@ -29,4 +48,4 @@ class UnitCreation(models.TransientModel):
                     )
                 )
 
-        return super().action_create_property_unit()
+        return super(UnitCreation, self).action_create_property_unit()

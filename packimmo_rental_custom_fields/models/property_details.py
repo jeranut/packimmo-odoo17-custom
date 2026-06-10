@@ -468,18 +468,8 @@ class PropertyDetails(models.Model):
         self.env["property.floor.level"].ensure_levels(
             max((vals.get("total_floor", 0) for vals in vals_list), default=0)
         )
+
         for vals in vals_list:
-            total_floor = vals.get("total_floor", 0)
-            if total_floor == 0:
-                vals["floor_occupation"] = "plain_pied"
-                vals["floor"] = 0
-            elif vals.get("floor_occupation") in (False, None, "plain_pied"):
-                vals["floor_occupation"] = "multiple_floors"
-            elif vals.get("floor_occupation") == "whole_building":
-                vals["floor"] = 0
-
-            vals.setdefault("website_price_currency", "ariary")
-
             property_type = (
                 vals.get("type")
                 or self.env.context.get("default_type")
@@ -488,13 +478,36 @@ class PropertyDetails(models.Model):
             )
 
             if property_type == "land":
-                vals["pricing_type"] = "area_wise"
+                vals.update({
+                    "pricing_type": "area_wise",
+                    "unit_type": "terrain",
+                    "is_section_measurement": False,
+                    "total_floor": 0,
+                    "floor": 0,
+                    "floor_occupation": "plain_pied",
+                    "floor_level_id": False,
+                })
+            else:
+                total_floor = vals.get("total_floor", 0)
+
+                if total_floor == 0:
+                    vals["floor_occupation"] = "plain_pied"
+                    vals["floor"] = 0
+                elif vals.get("floor_occupation") in (False, None, "plain_pied"):
+                    vals["floor_occupation"] = "multiple_floors"
+                elif vals.get("floor_occupation") == "whole_building":
+                    vals["floor"] = 0
+
+            vals.setdefault("website_price_currency", "ariary")
 
         records = super().create(vals_list)
+
         records._copy_address_from_project_or_subproject()
+
         self.env["property.floor.level"].ensure_levels(
             max(records.mapped("total_floor"), default=0)
         )
+
         return records
 
     def write(self, vals):
