@@ -19,6 +19,7 @@ class PropertyListController(http.Controller):
         max_price="",
         min_area="",
         max_area="",
+        category="",
         page=1,
         **kw
     ):
@@ -35,6 +36,22 @@ class PropertyListController(http.Controller):
         offset = (page - 1) * limit
 
         domain = [("stage", "!=", "draft")]
+
+        if category == "morcellement":
+            domain += [
+                ("type", "=", "land"),
+                ("property_subtype_id.category", "=", "morcellement"),
+            ]
+
+        elif category == "residence":
+            domain += [
+                ("type", "=", "residential"),
+            ]
+
+        elif category == "centre_commercial":
+            domain += [
+                ("type", "=", "commercial"),
+            ]
 
         Subtype = request.env["property.sub.type"].sudo()
         subtype_domain = []
@@ -185,6 +202,7 @@ class PropertyListController(http.Controller):
                     "max_price": max_price,
                     "min_area": min_area,
                     "max_area": max_area,
+                    "category": category,
                 }.items()
                 if v
             }
@@ -206,9 +224,118 @@ class PropertyListController(http.Controller):
                 "max_price": max_price or "",
                 "min_area": min_area or "",
                 "max_area": max_area or "",
+                "category": category or "",
                 "regions": regions,
                 "projects": projects,
                 "property_subtypes": property_subtypes,
+                "page": page,
+                "total_pages": total_pages,
+                "project_property_count": project_property_count,
+                "project_sale_lease_status": project_sale_lease_status,
+                "filter_url": filter_url,
+            },
+        )
+
+    @http.route(["/projects-list"], type="http", auth="public", website=True)
+    def projects_list(
+        self, sale_lease="", property_subtype_id="", project_kind="", page=1, **kw
+    ):
+        try:
+            page = int(page or 1)
+        except (ValueError, TypeError):
+            page = 1
+
+        if page < 1:
+            page = 1
+
+        limit = 6
+        offset = (page - 1) * limit
+
+        property_domain = [
+            ("stage", "!=", "draft"),
+            ("subproject_id", "!=", False),
+        ]
+
+        if sale_lease:
+            property_domain.append(("sale_lease", "=", sale_lease))
+
+        if property_subtype_id:
+            try:
+                property_domain.append(
+                    ("property_subtype_id", "=", int(property_subtype_id))
+                )
+            except (ValueError, TypeError):
+                pass
+
+        if project_kind == "residence":
+            property_domain.append(("type", "=", "residential"))
+
+        elif project_kind == "appartement":
+            property_domain.append(("property_subtype_id.name", "ilike", "Appartement"))
+
+        elif project_kind == "morcellement":
+            property_domain += [
+                ("type", "=", "land"),
+                ("property_subtype_id.category", "=", "morcellement"),
+            ]
+
+        Property = request.env["property.details"].sudo()
+        matching_properties = Property.search(property_domain, order="id desc")
+
+        subprojects = request.env["property.sub.project"].sudo().browse()
+        seen_ids = set()
+        project_property_count = {}
+        project_sale_lease_status = {}
+
+        for prop in matching_properties:
+            subproject = prop.subproject_id
+            if not subproject:
+                continue
+
+            project_property_count[subproject.id] = (
+                project_property_count.get(subproject.id, 0) + 1
+            )
+
+            if subproject.id not in project_sale_lease_status:
+                project_sale_lease_status[subproject.id] = set()
+
+            if prop.sale_lease:
+                project_sale_lease_status[subproject.id].add(prop.sale_lease)
+
+            if subproject.id not in seen_ids:
+                subprojects += subproject
+                seen_ids.add(subproject.id)
+
+        total_projects = len(subprojects)
+        total_pages = (total_projects + limit - 1) // limit
+
+        if total_pages and page > total_pages:
+            page = total_pages
+            offset = (page - 1) * limit
+
+        projects = subprojects[offset : offset + limit]
+
+        filter_url = urlencode(
+            {
+                k: v
+                for k, v in {
+                    "sale_lease": sale_lease,
+                    "property_subtype_id": property_subtype_id,
+                    "project_kind": project_kind,
+                }.items()
+                if v
+            }
+        )
+
+        filter_url = "&" + filter_url if filter_url else ""
+
+        return request.render(
+            "rental_management.projects_list_template",
+            {
+                "projects": projects,
+                "sale_lease": sale_lease or "",
+                "property_subtype_id": property_subtype_id or "",
+                "project_kind": project_kind or "",
                 "page": page,
                 "total_pages": total_pages,
                 "project_property_count": project_property_count,

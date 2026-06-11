@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="projects_list_template" name="PACKIMMO Projects List">
+        <t t-call="website.layout">
+            <div class="container my-5">
+
+                <div class="text-center mb-5">
+
+    <h1 t-if="sale_lease == 'for_tenancy'">
+        Nos projets disponibles à louer
+    </h1>
+
+    <h1 t-elif="sale_lease == 'for_sale'">
+        Nos projets disponibles à vendre
+    </h1>
+
+    <h1 t-else="">
+        Nos projets disponibles
+    </h1>
+
+    <p class="text-muted">
+        <t t-if="sale_lease == 'for_tenancy'">
+            Choisissez un projet pour consulter les unités disponibles à la location.
+        </t>
+
+        <t t-elif="sale_lease == 'for_sale'">
+            Choisissez un projet pour consulter les unités disponibles à la vente.
+        </t>
+
+        <t t-else="">
+            Choisissez un projet pour consulter les unités disponibles.
+        </t>
+    </p>
+
+</div>
+
+                <div class="row">
+                    <t t-if="projects">
+                        <t t-foreach="projects" t-as="project">
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="card h-100 shadow-sm border-0">
+
+                                    <t t-set="cover_gallery_property"
+                                       t-value="request.env['property.details'].sudo().search([
+                                           ('subproject_id', '=', project.id),
+                                           ('property_images_ids', '!=', False)
+                                       ], limit=1)"/>
+
+                                    <t t-if="project.image_1920">
+                                        <img t-att-src="'/web/image/property.sub.project/%s/image_1920' % project.id"
+                                             class="card-img-top"
+                                             style="height:240px; object-fit:cover;"
+                                             loading="lazy"
+                                             alt="Projet"/>
+                                    </t>
+
+                                    <t t-elif="cover_gallery_property and cover_gallery_property.property_images_ids">
+                                        <img t-att-src="'/web/image/property.images/%s/image' % cover_gallery_property.property_images_ids[0].id"
+                                             class="card-img-top"
+                                             style="height:240px; object-fit:cover;"
+                                             loading="lazy"
+                                             alt="Projet"/>
+                                    </t>
+
+                                    <t t-else="">
+                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                                             style="height:240px;">
+                                            <i class="fa fa-building fa-4x text-muted"/>
+                                        </div>
+                                    </t>
+
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-2" t-field="project.name"/>
+
+                                        <p class="text-muted mb-3">
+                                            <t t-if="project_property_count.get(project.id)">
+                                                <span t-esc="project_property_count.get(project.id)"/>
+                                                unité(s) disponible(s)
+                                            </t>
+                                            <t t-else="">
+                                                Aucune unité disponible
+                                            </t>
+                                        </p>
+
+                                        <a t-att-href="'/property/subproject/%s/unit-map' % project.id"
+                                           class="btn btn-primary w-100">
+                                            Voir les unités
+                                        </a>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+
+                    <t t-else="">
+                        <div class="col-12 text-center py-5">
+                            <h3>Aucun projet disponible</h3>
+                            <p class="text-muted">
+                                Aucun projet ne correspond actuellement à ce filtre.
+                            </p>
+                        </div>
+                    </t>
+                </div>
+
+                <t t-if="total_pages &gt; 1">
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <t t-foreach="range(1, total_pages + 1)" t-as="p">
+                                <li t-att-class="'page-item active' if p == page else 'page-item'">
+                                    <a class="page-link"
+                                       t-att-href="'/projects-list?page=%s%s' % (p, filter_url)">
+                                        <span t-esc="p"/>
+                                    </a>
+                                </li>
+                            </t>
+                        </ul>
+                    </nav>
+                </t>
+
+            </div>
+        </t>
+    </template>
+</odoo>
