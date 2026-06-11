@@ -82,6 +82,7 @@
                     options="{'horizontal': True}"
                     readonly="stage not in ['draft','available']"
                     invisible="not foreign_currency_code or foreign_currency_code == 'MGA'" />
+                <field name="website_price_on_request"/>
 
             </xpath>
             <xpath expr="//field[@name='property_subtype_id']" position="after">

@@ -200,7 +200,7 @@
                 "/>
                 <t t-set="unit_count" t-value="project_property_count.get(property_group_key, 1)"/>
                 <t t-set="sale_lease_values" t-value="project_sale_lease_status.get(property_group_key, [])"/>
-                <t t-set="hide_price" t-value="unit_count &gt; 1"/>
+                <t t-set="hide_price" t-value="unit_count &gt; 1 and not property.website_price_on_request"/>
                 <t t-set="display_title" t-value="
                     property.subproject_id.name if property.subproject_id
                     else property.property_project_id.name if property.property_project_id
@@ -244,10 +244,15 @@
                                 <t t-else="">À louer</t>
                             </div>
 
-                            <div t-if="not hide_price and property.price and property.price &gt; 0" class="pack-property-price">
-                                <t t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')"/>
-                                Ar
-                                <t t-if="property.sale_lease == 'for_tenancy'">&#160;/Mois</t>
+                            <div t-if="not hide_price" class="pack-property-price">
+                                <t t-if="property.website_price_on_request">
+                                    Nous contacter
+                                </t>
+                                <t t-elif="property.website_display_price and property.website_display_price &gt; 0">
+                                    <t t-esc="'{:,.0f}'.format(property.website_display_price).replace(',', ' ')"/>
+                                    <t t-esc="property.website_display_currency_id.symbol or property.website_display_currency_id.name"/>
+                                    <t t-if="property.sale_lease == 'for_tenancy'">&#160;/Mois</t>
+                                </t>
                             </div>
                         </div>
 

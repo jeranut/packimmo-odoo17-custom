@@ -280,6 +280,10 @@ class PropertyDetails(models.Model):
     detail_description = fields.Html(
         string="Description détaillée"
     )
+    website_price_on_request = fields.Boolean(
+        string="Prix : Nous contacter",
+        default=False,
+    )
         
     @api.model
     def fields_get(self, allfields=None, attributes=None):
