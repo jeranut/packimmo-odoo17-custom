@@ -27,13 +27,13 @@ class PropertyProject(models.Model):
         help="Exemple : 6176-H",
     )
 
-    
     @api.model
     def fields_get(self, allfields=None, attributes=None):
         res = super().fields_get(allfields, attributes)
         if "property_type" in res and "selection" in res["property_type"]:
             res["property_type"]["selection"] = [
-                item for item in res["property_type"]["selection"]
+                item
+                for item in res["property_type"]["selection"]
                 if item[0] != "industrial"
             ]
         return res
@@ -78,3 +78,24 @@ class PropertyProject(models.Model):
         if "region_id" in vals or "city_id" in vals:
             self._sync_region_city()
         return res
+
+    @api.constrains("landlord_id")
+    def _check_landlord_id_is_landlord(self):
+        for rec in self:
+            if rec.landlord_id and rec.landlord_id.user_type != "landlord":
+                raise ValidationError(
+                    _("Le propriétaire sélectionné doit être de type Propriétaire.")
+                )
+
+    @api.onchange("landlord_id")
+    def _onchange_landlord_id_check_type(self):
+        for rec in self:
+            if rec.landlord_id and rec.landlord_id.user_type != "landlord":
+                warning = {
+                    "title": _("Propriétaire invalide"),
+                    "message": _(
+                        "Le contact sélectionné doit être de type Propriétaire."
+                    ),
+                }
+                rec.landlord_id = False
+                return {"warning": warning}

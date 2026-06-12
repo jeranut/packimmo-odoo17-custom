@@ -56,6 +56,19 @@
 
         </field>
     </record>
+    <record id="property_project_view_form_allow_create_edit_landlord" model="ir.ui.view">
+            <field name="name">property.project.view.form.allow.create.edit.landlord</field>
+            <field name="model">property.project</field>
+            <field name="inherit_id" ref="rental_management.property_project_view_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//field[@name='landlord_id']" position="attributes">
+                    <attribute name="options">{'no_quick_create': True, 'no_create_edit': False}</attribute>
+                    <attribute name="context">{'default_user_type': 'landlord'}</attribute>
+                </xpath>
+
+            </field>
+        </record>
 
     <record id="property_sub_project_view_form_inherit_hide_sale_lease" model="ir.ui.view">
         <field name="name">property.sub.project.view.form.inherit.hide.sale.lease</field>
