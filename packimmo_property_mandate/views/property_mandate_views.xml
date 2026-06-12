@@ -335,18 +335,19 @@
         <field name="name">Mandats location</field>
         <field name="res_model">property.mandate</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="view_property_mandate_tree" />
+        <field name="view_id" ref="view_property_mandate_tree"/>
         <field name="domain">[('operation_type','=','rent')]</field>
-        <field name="context">{'group_by':'mandate_type'}</field>
+        <field name="context">{'group_by':'mandate_type','create':False}</field>
     </record>
-    <record id="action_property_mandate_sale" model="ir.actions.act_window">
-        <field name="name">Mandats vente</field>
-        <field name="res_model">property.mandate</field>
-        <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="view_property_mandate_tree" />
-        <field name="domain">[('operation_type','=','sale')]</field>
-        <field name="context">{'group_by':'mandate_type'}</field>
-    </record>
+
+<record id="action_property_mandate_sale" model="ir.actions.act_window">
+    <field name="name">Mandats vente</field>
+    <field name="res_model">property.mandate</field>
+    <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="view_property_mandate_tree"/>
+    <field name="domain">[('operation_type','=','sale')]</field>
+    <field name="context">{'group_by':'mandate_type','create':False}</field>
+</record>
 
 
     <menuitem id="menu_rent_property_mandate" name="Mandats"

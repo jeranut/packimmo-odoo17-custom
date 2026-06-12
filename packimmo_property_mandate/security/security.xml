@@ -11,4 +11,16 @@
         <field name="model_id" ref="model_property_mandate_exclusive_contract"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
+    <record id="rule_property_mandate_rent_only" model="ir.rule">
+    <field name="name">Property Mandate - Location uniquement</field>
+    <field name="model_id" ref="model_property_mandate"/>
+    <field name="domain_force">[('operation_type', '=', 'rent')]</field>
+    <field name="groups" eval="[(4, ref('packimmo_rental_custom_fields.group_property_tenancy_only'))]"/>
+    <field name="perm_read" eval="1"/>
+    <field name="perm_write" eval="1"/>
+    <field name="perm_create" eval="1"/>
+    <field name="perm_unlink" eval="0"/>
+</record>
+
 </odoo>
+

@@ -12,10 +12,11 @@ Première personnalisation : ajout du CIN client sur res.partner.
     "depends": ["rental_management", "property_list_dynamic_slider", "portal"],
     "data": [
         "security/ir.model.access.csv",
+        "security/security.xml",
         "data/legal_form_data.xml",
         "data/nationality_data.xml",
         "data/quality_data.xml",
-        'views/property_sub_type_views.xml',
+        "views/property_sub_type_views.xml",
         "views/property_sub_project_views.xml",
         "views/res_partner_views.xml",
         "views/property_project_views.xml",
