@@ -321,28 +321,25 @@
                                     </t>
 
                                     <!-- BIEN COMMERCIAL -->
-                                    <t t-set="property_subtype"
-   t-value="property.property_subtype_id if property and 'property_subtype_id' in property._fields and property.property_subtype_id else False"/>
+                                    <t t-set="property_subtype" t-value="property.property_subtype_id if property and 'property_subtype_id' in property._fields and property.property_subtype_id else False"/>
+                                    <t t-if="property.type == 'commercial'">
+                                        <t t-if="property_subtype">
+                                            <strong>Type :</strong>
+                                            <span t-esc="property_subtype.name"/> /
+                                        </t>
 
-<t t-if="property.type == 'commercial'">
+                                        <t t-if="property_subtype
+                                                and property_subtype.type == 'commercial'
+                                                and property_subtype.category == 'commercial'
+                                                and 'commercial_activity' in property._fields
+                                                and property.commercial_activity">
 
-    <t t-if="property_subtype">
-        <strong>Type :</strong>
-        <span t-esc="property_subtype.name"/> /
-    </t>
+                                            <strong>Activité commerciale :</strong>
+                                            <span t-esc="property.commercial_activity"/> /
 
-    <t t-if="property_subtype
-             and property_subtype.type == 'commercial'
-             and property_subtype.category == 'commercial'
-             and 'commercial_activity' in property._fields
-             and property.commercial_activity">
+                                        </t>
 
-        <strong>Activité commerciale :</strong>
-        <span t-esc="property.commercial_activity"/> /
-
-    </t>
-
-</t>
+                                    </t>
 
                                     <t t-if="'bed' in property._fields and property.bed">
                                         <strong>Pièce(s) :</strong>
@@ -365,11 +362,9 @@
 
                                     <t t-if="'bathroom' in property._fields and property.bathroom">
                                         <strong>Salle de bain :</strong>
-    <span
-                                            t-esc="property.bathroom" />
+                                        <span t-esc="property.bathroom" />
 
-    <t
-                                            t-if="'room_measurement_ids' in property._fields and property.room_measurement_ids">
+                                        <t t-if="'room_measurement_ids' in property._fields and property.room_measurement_ids">
                                         ( <t
                                                 t-foreach="property.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'bathroom')"
                                                 t-as="measure">
@@ -386,11 +381,8 @@
                                     <t
                                         t-if="'living_room_count' in property._fields and property.living_room_count">
                                         <strong>Séjour :</strong>
-    <span
-                                            t-esc="property.living_room_count" />
-
-    <t
-                                            t-if="'room_measurement_ids' in property._fields and property.room_measurement_ids">
+                                        <span t-esc="property.living_room_count" />
+                                        <t t-if="'room_measurement_ids' in property._fields and property.room_measurement_ids">
                                         ( <t
                                                 t-foreach="property.room_measurement_ids.filtered(lambda m: m.section_id and m.section_id.type == 'hall')"
                                                 t-as="measure">
@@ -503,48 +495,90 @@
                                                 address_source.zip or ''
                                             ]))" />
                                     </p>
+                                    <!-- LOYER HABITATION / COMMERCIAL -->
                                     <t t-if="doc.operation_type == 'rent' and property">
 
-                                        <p
-                                            t-if="('foreign_price' in property._fields and property.foreign_price) or property.price">
-                                            <strong>Loyer mensuel :</strong>
+                                        <!-- Cas loyer au m² -->
+                                        <t t-if="'pricing_type' in property._fields and property.pricing_type == 'area_wise'">
 
-                                            <!-- Cas devise étrangère -->
-                                            <t
-                                                t-if="'foreign_price' in property._fields and property.foreign_price">
+                                            <!-- Loyer au m² en devise étrangère -->
+                                            <p t-if="'foreign_price' in property._fields
+                                                    and property.foreign_price
+                                                    and 'foreign_currency_id' in property._fields
+                                                    and property.foreign_currency_id
+                                                    and property.foreign_currency_id.name != 'MGA'
+                                                    and 'price_per_area' in property._fields
+                                                    and property.price_per_area">
 
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
-                                                <span
-                                                    t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
-                                                <t t-if="doc.rental_price_text">
-                                                    (<span t-esc="doc.rental_price_text" />)
-                                                </t>
-                                            </t>
+                                                <strong>Loyer au m² :</strong>
 
-                                            <!-- Cas Ariary uniquement -->
-                                            <t t-else="">
+                                                <span t-esc="'{:,.2f}'.format(property.foreign_price or 0.0).replace(',', ' ')" />
+                                                <span t-esc="property.foreign_currency_id.symbol or property.foreign_currency_id.name" />
+                                                / m²
 
-                                                <span
-                                                    t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+                                                soit
+
+                                                <span t-esc="'{:,.0f}'.format(property.price_per_area or 0.0).replace(',', ' ')" />
+                                                Ariary / m²
+                                            </p>
+
+                                            <!-- Loyer au m² en Ariary uniquement -->
+                                            <p t-elif="'price_per_area' in property._fields and property.price_per_area">
+                                                <strong>Loyer au m² :</strong>
+
+                                                <span t-esc="'{:,.0f}'.format(property.price_per_area or 0.0).replace(',', ' ')" />
                                                 <span t-esc="doc.currency_id.symbol or 'Ar'" />
-                                                <t t-if="doc.rental_price_text">
-                                                    (<span t-esc="doc.rental_price_text" />)
+                                                / m²
+                                            </p>
+
+                                            <p t-if="property.price">
+                                                <strong>Loyer mensuel total :</strong>
+
+                                                <span t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+                                                <span t-esc="doc.currency_id.symbol or 'Ar'" />
+
+                                                <t t-if="doc.rental_price_ariary_text">
+                                                    (<span t-esc="doc.rental_price_ariary_text" />)
                                                 </t>
+                                            </p>
+
+                                        </t>
+
+                                        <!-- Cas loyer classique -->
+                                        <t t-else="">
+
+                                            <p t-if="('foreign_price' in property._fields and property.foreign_price) or property.price">
+                                                <strong>Loyer mensuel :</strong>
+
+                                                <!-- Devise étrangère -->
+                                                <t t-if="'foreign_price' in property._fields and property.foreign_price">
+                                                    <span t-esc="'{:,.2f}'.format(property.foreign_price or 0.0).replace(',', ' ')" />
+                                                    <span t-esc="property.foreign_currency_id.symbol if 'foreign_currency_id' in property._fields and property.foreign_currency_id else ''" />
+
+                                                    <t t-if="doc.rental_price_text">
+                                                        (<span t-esc="doc.rental_price_text" />)
+                                                    </t>
+                                                </t>
+
+                                                <!-- Ariary -->
+                                                <t t-else="">
+                                                    <span t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+                                                    <span t-esc="doc.currency_id.symbol or 'Ar'" />
+
+                                                    <t t-if="doc.rental_price_ariary_text">
+                                                        (<span t-esc="doc.rental_price_ariary_text" />)
+                                                    </t>
+                                                </t>
+                                            </p>
+
+                                            <t t-if="'foreign_price' in property._fields and property.foreign_price">
+                                                <p class="pk-note">
+                                                    <strong>NB :</strong> Lorsque le loyer est fixé en devise étrangère,
+                                                    son équivalent en Ariary sera calculé sur la base du cours MID du jour
+                                                    publié par la Banque Centrale de Madagascar à la date d’exigibilité
+                                                    ou de paiement du loyer.
+                                                </p>
                                             </t>
-                                        </p>
-
-                                        <!-- Affichage équivalent Ariary uniquement si devise
-                                        étrangère -->
-                                        <t
-                                            t-if="'foreign_price' in property._fields and property.foreign_price">
-
-                                            <p class="pk-note">
-                                                <strong>NB :</strong> Lorsque le loyer est fixé en
-                                                devise étrangère, son équivalent en Ariary sera
-                                                calculé sur la base du cours MID du jour publié par
-                                                la Banque Centrale de Madagascar à la date
-                                                d’exigibilité ou de paiement du loyer. </p>
 
                                         </t>
 
@@ -933,57 +967,117 @@
                             <t t-else=""><p>Aucun bien n’est encore rattaché à ce mandat.</p></t>
                             <t t-if="'rent_type' in doc._fields and doc.rent_type">
 
-    <!-- LOYER EN ARIARY -->
-                            <t t-if="doc.rent_type == 'ariary'">
+  <!-- LOYER EN DEVISE AVEC TAUX FIXE -->
+<!-- LOYER EN DEVISE AVEC TAUX FIXE -->
+<t t-if="doc.rent_type == 'fixed_forex'">
 
-                                <p>
-                                    Montant du loyer:
-                                    <strong>
-                                        <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
-                                    </strong>
-                                    Ariary
-                                    (<span t-esc="doc.rental_price_ariary_text if 'rental_price_ariary_text' in doc._fields else ''" />).
-                                </p>
+    <!-- Cas loyer au m² -->
+    <t t-if="'pricing_type' in property_rec._fields and property_rec.pricing_type == 'area_wise'">
 
-                            </t>
+        <p t-if="'foreign_price' in property_rec._fields
+                 and property_rec.foreign_price
+                 and 'foreign_currency_id' in property_rec._fields
+                 and property_rec.foreign_currency_id
+                 and property_rec.foreign_currency_id.name != 'MGA'
+                 and 'price_per_area' in property_rec._fields
+                 and property_rec.price_per_area">
+            <strong>Loyer au m² :</strong>
+            <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
+            <span t-esc="property_rec.foreign_currency_id.symbol or property_rec.foreign_currency_id.name" />
+            / m² soit
+            <span t-esc="'{:,.0f}'.format(property_rec.price_per_area or 0.0).replace(',', ' ')" />
+            Ariary / m²
+        </p>
 
-                            <!-- LOYER EN DEVISE AVEC TAUX FIXE -->
-                            <t t-if="doc.rent_type == 'fixed_forex'">
+        <p t-elif="'price_per_area' in property_rec._fields and property_rec.price_per_area">
+            <strong>Loyer au m² :</strong>
+            <span t-esc="'{:,.0f}'.format(property_rec.price_per_area or 0.0).replace(',', ' ')" />
+            <span t-esc="doc.currency_id.symbol or 'Ar'" /> / m²
+        </p>
 
-                                <p>
-                                <strong>Montant du loyer:</strong>
-                                    
-                                        <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
-                                    
-                                    <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
-                                    (<span t-esc="doc.rental_price_text if 'rental_price_text' in doc._fields else ''" />),
-                                    converti au taux contractuel fixe et invariable de
-                                    
-                                        1
-                                        <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
-                                        =
-                                        <span t-esc="'{:,.0f}'.format((property_rec.price or 0.0) / (property_rec.foreign_price or 1.0)).replace(',', ' ')" />
-                                        Ariary,
-                                    soit un loyer mensuel net de
-                                
-                                        <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
-                                    Ariary
-                                    (<span t-esc="doc.rental_price_ariary_text if 'rental_price_ariary_text' in doc._fields else ''" />).
-                                </p>
+        <p t-if="property_rec.price">
+            <strong>Loyer mensuel total :</strong>
+            <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
+            <span t-esc="doc.currency_id.symbol or 'Ar'" />
+            <t t-if="doc.rental_price_ariary_text">
+                (<span t-esc="doc.rental_price_ariary_text" />)
+            </t>
+        </p>
 
-                            </t>
+    </t>
 
-                            <!-- LOYER INDEXÉ BCM / MID -->
-                            <t t-if="doc.rent_type == 'mid_forex'">
+    <!-- Cas devise classique -->
+    <t t-else="">
+        <p>
+            <strong>Montant du loyer :</strong>
+            <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
+            <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
+            (<span t-esc="doc.rental_price_text if 'rental_price_text' in doc._fields else ''" />),
+            converti au taux contractuel fixe et invariable de
+            1
+            <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
+            =
+            <span t-esc="'{:,.0f}'.format((property_rec.price or 0.0) / (property_rec.foreign_price or 1.0)).replace(',', ' ')" />
+            Ariary,
+            soit un loyer mensuel net de
+            <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
+            Ariary
+            (<span t-esc="doc.rental_price_ariary_text if 'rental_price_ariary_text' in doc._fields else ''" />).
+        </p>
+    </t>
 
-                                <p>
-                                <strong>Le loyer mensuel est fixé à</strong>
-                                        <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
-                                    <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
-                                    (<span t-esc="doc.rental_price_text if 'rental_price_text' in doc._fields else ''" />).
-                                </p>
+</t>
 
-                            </t>
+<!-- LOYER INDEXÉ BCM / MID -->
+<t t-if="doc.rent_type == 'mid_forex'">
+
+    <!-- Cas loyer au m² -->
+    <t t-if="'pricing_type' in property_rec._fields and property_rec.pricing_type == 'area_wise'">
+
+        <p t-if="'foreign_price' in property_rec._fields
+                 and property_rec.foreign_price
+                 and 'foreign_currency_id' in property_rec._fields
+                 and property_rec.foreign_currency_id
+                 and property_rec.foreign_currency_id.name != 'MGA'
+                 and 'price_per_area' in property_rec._fields
+                 and property_rec.price_per_area">
+            <strong>Loyer au m² :</strong>
+            <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
+            <span t-esc="property_rec.foreign_currency_id.symbol or property_rec.foreign_currency_id.name" />
+            / m² soit
+            <span t-esc="'{:,.0f}'.format(property_rec.price_per_area or 0.0).replace(',', ' ')" />
+            Ariary / m²
+        </p>
+
+        <p t-elif="'price_per_area' in property_rec._fields and property_rec.price_per_area">
+            <strong>Loyer au m² :</strong>
+            <span t-esc="'{:,.0f}'.format(property_rec.price_per_area or 0.0).replace(',', ' ')" />
+            <span t-esc="doc.currency_id.symbol or 'Ar'" /> / m²
+        </p>
+
+        <p t-if="property_rec.price">
+            <strong>Loyer mensuel total :</strong>
+            <span t-esc="'{:,.0f}'.format(property_rec.price or 0.0).replace(',', ' ')" />
+            <span t-esc="doc.currency_id.symbol or 'Ar'" />
+            <t t-if="doc.rental_price_ariary_text">
+                (<span t-esc="doc.rental_price_ariary_text" />)
+            </t>
+        </p>
+
+    </t>
+
+    <!-- Cas devise classique -->
+    <t t-else="">
+        <p>
+            <strong>Le loyer mensuel est fixé à </strong>
+            <span t-esc="'{:,.2f}'.format(property_rec.foreign_price or 0.0).replace(',', ' ')" />
+            <span t-esc="property_rec.foreign_currency_id.symbol if property_rec.foreign_currency_id else ''" />
+            (<span t-esc="doc.rental_price_text if 'rental_price_text' in doc._fields else ''" />).
+        </p>
+    </t>
+
+</t>
+
                             <div style="
     margin-top:8px;
     font-size:12px;

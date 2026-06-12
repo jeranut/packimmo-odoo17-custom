@@ -96,6 +96,19 @@
 
         </field>
     </record>
+    <record id="property_details_tree_no_create" model="ir.ui.view">
+            <field name="name">property.details.tree.no.create</field>
+            <field name="model">property.details</field>
+            <field name="inherit_id" ref="rental_management.property_details_tree_view"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//tree" position="attributes">
+                    <attribute name="create">0</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
     <record id="property_details_view_form_inherit_living_room" model="ir.ui.view">
         <field name="name">property.details.view.form.inherit.living.room</field>
         <field name="model">property.details</field>

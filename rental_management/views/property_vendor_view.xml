@@ -19,7 +19,7 @@
                         <button name="%(property_vendor_wizard_action)d"
                             type="action"
                             icon="fa-plus"
-                            string="Create Installments"
+                            string="Créer un plan de paiement"
                             class="btn btn-primary"
                             invisible="stage not in ['booked'] or sale_invoice_ids" />
                         <button name="action_reset_installments"

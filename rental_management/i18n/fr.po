@@ -2177,7 +2177,7 @@ msgstr "Détails de l'adresse"
 #: model:ir.model.fields,field_description:rental_management.field_booking_wizard__book_price
 #: model:ir.model.fields,field_description:rental_management.field_property_vendor__book_invoice_id
 msgid "Advance"
-msgstr "Prix ​​du livre"
+msgstr "Avance de paiement"
 
 #. module: rental_management
 #: model:ir.model.fields,field_description:rental_management.field_agreement_template__agreement
@@ -3089,7 +3089,7 @@ msgstr "La date de début du contrat doit être supérieure à la date de fin du
 #: model:ir.ui.menu,name:rental_management.menu_rent_contract
 #: model:ir.ui.menu,name:rental_management.menu_sell_contract
 msgid "Contracts"
-msgstr "Vendeur immobilier"
+msgstr "Contrats"
 
 #. module: rental_management
 #: model:ir.model.fields,field_description:rental_management.field_extra_service_line__price

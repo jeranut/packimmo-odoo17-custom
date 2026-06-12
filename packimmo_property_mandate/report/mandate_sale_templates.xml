@@ -379,22 +379,73 @@
                                     </t>
 
                                     <!-- Prix des biens résidentiels et commerciaux -->
-                                    <p
-                                        t-if="property.type != 'land' and (('foreign_price' in property._fields and property.foreign_price) or property.price)">
-                                        <strong>Prix de vente :</strong>
-                                        <t
-                                            t-if="'foreign_price' in property._fields and property.foreign_price">
-                                            <span
-                                                t-esc="'{:,.0f}'.format(property.foreign_price).replace(',', ' ')" />
-                                            <span
-                                                t-esc="property.foreign_currency_id.symbol if property.foreign_currency_id else ''" />
-                                        </t>
-                                        <t t-else="">
-                                            <span
-                                                t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
-                                            <span t-esc="doc.currency_id.symbol or 'Ar'" />
-                                        </t>
-                                    </p>
+                                    <t t-if="property.type != 'land'">
+
+    <!-- Vente au m² avec devise étrangère -->
+    <p t-if="'pricing_type' in property._fields
+             and property.pricing_type == 'area_wise'
+             and 'foreign_price' in property._fields
+             and property.foreign_price
+             and 'foreign_currency_id' in property._fields
+             and property.foreign_currency_id
+             and property.foreign_currency_id.name != 'MGA'
+             and 'price_per_area' in property._fields
+             and property.price_per_area">
+
+        <strong>Prix de vente au m² :</strong>
+
+        <span t-esc="'{:,.2f}'.format(property.foreign_price or 0.0).replace(',', ' ')" />
+        <span t-esc="property.foreign_currency_id.symbol or property.foreign_currency_id.name" />
+        / m² soit
+
+        <span t-esc="'{:,.0f}'.format(property.price_per_area or 0.0).replace(',', ' ')" />
+        Ariary / m²
+    </p>
+
+    <!-- Vente au m² en Ariary uniquement -->
+    <p t-elif="'pricing_type' in property._fields
+               and property.pricing_type == 'area_wise'
+               and 'price_per_area' in property._fields
+               and property.price_per_area">
+
+        <strong>Prix de vente au m² :</strong>
+
+        <span t-esc="'{:,.0f}'.format(property.price_per_area or 0.0).replace(',', ' ')" />
+        <span t-esc="doc.currency_id.symbol or 'Ar'" />
+        / m²
+    </p>
+
+    <!-- Prix de vente total -->
+    <p t-if="property.price">
+        <strong>Prix de vente total :</strong>
+
+        <span t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+        <span t-esc="doc.currency_id.symbol or 'Ar'" />
+    </p>
+
+    <!-- Vente classique en devise étrangère -->
+    <p t-if="('pricing_type' not in property._fields or property.pricing_type != 'area_wise')
+             and 'foreign_price' in property._fields
+             and property.foreign_price">
+
+        <strong>Prix de vente :</strong>
+
+        <span t-esc="'{:,.2f}'.format(property.foreign_price or 0.0).replace(',', ' ')" />
+        <span t-esc="property.foreign_currency_id.symbol if property.foreign_currency_id else ''" />
+    </p>
+
+    <!-- Vente classique Ariary -->
+    <p t-if="('pricing_type' not in property._fields or property.pricing_type != 'area_wise')
+             and not ('foreign_price' in property._fields and property.foreign_price)
+             and property.price">
+
+        <strong>Prix de vente :</strong>
+
+        <span t-esc="'{:,.0f}'.format(property.price or 0.0).replace(',', ' ')" />
+        <span t-esc="doc.currency_id.symbol or 'Ar'" />
+    </p>
+
+</t>
                                 </div>
                             </t>
                         </t>
