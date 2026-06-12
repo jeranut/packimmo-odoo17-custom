@@ -7838,7 +7838,7 @@ msgstr "Nombre d'unités"
 #: model:ir.model.fields,field_description:rental_management.field_subproject_creation__units_per_floor
 #: model:ir.model.fields,field_description:rental_management.field_unit_creation__units_per_floor
 msgid "Units per Floor"
-msgstr "Unités par étage"
+msgstr "Bien\Lot par étage\Phase"
 
 #. module: rental_management
 #: model:ir.model.fields,field_description:rental_management.field_property_vendor__total_untaxed_amount

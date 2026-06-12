@@ -238,4 +238,22 @@
 
     </field>
 </record>
+
+<record id="property_details_view_form_replace_create_contract_button" model="ir.ui.view">
+    <field name="name">property.details.view.form.replace.create.contract.button</field>
+    <field name="model">property.details</field>
+    <field name="inherit_id" ref="rental_management.property_details_form_view"/>
+    <field name="arch" type="xml">
+
+        <xpath expr="//header/button[@type='action' and @icon='fa-money']" position="replace">
+            <button name="action_open_contract_wizard_checked"
+                    type="object"
+                    string="Create Contract"
+                    class="btn btn-success"
+                    icon="fa-money"
+                    invisible="stage not in ['available','on_lease'] or sale_lease != 'for_tenancy'"/>
+        </xpath>
+
+    </field>
+</record>
 </odoo>

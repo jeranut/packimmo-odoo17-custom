@@ -284,6 +284,28 @@ class PropertyDetails(models.Model):
         string="Prix : Nous contacter",
         default=False,
     )
+    
+    def action_open_contract_wizard_checked(self):
+        for rec in self:
+            mandate = self.env["property.mandate"].search([
+                ("property_ids", "in", rec.id),
+                ("mandate_type", "=", "exclusive_absolute"),
+                ("operation_type", "=", "rent"),
+            ], limit=1)
+
+            if mandate and mandate.state != "completed":
+                raise ValidationError(
+                    _("Veuillez régulariser le mandat avant de créer le contrat de bail.")
+                )
+
+        action = self.env.ref("rental_management.contract_wizard_action").read()[0]
+        action["context"] = {
+            "active_model": "property.details",
+            "active_id": self.id,
+            "active_ids": self.ids,
+        }
+        return action
+
         
     @api.model
     def fields_get(self, allfields=None, attributes=None):
@@ -807,3 +829,5 @@ class PropertyRoomMeasurement(models.Model):
             ):
                 vals["measure_per_floor"] = property_rec.floor_level_id.id
         return super().create(vals_list)
+    
+    

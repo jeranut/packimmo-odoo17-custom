@@ -20,10 +20,10 @@
                     <!-- Customer &amp; Property Details -->
                     <group>
                         <group string="Customer Details">
-                            <field name="customer_id" required="1" readonly="is_contract_extend"
-                                   options="{'no_quick_create':True}"/>
-                            <field name="customer_phone" widget="phone"/>
-                            <field name="customer_email" widget="email"/>
+                            <field name="customer_id" required="1" 
+                                   options="{'no_quick_create':True}" readonly="1"/>
+                            <field name="customer_phone" widget="phone" readonly="1"/>
+                            <field name="customer_email" widget="email" readonly="1"/>
                         </group>
                         <group string="Property Details">
                             <field name="is_contract_extend" invisible="1"/>

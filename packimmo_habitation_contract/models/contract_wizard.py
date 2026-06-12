@@ -2,7 +2,7 @@
 import base64
 import logging
 
-from odoo import api, fields, models
+from odoo import api, fields, models,_
 
 _logger = logging.getLogger(__name__)
 
@@ -244,3 +244,34 @@ class ContractWizard(models.TransientModel):
         )
 
         return attachment
+    
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+
+        property_id = (
+            res.get("property_id")
+            or self.env.context.get("default_property_id")
+            or self.env.context.get("active_id")
+        )
+
+        if property_id:
+            mandate = self.env["property.mandate"].search([
+                ("property_ids", "in", property_id),
+                ("mandate_type", "=", "exclusive_absolute"),
+                ("operation_type", "=", "rent"),
+            ], order="id desc", limit=1)
+
+            if mandate and mandate.client_id:
+                customer = mandate.client_id
+                res["customer_id"] = customer.id
+                res["customer_phone"] = customer.phone or customer.mobile or False
+                res["customer_email"] = customer.email or False
+
+        return res
+    
+    @api.onchange("customer_id")
+    def _onchange_customer_id_packimmo(self):
+        for wizard in self:
+            wizard.customer_phone = wizard.customer_id.phone or wizard.customer_id.mobile or False
+            wizard.customer_email = wizard.customer_id.email or False
