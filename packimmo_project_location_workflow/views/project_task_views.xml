@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_task_search_packimmo_location" model="ir.ui.view">
+        <field name="name">project.task.search.packimmo.location</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_search_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//search" position="inside">
+                <filter string="Projet LOCATION"
+                        name="filter_location_project"
+                        domain="[('project_id.name', '=', 'LOCATION')]"/>
+
+                <field name="property_id"/>
+                <field name="property_subtype_id"/>
+                <field name="property_subtype_name"/>
+                <field name="property_landlord_id"/>
+                <field name="property_address"/>
+            </xpath>
+
+            <xpath expr="//group" position="inside">
+                <filter string="Sous-type du bien"
+                        name="group_by_property_subtype_name"
+                        context="{'group_by': 'property_subtype_name'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_task_tree_packimmo_location" model="ir.ui.view">
+        <field name="name">project.task.tree.packimmo.location</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_tree2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="property_id" optional="show"/>
+                <field name="property_subtype_id" optional="show"/>
+                <field name="property_subtype_name" optional="hide"/>
+                <field name="property_display_price" optional="show"/>
+                <field name="property_display_currency_id" optional="hide"/>
+                <field name="property_landlord_id" optional="show"/>
+                <field name="property_address" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_kanban_packimmo_location" model="ir.ui.view">
+        <field name="name">project.task.kanban.packimmo.location</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_kanban"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//kanban" position="inside">
+                <field name="property_id"/>
+                <field name="property_subtype_id"/>
+                <field name="property_subtype_name"/>
+                <field name="property_display_price"/>
+                <field name="property_display_currency_id"/>
+                <field name="property_landlord_id"/>
+                <field name="property_address"/>
+            </xpath>
+
+            <xpath expr="//div[hasclass('o_kanban_record_body')]" position="inside">
+
+                <div t-if="record.property_subtype_name.raw_value" class="mt-1 mb-1">
+                    <span class="badge rounded-pill text-bg-info">
+                        <field name="property_subtype_name"/>
+                    </span>
+                </div>
+
+                <div t-if="record.property_display_price.raw_value" class="text-muted">
+                    <strong>Loyer :</strong>
+                    <field name="property_display_price"
+                           widget="monetary"
+                           options="{'currency_field': 'property_display_currency_id'}"/>
+                    <span> / mois</span>
+                </div>
+
+                <div t-if="record.property_landlord_id.raw_value" class="text-muted">
+                    <strong>Propriétaire :</strong>
+                    <field name="property_landlord_id"/>
+                </div>
+
+                <div t-if="record.property_address.raw_value" class="text-muted">
+                    <strong>Adresse :</strong>
+                    <field name="property_address"/>
+                </div>
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_task_form_packimmo_location" model="ir.ui.view">
+        <field name="name">project.task.form.packimmo.location</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//header" position="inside">
+                <button name="action_open_property"
+                        type="object"
+                        string="Ouvrir le bien"
+                        class="btn-primary"
+                        invisible="not property_id"/>
+            </xpath>
+
+            <xpath expr="//sheet" position="inside">
+                <group string="Bien immobilier Packimmo">
+                    <field name="property_id" readonly="1"/>
+                    <field name="property_subtype_id" readonly="1"/>
+                    <field name="property_display_price" readonly="1"/>
+                    <field name="property_display_currency_id" readonly="1"/>
+                    <field name="property_landlord_id" readonly="1"/>
+                    <field name="property_address" readonly="1"/>
+                </group>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

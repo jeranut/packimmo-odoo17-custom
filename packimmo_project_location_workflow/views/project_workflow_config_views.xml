@@ -1,0 +1,43 @@
+<odoo>
+
+    <record id="view_packimmo_project_workflow_config_tree" model="ir.ui.view">
+        <field name="name">packimmo.project.workflow.config.tree</field>
+        <field name="model">packimmo.project.workflow.config</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="project_id"/>
+                <field name="default_user_id"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_project_workflow_config_form" model="ir.ui.view">
+        <field name="name">packimmo.project.workflow.config.form</field>
+        <field name="model">packimmo.project.workflow.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="project_id"/>
+                        <field name="default_user_id"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packimmo_project_workflow_config" model="ir.actions.act_window">
+        <field name="name">Configuration workflow Packimmo</field>
+        <field name="res_model">packimmo.project.workflow.config</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_packimmo_project_workflow_config"
+              name="Configuration workflow Packimmo"
+              parent="project.menu_project_config"
+              action="action_packimmo_project_workflow_config"
+              sequence="50"/>
+
+</odoo>
