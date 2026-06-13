@@ -6,30 +6,6 @@
         <field name="inherit_id" ref="rental_management.property_project_view_form"/>
         <field name="arch" type="xml">
 
-            <xpath expr="//header" position="inside">
-                <button string="Import Map Image"
-                        name="action_open_import_unit_map_wizard"
-                        type="object"
-                        class="btn-secondary"
-                        invisible="not has_multiple_units or property_type == 'land'"/>
-
-                <button string="Préparer les lots cartographie"
-                        name="action_prepare_unit_map_lines"
-                        type="object"
-                        class="btn-secondary"
-                        invisible="not has_multiple_units and property_type != 'land'"/>
-
-                <button string="Dessiner la cartographie"
-                        name="action_open_unit_map_editor"
-                        type="object"
-                        class="btn-primary"
-                        invisible="not has_multiple_units and property_type != 'land'"/>
-                <button name="action_view_unit_map_website"
-                        string="Voir côté site web"
-                        type="object"
-                        class="btn-primary"/>
-            </xpath>
-
             <xpath expr="//sheet/notebook" position="inside">
                 <page string="Aperçu du plan" name="unit_map">
                     <field name="has_multiple_units" invisible="1"/>

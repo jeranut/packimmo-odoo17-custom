@@ -5,10 +5,6 @@
         <field name="model">property.project</field>
         <field name="inherit_id" ref="property_unit_mapping.property_project_view_form_inherit_unit_mapping"/>
         <field name="arch" type="xml">
-            <xpath expr="//button[@name='action_open_import_unit_map_wizard']" position="attributes">
-                <attribute name="string">Importer une image de fond</attribute>
-                <attribute name="invisible">(not has_multiple_units and property_type != 'land') or (property_type == 'land' and land_phase_map_background != 'image')</attribute>
-            </xpath>
             <xpath expr="//field[@name='unit_map_image']" position="before">
                 <field name="land_phase_map_background"
                        string="Fond de carte"
