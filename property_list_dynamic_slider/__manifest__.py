@@ -9,6 +9,7 @@
     "depends": ["website", "rental_management"],
     "data": [
         "views/properties_list_slider_template.xml",
+        "views/projects_list_slider_template.xml",
     ],
     "assets": {
         "web.assets_frontend": [

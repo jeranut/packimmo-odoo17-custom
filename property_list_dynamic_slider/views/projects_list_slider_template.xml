@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="projects_list_slider_template"
+              inherit_id="rental_management.projects_list_template"
+              name="Projects List Modern Cards">
+
+        <xpath expr="//t[@t-foreach='projects']" position="replace">
+            <t t-foreach="projects" t-as="project">
+                <t t-set="unit_count" t-value="project_property_count.get(project.id, 0)"/>
+                <t t-set="sale_lease_values" t-value="project_sale_lease_status.get(project.id, [])"/>
+                <t t-set="parent_project" t-value="project.property_project_id"/>
+
+                <div class="col-xl-4 col-md-6 mb-4">
+                    <article class="pack-property-card h-100">
+                        <div class="pack-property-media">
+                            <img t-if="project.subproject_image_ids"
+                                 t-att-src="'/web/image/subproject.images.line/%s/image' % project.subproject_image_ids[0].id"
+                                 t-att-alt="project.name"
+                                 class="pack-property-image"/>
+                            <img t-elif="project.image_1920"
+                                 t-att-src="'/web/image/property.sub.project/%s/image_1920' % project.id"
+                                 t-att-alt="project.name"
+                                 class="pack-property-image"/>
+                            <img t-elif="parent_project and parent_project.project_image_ids"
+                                 t-att-src="'/web/image/project.images.line/%s/image' % parent_project.project_image_ids[0].id"
+                                 t-att-alt="project.name"
+                                 class="pack-property-image"/>
+                            <img t-else=""
+                                 src="/web/static/img/placeholder.png"
+                                 t-att-alt="project.name"
+                                 class="pack-property-image"/>
+
+                            <div class="pack-property-status">
+                                <i class="fa fa-tag" aria-hidden="true"/>
+                                <t t-if="'for_sale' in sale_lease_values and 'for_tenancy' in sale_lease_values">
+                                    Vente et location
+                                </t>
+                                <t t-elif="'for_sale' in sale_lease_values">À vendre</t>
+                                <t t-elif="'for_tenancy' in sale_lease_values">À louer</t>
+                                <t t-elif="sale_lease == 'for_sale'">À vendre</t>
+                                <t t-elif="sale_lease == 'for_tenancy'">À louer</t>
+                            </div>
+                        </div>
+
+                        <div class="pack-property-body">
+                            <div class="pack-property-kind">
+                                <t t-esc="project.property_subtype_id.name or project.property_type or ''"/>
+                            </div>
+
+                            <h3 class="pack-property-title">
+                                <t t-esc="project.name"/>
+                            </h3>
+
+                            <div t-if="project.city_id or parent_project.city_id"
+                                 class="pack-property-location">
+                                <i class="fa fa-map-marker" aria-hidden="true"/>
+                                <span t-esc="project.city_id.name or parent_project.city_id.name"/>
+                            </div>
+
+                            <div t-if="project.avail_description and project.description"
+                                 class="pack-property-description"
+                                 t-field="project.description"/>
+                            <div t-elif="parent_project.avail_description and parent_project.description"
+                                 class="pack-property-description"
+                                 t-field="parent_project.description"/>
+
+                            <div t-else="" class="pack-property-features">
+                                <span class="pack-property-feature">
+                                    <i class="fa fa-building" aria-hidden="true"/>
+                                    <t t-esc="unit_count"/>
+                                    unité<t t-if="unit_count &gt; 1">s</t>
+                                    disponible<t t-if="unit_count &gt; 1">s</t>
+                                </span>
+                            </div>
+
+                            <a t-att-href="'/property/subproject/%s/unit-map' % project.id"
+                               class="btn pack-property-detail">
+                                Voir le détail
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            </t>
+        </xpath>
+
+        <xpath expr="//t[@t-if='total_pages &gt; 1']" position="replace">
+            <t t-if="total_pages &gt; 1">
+                <div class="property-pagination mt-4">
+                    <a t-if="page &gt; 1"
+                       t-att-href="'/projects-list?page=%s%s' % (page - 1, filter_url or '')"
+                       class="page-link-custom">
+                        Précédent
+                    </a>
+
+                    <t t-foreach="range(1, total_pages + 1)" t-as="p">
+                        <a t-att-href="'/projects-list?page=%s%s' % (p, filter_url or '')"
+                           t-att-class="'page-link-custom active' if p == page else 'page-link-custom'">
+                            <t t-esc="p"/>
+                        </a>
+                    </t>
+
+                    <a t-if="page &lt; total_pages"
+                       t-att-href="'/projects-list?page=%s%s' % (page + 1, filter_url or '')"
+                       class="page-link-custom">
+                        Suivant
+                    </a>
+                </div>
+            </t>
+        </xpath>
+
+    </template>
+</odoo>
