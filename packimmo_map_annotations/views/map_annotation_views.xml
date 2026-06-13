@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="property_map_annotation_view_tree" model="ir.ui.view">
+        <field name="name">property.map.annotation.view.tree</field>
+        <field name="model">property.map.annotation</field>
+        <field name="arch" type="xml">
+            <tree string="Légendes de carte">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="subproject_id"/>
+                <field name="icon"/>
+                <field name="color" widget="color"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="property_map_annotation_view_form" model="ir.ui.view">
+        <field name="name">property.map.annotation.view.form</field>
+        <field name="model">property.map.annotation</field>
+        <field name="arch" type="xml">
+            <form string="Légende de carte">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name="project_id"/>
+                            <field name="subproject_id"/>
+                            <field name="icon"/>
+                            <field name="color" widget="color"/>
+                        </group>
+                        <group string="Coordonnées">
+                            <field name="target_lat"/>
+                            <field name="target_lng"/>
+                            <field name="label_lat"/>
+                            <field name="label_lng"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="property_map_annotation_action" model="ir.actions.act_window">
+        <field name="name">Légendes de carte</field>
+        <field name="res_model">property.map.annotation</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="property_map_interest_zone_view_tree" model="ir.ui.view">
+        <field name="name">property.map.interest.zone.view.tree</field>
+        <field name="model">property.map.interest.zone</field>
+        <field name="arch" type="xml">
+            <tree string="Zones d'intérêt">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="project_id"/>
+                <field name="subproject_id"/>
+                <field name="zone_type"/>
+                <field name="color" widget="color"/>
+                <field name="opacity"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="property_map_interest_zone_view_form" model="ir.ui.view">
+        <field name="name">property.map.interest.zone.view.form</field>
+        <field name="model">property.map.interest.zone</field>
+        <field name="arch" type="xml">
+            <form string="Zone d'intérêt">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name="project_id"/>
+                            <field name="subproject_id"/>
+                            <field name="zone_type"/>
+                            <field name="color" widget="color"/>
+                            <field name="opacity"/>
+                        </group>
+                        <group>
+                            <field name="polygon_json"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="property_map_interest_zone_action" model="ir.actions.act_window">
+        <field name="name">Zones d'intérêt</field>
+        <field name="res_model">property.map.interest.zone</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
