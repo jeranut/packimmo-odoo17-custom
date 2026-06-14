@@ -136,6 +136,7 @@
                 : `/property/unit-map/data/${PROJECT_ID}`;
 
                 const map = L.map('unit_map_designer', {crs: L.CRS.Simple, minZoom: -5, maxZoom: 4});
+                map.getContainer()._packimmoLeafletMap = map;
                 const drawnItems = new L.FeatureGroup();
 
                 map.addLayer(drawnItems);
@@ -583,6 +584,10 @@
                 map.on(L.Draw.Event.CREATED, function(event) {
                 const drawType = document.getElementById('draw_type').value;
 
+                if (drawType === 'legend' || drawType === 'annotation' || drawType === 'interest_zone') {
+                return;
+                }
+
                 if (drawType === 'phase') {
                 if (phaseLayer) {
                 alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Effacer dessin”.');
@@ -718,6 +723,7 @@
                     maxZoom: 4,
                     zoomControl:true
                     });
+                    map.getContainer()._packimmoLeafletMap = map;
 
                     function rpc(route, params) {
                     return fetch(route, {
@@ -890,6 +896,7 @@
                 minZoom: -5,
                 maxZoom: 4
                 });
+                map.getContainer()._packimmoLeafletMap = map;
 
                 const all = new L.FeatureGroup().addTo(map);
 
@@ -1086,6 +1093,7 @@
                 const CLEAR_ROUTE = (lineId) =&gt; `/property/unit-map/clear/${lineId}`;
 
                 const map = L.map('unit_map_esri_designer').setView([-18.8792, 47.5079], 16);
+                map.getContainer()._packimmoLeafletMap = map;
                 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     attribution: 'Tiles © Esri',
                     maxNativeZoom: 19,
@@ -1155,7 +1163,7 @@
                 document.getElementById('btn_search_place').addEventListener('click', function() { const q = document.getElementById('search_place').value; if (!q) { alert('Veuillez saisir un lieu ou des coordonnées.'); return; } const coords = q.split(',').map(x =&gt; parseFloat(x.trim())); if (coords.length === 2 &amp;&amp; !isNaN(coords[0]) &amp;&amp; !isNaN(coords[1])) { map.setView([coords[0], coords[1]], 18); return; } fetch(`https://nominatim.openstreetmap.org/search?format=json&amp;limit=1&amp;q=${encodeURIComponent(q)}`).then(r =&gt; r.json()).then(results =&gt; { if (!results.length) { alert('Terrain introuvable.'); return; } map.setView([parseFloat(results[0].lat), parseFloat(results[0].lon)], 18); }); });
                 document.getElementById('btn_use_position').addEventListener('click', function() { if (!navigator.geolocation) { alert('Géolocalisation non supportée par ce navigateur.'); return; } navigator.geolocation.getCurrentPosition(function(pos) { map.setView([pos.coords.latitude, pos.coords.longitude], 18); }); });
 
-                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Supprimer dessin”.'); drawnItems.removeLayer(event.layer); return; } const layer = event.layer; registerPhaseLayer(layer); savePhaseLayer(layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord une unité.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); const layer = event.layer; registerLayer(layer, unit); saveLayer(layer, label); });
+                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'legend' || drawType === 'annotation' || drawType === 'interest_zone') return; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier ou “Supprimer dessin”.'); drawnItems.removeLayer(event.layer); return; } const layer = event.layer; registerPhaseLayer(layer); savePhaseLayer(layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord une unité.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); const layer = event.layer; registerLayer(layer, unit); saveLayer(layer, label); });
                 document.getElementById('btn_edit_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') enablePhaseEdit(); else enableEdit(document.getElementById('unit_select').value); });
                 document.getElementById('btn_save_selected').addEventListener('click', () =&gt; { if (document.getElementById('draw_type').value === 'phase') savePhaseLayer(activeLayer || phaseLayer); else saveLayer(activeLayer || findLayer(document.getElementById('unit_select').value)); });
                 document.getElementById('btn_rename_selected').addEventListener('click', () =&gt; renameUnit(document.getElementById('unit_select').value || (activeLayer &amp;&amp; activeLayer.meta ? activeLayer.meta.line_id : false)));
@@ -1180,6 +1188,7 @@
                     const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
                     const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
                     const map = L.map('preview_unit_map_esri').setView([-18.8792, 47.5079], 16);
+                    map.getContainer()._packimmoLeafletMap = map;
                     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                         attribution: 'Tiles © Esri',
                         maxNativeZoom: 19,
@@ -1222,6 +1231,7 @@
                 const MAP_TYPE = '<t t-esc="map_type or 'project'"/>';
                 const DATA_ROUTE = MAP_TYPE === 'subproject' ? `/property/subproject/unit-map/data/${PROJECT_ID}` : `/property/unit-map/data/${PROJECT_ID}`;
                 const map = L.map('public_unit_map_esri').setView([-18.8792, 47.5079], 16);
+                map.getContainer()._packimmoLeafletMap = map;
                 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     attribution: 'Tiles © Esri',
                     maxNativeZoom: 19,

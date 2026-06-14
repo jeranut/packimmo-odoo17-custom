@@ -24,9 +24,11 @@ class PropertyMapInterestZone(models.Model):
     ], string="Type", default="other")
     polygon_json = fields.Text("Polygone JSON", required=True)
     color = fields.Char("Couleur", default="#22c55e")
+    text_color = fields.Char("Couleur du texte", default="#111827")
     opacity = fields.Float("Opacité", default=0.25)
     sequence = fields.Integer(default=10)
     active = fields.Boolean(default=True)
+    website_published = fields.Boolean("Publié sur site web", default=True)
 
     @api.constrains("project_id", "subproject_id")
     def _check_scope(self):
@@ -43,5 +45,6 @@ class PropertyMapInterestZone(models.Model):
             "zone_type": self.zone_type or "other",
             "polygon_json": self.polygon_json or "[]",
             "color": self.color or "#22c55e",
+            "text_color": self.text_color or "#111827",
             "opacity": self.opacity if self.opacity is not False else 0.25,
         }

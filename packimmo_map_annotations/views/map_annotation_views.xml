@@ -11,6 +11,7 @@
                 <field name="subproject_id"/>
                 <field name="icon"/>
                 <field name="color" widget="color"/>
+                <field name="text_color" widget="color"/>
                 <field name="active"/>
             </tree>
         </field>
@@ -30,12 +31,15 @@
                             <field name="subproject_id"/>
                             <field name="icon"/>
                             <field name="color" widget="color"/>
+                            <field name="text_color" widget="color"/>
+                            <field name="website_published"/>
                         </group>
                         <group string="Coordonnées">
                             <field name="target_lat"/>
                             <field name="target_lng"/>
                             <field name="label_lat"/>
                             <field name="label_lng"/>
+                            <field name="geometry_json"/>
                             <field name="sequence"/>
                             <field name="active"/>
                         </group>
@@ -51,6 +55,19 @@
         <field name="view_mode">tree,form</field>
     </record>
 
+    <record id="packimmo_map_annotations_root" model="ir.ui.menu">
+        <field name="name">Annotations carte</field>
+        <field name="parent_id" ref="project.menu_project_config"/>
+        <field name="sequence">95</field>
+    </record>
+
+    <record id="menu_packimmo_map_annotation" model="ir.ui.menu">
+        <field name="name">Légendes</field>
+        <field name="parent_id" ref="packimmo_map_annotations_root"/>
+        <field name="action" ref="property_map_annotation_action"/>
+        <field name="sequence">1</field>
+    </record>
+
     <record id="property_map_interest_zone_view_tree" model="ir.ui.view">
         <field name="name">property.map.interest.zone.view.tree</field>
         <field name="model">property.map.interest.zone</field>
@@ -62,6 +79,7 @@
                 <field name="subproject_id"/>
                 <field name="zone_type"/>
                 <field name="color" widget="color"/>
+                <field name="text_color" widget="color"/>
                 <field name="opacity"/>
                 <field name="active"/>
             </tree>
@@ -82,6 +100,7 @@
                             <field name="subproject_id"/>
                             <field name="zone_type"/>
                             <field name="color" widget="color"/>
+                            <field name="text_color" widget="color"/>
                             <field name="opacity"/>
                         </group>
                         <group>
@@ -99,5 +118,12 @@
         <field name="name">Zones d'intérêt</field>
         <field name="res_model">property.map.interest.zone</field>
         <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="menu_packimmo_map_interest_zone" model="ir.ui.menu">
+        <field name="name">Zones d'intérêt</field>
+        <field name="parent_id" ref="packimmo_map_annotations_root"/>
+        <field name="action" ref="property_map_interest_zone_action"/>
+        <field name="sequence">2</field>
     </record>
 </odoo>

@@ -81,6 +81,7 @@
                 const map = MAP_MODE === 'image'
                     ? L.map('land_phase_map', {crs:L.CRS.Simple, minZoom:-5, maxZoom:5})
                     : L.map('land_phase_map').setView([-18.8792, 47.5079], 16);
+                map.getContainer()._packimmoLeafletMap = map;
                 if (MAP_MODE === 'esri') {
                     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                         attribution: 'Tiles © Esri',
@@ -160,7 +161,7 @@
 
                 document.getElementById('btn_search_place').addEventListener('click', function() { const q = document.getElementById('search_place').value; if (!q) { alert('Veuillez saisir un lieu ou des coordonnées.'); return; } const coords = q.split(',').map(x =&gt; parseFloat(x.trim())); if (coords.length === 2 &amp;&amp; !isNaN(coords[0]) &amp;&amp; !isNaN(coords[1])) { map.setView([coords[0], coords[1]], 18); return; } fetch(`https://nominatim.openstreetmap.org/search?format=json&amp;limit=1&amp;q=${encodeURIComponent(q)}`).then(r =&gt; r.json()).then(results =&gt; { if (!results.length) { alert('Terrain introuvable.'); return; } map.setView([parseFloat(results[0].lat), parseFloat(results[0].lon)], 18); }); });
                 document.getElementById('btn_use_position').addEventListener('click', function() { if (!navigator.geolocation) { alert('Géolocalisation non supportée par ce navigateur.'); return; } navigator.geolocation.getCurrentPosition(function(pos) { map.setView([pos.coords.latitude, pos.coords.longitude], 18); }); });
-                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier.'); return; } registerCurrentPhase(event.layer); savePhaseLayer(event.layer); return; } const divideCheckbox = document.getElementById('divide_mother_lot'); if (divideCheckbox &amp;&amp; divideCheckbox.checked) { saveDividedMotherLot(event.layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord un lot.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); registerUnitLayer(event.layer, unit); saveLayer(event.layer, label); });
+                map.on(L.Draw.Event.CREATED, function(event) { const drawType = document.getElementById('draw_type').value; if (drawType === 'legend' || drawType === 'annotation' || drawType === 'interest_zone') return; if (drawType === 'phase') { if (phaseLayer) { alert('Cette phase est déjà dessinée. Utilisez “Modifier dessin” pour la modifier.'); return; } registerCurrentPhase(event.layer); savePhaseLayer(event.layer); return; } const divideCheckbox = document.getElementById('divide_mother_lot'); if (divideCheckbox &amp;&amp; divideCheckbox.checked) { saveDividedMotherLot(event.layer); return; } const lineId = document.getElementById('unit_select').value; if (!lineId) { alert('Sélectionnez d’abord un lot.'); return; } const unit = findUnit(lineId); if (!unit) return; const label = unit.label || askUnitLabel(unit); if (!label) return; const old = findLayer(lineId); if (old) drawnItems.removeLayer(old); unitLayers = unitLayers.filter(l =&gt; String((l.meta || {}).line_id) !== String(lineId)); registerUnitLayer(event.layer, unit); saveLayer(event.layer, label); });
                 document.getElementById('btn_rename_selected').addEventListener('click', () =&gt; renameLot(document.getElementById('unit_select').value || (activeLayer &amp;&amp; activeLayer.meta ? activeLayer.meta.line_id : false)));
                 document.getElementById('btn_clear_selected').addEventListener('click', clearSelected);
                 document.addEventListener('click', function(ev) { const edit = ev.target.closest('.js-edit-unit'); const save = ev.target.closest('.js-save-unit'); const rename = ev.target.closest('.js-rename-unit'); const clear = ev.target.closest('.js-clear-unit'); if (edit) enableEdit(edit.dataset.lineId); if (save) saveLayer(findLayer(save.dataset.lineId)); if (rename) renameLot(rename.dataset.lineId); if (clear) { const layer = findLayer(clear.dataset.lineId); if (layer) selectDrawnLot(layer); clearSelected(); } });
@@ -203,6 +204,7 @@
                 const map = MAP_MODE === 'image'
                     ? L.map('land_phase_global_map', {crs:L.CRS.Simple, minZoom:-5, maxZoom:5})
                     : L.map('land_phase_global_map').setView([-18.8792, 47.5079], 16);
+                map.getContainer()._packimmoLeafletMap = map;
                 if (MAP_MODE === 'esri') {
                     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                         attribution: 'Tiles © Esri',
@@ -247,6 +249,7 @@
                     const map = MAP_MODE === 'image'
                         ? L.map('land_phase_preview_map', {crs:L.CRS.Simple, minZoom:-5, maxZoom:5})
                         : L.map('land_phase_preview_map').setView([-18.8792, 47.5079], 16);
+                    map.getContainer()._packimmoLeafletMap = map;
                     if (MAP_MODE === 'esri') {
                         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                             attribution: 'Tiles © Esri',
