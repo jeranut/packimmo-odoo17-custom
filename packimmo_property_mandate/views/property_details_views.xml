@@ -66,4 +66,15 @@
 
         </field>
     </record>
+
+    <record id="property_details_form_view_inherit_mandate_contract_button_checked" model="ir.ui.view">
+        <field name="name">property.details.form.view.inherit.mandate.contract.button.checked</field>
+        <field name="model">property.details</field>
+        <field name="inherit_id" ref="packimmo_rental_custom_fields.property_details_view_form_replace_create_contract_button" />
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_open_contract_wizard_checked']" position="attributes">
+                <attribute name="invisible">stage not in ['available','on_lease'] or sale_lease != 'for_tenancy' or mandate_type in ['simple', 'exclusive'] or has_simple_mandate</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>

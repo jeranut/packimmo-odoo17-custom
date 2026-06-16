@@ -93,6 +93,18 @@ class PropertyDetails(models.Model):
             },
         }
 
+    def action_open_contract_wizard_checked(self):
+        for rec in self:
+            if rec.mandate_type in ("simple", "exclusive") or rec.has_simple_mandate:
+                raise ValidationError(
+                    _(
+                        "La création du contrat de bail n'est pas autorisée "
+                        "pour un mandat simple ou exclusif."
+                    )
+                )
+
+        return super().action_open_contract_wizard_checked()
+
     def _compute_has_simple_mandate(self):
         for rec in self:
 

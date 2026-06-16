@@ -1,3 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_packimmo_project_workflow_config_user,access.packimmo.project.workflow.config.user,model_packimmo_project_workflow_config,project.group_project_user,1,1,1,1
-access_packimmo_project_workflow_config_manager,access.packimmo.project.workflow.config.manager,model_packimmo_project_workflow_config,project.group_project_manager,1,1,1,1
+access_packimmo_project_workflow_config_user,packimmo.project.workflow.config.user,model_packimmo_project_workflow_config,project.group_project_user,1,0,0,0
+access_packimmo_project_workflow_config_manager,packimmo.project.workflow.config.manager,model_packimmo_project_workflow_config,project.group_project_manager,1,1,1,1
+access_project_task_visit_wizard_internal,project.task.visit.wizard.internal,model_project_task_visit_wizard,base.group_user,1,1,1,1
+access_project_task_visit_wizard_user,project.task.visit.wizard.user,model_project_task_visit_wizard,project.group_project_user,1,1,1,1
+access_project_task_visit_wizard_manager,project.task.visit.wizard.manager,model_project_task_visit_wizard,project.group_project_manager,1,1,1,1
