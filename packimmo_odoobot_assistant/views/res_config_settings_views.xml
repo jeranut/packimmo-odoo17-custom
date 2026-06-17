@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_miia" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.miia</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="80"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="MIIA" string="MIIA" name="packimmo_miia">
+                    <block title="Configuration MIIA" id="packimmo_miia_settings">
+                        <setting string="Réponses MIIA" help="Configurez les réponses, mots-clés et photos d'illustration utilisées par MIIA dans Discuss.">
+                            <button
+                                name="action_open_packimmo_miia_answers"
+                                type="object"
+                                string="Configurer les réponses"
+                                icon="oi-arrow-right"
+                                class="oe_link"
+                            />
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

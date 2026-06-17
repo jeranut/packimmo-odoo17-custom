@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_packimmo_odoobot_answer_user,packimmo.odoobot.answer user,model_packimmo_odoobot_answer,base.group_user,1,0,0,0
+access_packimmo_odoobot_answer_admin,packimmo.odoobot.answer admin,model_packimmo_odoobot_answer,base.group_system,1,1,1,1
+access_packimmo_odoobot_answer_step_user,packimmo.odoobot.answer.step user,model_packimmo_odoobot_answer_step,base.group_user,1,0,0,0
+access_packimmo_odoobot_answer_step_admin,packimmo.odoobot.answer.step admin,model_packimmo_odoobot_answer_step,base.group_system,1,1,1,1
