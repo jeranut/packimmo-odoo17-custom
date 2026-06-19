@@ -577,6 +577,115 @@
     margin-top: 1px;
 }
 
+.rm-period-widget {
+    min-height: 38px;
+    padding: 5px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .78);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    box-shadow: 0 6px 18px rgba(84, 42, 17, .06);
+}
+
+.rm-period-main {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--p1);
+    padding: 0 7px;
+    border-radius: 7px;
+    background: var(--p1-a);
+}
+
+.rm-period-main svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+}
+
+.rm-period-select,
+.rm-period-input,
+.rm-period-picker .o_datetime_input {
+    height: 28px;
+    border: 1px solid rgba(146, 81, 42, .18);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font);
+    outline: none;
+}
+
+.rm-period-select {
+    min-width: 124px;
+    border: 0;
+    background: transparent;
+    color: var(--p1);
+}
+
+.rm-period-inputs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rm-period-input {
+    width: 120px;
+    padding: 0 7px;
+}
+
+.rm-period-picker {
+    position: relative;
+    width: 126px;
+}
+
+.rm-period-picker::after {
+    content: "\f073";
+    font-family: FontAwesome;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--p1);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.rm-period-picker .o_datetime_input {
+    width: 100%;
+    padding: 0 26px 0 8px;
+    cursor: pointer;
+    caret-color: transparent;
+}
+
+.rm-period-picker .o_datetime_input:focus {
+    border-color: var(--p1);
+    box-shadow: 0 0 0 2px var(--p1-a);
+}
+
+.rm-period-year {
+    width: 126px;
+}
+
+.rm-period-sep {
+    color: var(--soft);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.rm-period-summary {
+    color: var(--soft);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 0 5px;
+    white-space: nowrap;
+}
+
 .rm-search {
     position: relative;
 }

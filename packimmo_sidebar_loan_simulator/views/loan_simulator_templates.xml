@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="packimmo_sidebar_loan_simulator_block" name="Packimmo Sidebar Loan Simulator Block">
+        <t t-set="loan_data" t-value="request.env['packimmo.loan.bank.rate'].sudo()._get_website_simulator_data(property_id)"/>
+        <t t-if="loan_data.get('show')">
+            <div class="packimmo-loan-card my-3"
+                 t-att-data-price="loan_data.get('price')"
+                 t-att-data-price-mga="loan_data.get('price_mga')"
+                 t-att-data-currency-code="loan_data.get('currency_code')"
+                 t-att-data-currency-symbol="loan_data.get('currency_symbol')"
+                 t-att-data-mga-symbol="loan_data.get('mga_symbol')"
+                 t-att-data-is-mga="'1' if loan_data.get('is_mga') else '0'"
+                 t-att-data-exchange-rate="loan_data.get('exchange_rate')"
+                 t-att-data-banks-b64="loan_data.get('banks_b64')"
+                 t-att-data-banks="loan_data.get('banks_json')">
+                <div class="packimmo-loan-title">Simulateur de prêt</div>
+                <div class="packimmo-loan-subtitle">Estimation indicative en Ariary</div>
+
+                <div class="packimmo-loan-price-zone">
+                    <div class="d-flex justify-content-between gap-2">
+                        <span>Prix du bien</span>
+                        <strong class="js-loan-original-price"/>
+                    </div>
+                    <div t-if="not loan_data.get('is_mga')" class="packimmo-loan-currency-box mt-2">
+                        <div class="d-flex justify-content-between gap-2">
+                            <span>Cours utilisé</span>
+                            <strong class="js-loan-rate-label"/>
+                        </div>
+                        <div class="d-flex justify-content-between gap-2 mt-1">
+                            <span>Prix converti</span>
+                            <strong class="js-loan-mga-price"/>
+                        </div>
+                        <div class="packimmo-loan-currency-note mt-2">
+                            Observation : la conversion en Ariary est calculée sur la base du cours MID du jour.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="packimmo-loan-form mt-3">
+                    <label>Banque</label>
+                    <select class="form-select form-select-sm js-loan-bank"></select>
+
+                    <label class="mt-2">Type d'apport</label>
+                    <select class="form-select form-select-sm js-loan-down-type">
+                        <option value="percent">Pourcentage</option>
+                        <option value="fixed">Montant fixe</option>
+                    </select>
+
+                    <label class="mt-2">Apport personnel</label>
+                    <input type="text"
+                           inputmode="decimal"
+                           autocomplete="off"
+                           class="form-control form-control-sm js-loan-down-value"/>
+                    <div class="packimmo-loan-help js-loan-down-amount"></div>
+
+                    <div class="row g-2 mt-1">
+                        <div class="col-6">
+                            <label>Durée</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" min="1" step="1" class="form-control js-loan-duration"/>
+                                <span class="input-group-text">ans</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label>Taux</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" min="0" step="0.01" class="form-control js-loan-interest"/>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100 mt-3 js-loan-calculate">Calculer</button>
+                </div>
+
+                <div class="packimmo-loan-results mt-3">
+                    <div class="packimmo-loan-monthly">
+                        <span>Mensualité estimée</span>
+                        <strong class="js-loan-monthly"/>
+                    </div>
+                    <div class="packimmo-loan-result-line"><span>Montant emprunté</span><strong class="js-loan-principal"/></div>
+                    <div class="packimmo-loan-result-line"><span>Intérêts totaux</span><strong class="js-loan-interest-total"/></div>
+                    <div class="packimmo-loan-result-line"><span>Coût total</span><strong class="js-loan-total"/></div>
+
+                    <div class="packimmo-loan-stack mt-3">
+                        <div class="packimmo-loan-stack-bar">
+                            <div class="packimmo-loan-stack-capital js-loan-capital-bar"></div>
+                            <div class="packimmo-loan-stack-interest js-loan-interest-bar"></div>
+                        </div>
+                        <div class="packimmo-loan-stack-legend">
+                            <span class="js-loan-capital-label"></span>
+                            <span class="js-loan-interest-label"></span>
+                        </div>
+                    </div>
+                    <div class="packimmo-loan-disclaimer">Estimation indicative hors assurance, frais bancaires et frais de notaire.</div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="property_details_sidebar_loan_simulator"
+              inherit_id="packimmo_property_brochure_layout.packimmo_property_brochure_details"
+              name="Packimmo Loan Simulator in Property Sidebar"
+              priority="99">
+        <xpath expr="//aside[hasclass('pk-sidebar')]/div[hasclass('pk-side-card')][2]" position="before">
+            <t t-call="packimmo_sidebar_loan_simulator.packimmo_sidebar_loan_simulator_block"/>
+        </xpath>
+    </template>
+</odoo>

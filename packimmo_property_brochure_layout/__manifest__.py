@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "PACKIMMO Property Brochure Layout",
-    "version": "17.0.1.0.0",
+    "version": "17.0.1.0.1",
     "category": "Website/Real Estate",
     "summary": "Header image and right enquiry panel for property brochure",
     "author": "PACKIMMO",

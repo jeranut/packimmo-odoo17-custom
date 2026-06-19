@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="packimmo_loan_bank_rate_company_rule" model="ir.rule">
+        <field name="name">Loan bank rates: allowed companies</field>
+        <field name="model_id" ref="model_packimmo_loan_bank_rate"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('website.group_website_designer'))]"/>
+    </record>
+</odoo>

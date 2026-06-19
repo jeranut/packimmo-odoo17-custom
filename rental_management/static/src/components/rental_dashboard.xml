@@ -227,6 +227,41 @@
             <p t-esc="state.today"/>
           </div>
           <div style="flex:1"/>
+          <div class="rm-period-widget">
+            <div class="rm-period-main">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="17" rx="2"/>
+                <path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              <select class="rm-period-select" t-att-value="state.period.mode" t-on-change="onPeriodModeChange">
+                <option value="week">Par semaine</option>
+                <option value="month">Par mois</option>
+                <option value="month_range">Intervalle de mois</option>
+                <option value="year">Par année</option>
+              </select>
+            </div>
+            <div class="rm-period-inputs">
+              <div t-if="state.period.mode === 'week'" class="rm-period-picker">
+                <DateTimeInput t-props="periodPickerProps('weekDate')"/>
+              </div>
+              <div t-if="state.period.mode === 'month'" class="rm-period-picker">
+                <DateTimeInput t-props="periodPickerProps('month')"/>
+              </div>
+              <t t-if="state.period.mode === 'month_range'">
+                <div class="rm-period-picker">
+                  <DateTimeInput t-props="periodPickerProps('startMonth')"/>
+                </div>
+                <span class="rm-period-sep">à</span>
+                <div class="rm-period-picker">
+                  <DateTimeInput t-props="periodPickerProps('endMonth')"/>
+                </div>
+              </t>
+              <div t-if="state.period.mode === 'year'" class="rm-period-picker rm-period-year">
+                <DateTimeInput t-props="periodPickerProps('year')"/>
+              </div>
+            </div>
+            <span class="rm-period-summary" t-esc="periodSummary"/>
+          </div>
         </div>
 
         <!-- ── DASHBOARD PAGE ── -->

@@ -1,0 +1,99 @@
+.packimmo-loan-card {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    border-bottom: 4px solid #23a455;
+
+    .packimmo-loan-title {
+        color: #c52222;
+        font-weight: 800;
+        font-size: 1.05rem;
+        line-height: 1.2;
+    }
+
+    .packimmo-loan-subtitle,
+    .packimmo-loan-help,
+    .packimmo-loan-disclaimer {
+        color: #6c757d;
+        font-size: 0.78rem;
+    }
+
+    .packimmo-loan-price-zone,
+    .packimmo-loan-currency-box {
+        font-size: 0.88rem;
+    }
+
+    .packimmo-loan-currency-box {
+        background: #f7f9fb;
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    .packimmo-loan-currency-note {
+        color: #6c757d;
+        font-size: 0.74rem;
+        line-height: 1.35;
+    }
+
+    label {
+        font-weight: 700;
+        font-size: 0.82rem;
+        margin-bottom: 3px;
+    }
+
+    .packimmo-loan-monthly {
+        background: #f4fff8;
+        border-radius: 14px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        span {
+            color: #5f6b66;
+            font-size: 0.78rem;
+        }
+
+        strong {
+            color: #15803d;
+            font-size: 1rem;
+        }
+    }
+
+    .packimmo-loan-result-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 0.84rem;
+        padding: 8px 0;
+        border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+    }
+
+    .packimmo-loan-stack-bar {
+        display: flex;
+        height: 14px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #eef1f4;
+    }
+
+    .packimmo-loan-stack-capital {
+        background: #1f9d55;
+        transition: width 0.25s ease;
+    }
+
+    .packimmo-loan-stack-interest {
+        background: #c52222;
+        transition: width 0.25s ease;
+    }
+
+    .packimmo-loan-stack-legend {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-size: 0.76rem;
+        color: #4b5563;
+    }
+}

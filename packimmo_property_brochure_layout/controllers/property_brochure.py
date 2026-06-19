@@ -2,8 +2,12 @@
 from odoo import http
 from odoo.http import request
 
+from odoo.addons.rental_management.controllers.property_brochure_detail import (
+    PropertyBrochureDetailsController,
+)
 
-class PackimmoPropertyBrochureController(http.Controller):
+
+class PackimmoPropertyBrochureController(PropertyBrochureDetailsController):
 
     @http.route(
         ["/property-brochure/<string:brocher_access_token>"],

@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_packimmo_loan_bank_rate_website_designer,packimmo.loan.bank.rate website designer,model_packimmo_loan_bank_rate,website.group_website_designer,1,1,1,1

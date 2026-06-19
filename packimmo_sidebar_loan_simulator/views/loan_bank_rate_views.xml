@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_packimmo_loan_bank_rate_tree" model="ir.ui.view">
+        <field name="name">packimmo.loan.bank.rate.tree</field>
+        <field name="model">packimmo.loan.bank.rate</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="interest_rate"/>
+                <field name="duration_years"/>
+                <field name="down_payment_type"/>
+                <field name="down_payment_value"/>
+                <field name="company_id" optional="show"/>
+                <field name="website_id" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_loan_bank_rate_form" model="ir.ui.view">
+        <field name="name">packimmo.loan.bank.rate.form</field>
+        <field name="model">packimmo.loan.bank.rate</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="company_id"/>
+                            <field name="website_id"
+                                   options="{'no_create': True}"
+                                   groups="website.group_multi_website"/>
+                        </group>
+                        <group>
+                            <field name="interest_rate"/>
+                            <field name="duration_years"/>
+                            <field name="down_payment_type"/>
+                            <field name="down_payment_value"/>
+                        </group>
+                    </group>
+                    <group string="Note">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packimmo_loan_bank_rate" model="ir.actions.act_window">
+        <field name="name">Banques et taux</field>
+        <field name="res_model">packimmo.loan.bank.rate</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_packimmo_loan_simulator_root"
+              name="Simulateur de prêt"
+              parent="website.menu_website_configuration"
+              groups="website.group_website_designer"
+              sequence="85"/>
+
+    <menuitem id="menu_packimmo_loan_bank_rate"
+              name="Banques et taux"
+              parent="menu_packimmo_loan_simulator_root"
+              action="action_packimmo_loan_bank_rate"
+              groups="website.group_website_designer"
+              sequence="10"/>
+</odoo>

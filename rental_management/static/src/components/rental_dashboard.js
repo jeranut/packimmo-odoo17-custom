@@ -5,9 +5,11 @@
  * the Estala-style dashboard with ApexCharts + ECharts.
  */
 
-import {Component, useState, onMounted, onWillUnmount, useRef} from "@odoo/owl";
+import {Component, useState, onMounted, onWillUnmount, onPatched, useRef} from "@odoo/owl";
 import {registry} from "@web/core/registry";
 import {useService} from "@web/core/utils/hooks";
+import {DateTimeInput} from "@web/core/datetime/datetime_input";
+import {deserializeDate} from "@web/core/l10n/dates";
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  THEME PALETTES — 10 predefined professional colour themes
@@ -157,17 +159,53 @@ function axisMoneyFormatter(currencyInfo, scale = 100_000) {
     return (value) => formatMoney((Number(value) || 0) * scale, currencyInfo);
 }
 
+function dateToISO(date) {
+    return date.toISOString().slice(0, 10);
+}
+
+function isoToMonth(isoDate) {
+    return String(isoDate || "").slice(0, 7);
+}
+
+function monthToISO(monthValue) {
+    return `${monthValue || isoToMonth(dateToISO(new Date()))}-01`;
+}
+
+function monthToRange(monthValue) {
+    const [year, month] = String(monthValue).split("-").map(Number);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    return {start: dateToISO(start), end: dateToISO(end)};
+}
+
+function yearToRange(yearValue) {
+    const year = Number(yearValue) || new Date().getFullYear();
+    return {start: `${year}-01-01`, end: `${year}-12-31`};
+}
+
+function weekToRange(dateValue) {
+    const base = dateValue ? new Date(`${dateValue}T00:00:00`) : new Date();
+    const day = base.getDay() || 7;
+    const start = new Date(base);
+    start.setDate(base.getDate() - day + 1);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return {start: dateToISO(start), end: dateToISO(end)};
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  DASHBOARD COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export class RentalDashboard extends Component {
     static template = "rental_management.Dashboard";
     static THEMES = THEMES;  // expose for template access
+    static components = {DateTimeInput};
 
     setup() {
         this.rpc = useService("rpc");
         this.action = useService("action");
         this.orm = useService("orm");
+        this.company = useService("company");
 
         this.state = useState({
             loading: true,
@@ -177,6 +215,7 @@ export class RentalDashboard extends Component {
             data: {},
             pageData: {},
             companyName: "",
+            period: this._defaultPeriod(),
             currency: {symbol: '₹', position: 'before', name: 'INR'},
             today: new Date().toLocaleDateString("fr-FR", {
                 weekday: "long",
@@ -204,14 +243,25 @@ export class RentalDashboard extends Component {
         this.onRegionClick = this.onRegionClick.bind(this);
         this.onOccupancyByTypeClick = this.onOccupancyByTypeClick.bind(this);
         this.onTicketTrendClick = this.onTicketTrendClick.bind(this);
+        this.onPeriodModeChange = this.onPeriodModeChange.bind(this);
+        this.onPeriodDateApply = this.onPeriodDateApply.bind(this);
 
         onMounted(async () => {
             await this._loadTheme();
             await this._loadDashboardData();
             this._applyThemeVars();
+            this._lockPeriodDateInputs();
         });
 
+        onPatched(() => this._lockPeriodDateInputs());
         onWillUnmount(() => this._destroyCharts());
+    }
+
+    _lockPeriodDateInputs() {
+        document.querySelectorAll(".rm-period-picker input").forEach((input) => {
+            input.setAttribute("readonly", "readonly");
+            input.setAttribute("inputmode", "none");
+        });
     }
 
     // ── THEME ──────────────────────────────────────────────────────────────────
@@ -260,10 +310,123 @@ export class RentalDashboard extends Component {
     }
 
     // ── DATA LOADING ───────────────────────────────────────────────────────────
+    _defaultPeriod() {
+        const today = new Date();
+        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+        return {
+            mode: "month",
+            month,
+            startMonth: month,
+            endMonth: month,
+            weekDate: dateToISO(today),
+            year: today.getFullYear(),
+        };
+    }
+
+    _periodRange() {
+        const p = this.state.period;
+        if (p.mode === "week") {
+            return weekToRange(p.weekDate);
+        }
+        if (p.mode === "year") {
+            return yearToRange(p.year);
+        }
+        if (p.mode === "month_range") {
+            const startRange = monthToRange(p.startMonth || p.month);
+            const endRange = monthToRange(p.endMonth || p.startMonth || p.month);
+            return startRange.start <= endRange.end
+                ? {start: startRange.start, end: endRange.end}
+                : {start: endRange.start, end: startRange.end};
+        }
+        return monthToRange(p.month);
+    }
+
+    get periodSummary() {
+        const {start, end} = this._periodRange();
+        return `${this.fmtDate(start)} - ${this.fmtDate(end)}`;
+    }
+
+    periodPickerProps(field) {
+        const value = this._periodFieldDate(field);
+        const isMonth = ["month", "startMonth", "endMonth"].includes(field);
+        const isYear = field === "year";
+        return {
+            type: "date",
+            value: value ? deserializeDate(value) : false,
+            format: isYear ? "yyyy" : isMonth ? "LLLL yyyy" : "dd/MM/yyyy",
+            minPrecision: isYear ? "years" : isMonth ? "months" : "days",
+            maxPrecision: isYear ? "years" : isMonth ? "months" : "decades",
+            placeholder: isYear ? "Choisir une année" : isMonth ? "Choisir un mois" : "Choisir une date",
+            onApply: (dateValue) => this.onPeriodDateApply(field, dateValue),
+        };
+    }
+
+    _periodFieldDate(field) {
+        const p = this.state.period;
+        if (field === "weekDate") {
+            return p.weekDate;
+        }
+        if (field === "month") {
+            return monthToISO(p.month);
+        }
+        if (field === "startMonth") {
+            return monthToISO(p.startMonth);
+        }
+        if (field === "endMonth") {
+            return monthToISO(p.endMonth);
+        }
+        if (field === "year") {
+            return `${p.year || new Date().getFullYear()}-01-01`;
+        }
+        return dateToISO(new Date());
+    }
+
+    _dashboardParams(extra = {}) {
+        const companyId = this.company?.currentCompany?.id;
+        const range = this._periodRange();
+        return {
+            ...extra,
+            ...(companyId ? {current_company_id: companyId} : {}),
+            period_mode: this.state.period.mode,
+            start_date: range.start,
+            end_date: range.end,
+        };
+    }
+
+    async _reloadForPeriod() {
+        this._destroyCharts();
+        this.state.pageData = {};
+        await this._loadDashboardData();
+        if (this.state.currentPage !== "dashboard") {
+            await this._loadPageData(this.state.currentPage);
+            setTimeout(() => this._renderPageCharts(this.state.currentPage), 80);
+        }
+    }
+
+    async onPeriodModeChange(ev) {
+        this.state.period.mode = ev.target.value;
+        await this._reloadForPeriod();
+    }
+
+    async onPeriodDateApply(field, dateValue) {
+        const isoDate = dateValue?.toISODate?.();
+        if (!isoDate) {
+            return;
+        }
+        if (field === "month" || field === "startMonth" || field === "endMonth") {
+            this.state.period[field] = isoToMonth(isoDate);
+        } else if (field === "year") {
+            this.state.period.year = Number(isoDate.slice(0, 4));
+        } else {
+            this.state.period[field] = isoDate;
+        }
+        await this._reloadForPeriod();
+    }
+
     async _loadDashboardData() {
         this.state.loading = true;
         try {
-            const data = await this.rpc("/rental/dashboard/data", {});
+            const data = await this.rpc("/rental/dashboard/data", this._dashboardParams());
             this.state.data = data;
             if (data && data.currency) {
                 this.state.currency = data.currency;
@@ -296,7 +459,7 @@ export class RentalDashboard extends Component {
                 : page === "mandates_sale"
                     ? {operation_type: "sale"}
                     : {};
-            const d = await this.rpc(ep, params);
+            const d = await this.rpc(ep, this._dashboardParams(params));
             this.state.pageData = {...this.state.pageData, [page]: d};
         } catch (e) {
             console.error(`Page data error (${page}):`, e);
@@ -333,8 +496,9 @@ export class RentalDashboard extends Component {
             domain,
             target: "current",
             context: {
-            ...context,
-            ...(groupby.length > 0 && groupby.reduce((acc, field) => {
+                ...context,
+                ...(this.company?.currentCompany?.id ? {allowed_company_ids: [this.company.currentCompany.id]} : {}),
+                ...(groupby.length > 0 && groupby.reduce((acc, field) => {
                     acc[`search_default_${field}`] = 1;
                     return acc;
                 }, {})),
