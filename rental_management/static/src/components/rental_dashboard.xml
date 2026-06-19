@@ -60,27 +60,27 @@
             <circle class="rm-ld-svgpeak" cx="32" cy="8" r="3.5"/>
           </svg>
         </div>
-        <div class="rm-ld-title">Rental Dashboard</div>
-        <div class="rm-ld-sub">Assembling your portfolio…</div>
+        <div class="rm-ld-title">Tableau de bord Location</div>
+        <div class="rm-ld-sub">Préparation de votre portefeuille...</div>
         <div class="rm-ld-steps">
           <div class="rm-ld-step">
             <div class="rm-ld-dot rm-ld-dot-1"/>
-            <span>Properties</span>
+            <span>Biens</span>
           </div>
           <div class="rm-ld-conn rm-ld-conn-1"/>
           <div class="rm-ld-step">
             <div class="rm-ld-dot rm-ld-dot-2"/>
-            <span>Contracts</span>
+            <span>Contrats</span>
           </div>
           <div class="rm-ld-conn rm-ld-conn-2"/>
           <div class="rm-ld-step">
             <div class="rm-ld-dot rm-ld-dot-3"/>
-            <span>Revenue</span>
+            <span>Revenus</span>
           </div>
           <div class="rm-ld-conn rm-ld-conn-3"/>
           <div class="rm-ld-step">
             <div class="rm-ld-dot rm-ld-dot-4"/>
-            <span>Analytics</span>
+            <span>Analyses</span>
           </div>
         </div>
       </div>
@@ -144,12 +144,33 @@
           <span class="rm-badge" t-esc="glance.rented || 0"/>
         </button>
 
+        <button class="rm-nav-item" t-att-class="state.currentPage === 'mandates_rent' ? 'rm-nav-active' : ''"
+                t-on-click="() =&gt; navigateTo('mandates_rent')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/>
+            <path d="M14 3v5h5M9 13h6M9 17h4"/>
+          </svg>
+          Mandats de location
+          <span class="rm-badge" t-esc="glance.mandates_rent || 0"/>
+        </button>
+
         <button class="rm-nav-item" t-att-class="state.currentPage === 'sales' ? 'rm-nav-active' : ''"
                 t-on-click="() =&gt; navigateTo('sales')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>
           </svg>
           Sales
+        </button>
+
+        <button class="rm-nav-item" t-att-class="state.currentPage === 'mandates_sale' ? 'rm-nav-active' : ''"
+                t-on-click="() =&gt; navigateTo('mandates_sale')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/>
+            <path d="M14 3v5h5M8 12h8M8 16h5"/>
+            <path d="M16 18l2 2 3-4"/>
+          </svg>
+          Mandats de vente
+          <span class="rm-badge" t-esc="glance.mandates_sale || 0"/>
         </button>
 
         <button class="rm-nav-item" t-att-class="state.currentPage === 'maintenance' ? 'rm-nav-active' : ''"
@@ -166,28 +187,28 @@
             <circle cx="9" cy="8" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>
             <circle cx="17" cy="9" r="2.5"/><path d="M21 21v-1.5a3 3 0 00-2-2.8"/>
           </svg>
-          Brokers
+          Courtiers
         </button>
 
         <!-- Glance Panel -->
         <div class="rm-glance">
           <div class="rm-glance-title">
-            <span style="margin-right:4px">📊</span> Quick Glance
+            <span style="margin-right:4px">📊</span> Aperçu rapide
           </div>
           <div class="rm-glance-row">
-            <span class="rm-gk">Total Properties</span>
+            <span class="rm-gk">Total des biens</span>
             <span class="rm-gv up" t-esc="glance.total || 0"/>
           </div>
           <div class="rm-glance-row">
-            <span class="rm-gk">Available</span>
+            <span class="rm-gk">Disponibles</span>
             <span class="rm-gv" t-esc="glance.available || 0"/>
           </div>
           <div class="rm-glance-row">
-            <span class="rm-gk">Rented</span>
+            <span class="rm-gk">Loués</span>
             <span class="rm-gv up" t-esc="glance.rented || 0"/>
           </div>
           <div class="rm-glance-row">
-            <span class="rm-gk">Expiring 30d</span>
+            <span class="rm-gk">Expiration 30 j</span>
             <span t-att-class="'rm-gv ' + ((glance.expiring_30d || 0) &gt; 5 ? 'dn' : 'up')"
                   t-esc="glance.expiring_30d || 0"/>
           </div>
@@ -202,7 +223,7 @@
         <!-- Header -->
         <div class="rm-hdr">
           <div class="rm-ht">
-            <h1 t-esc="state.currentPage === 'dashboard' ? 'Overview Dashboard' : state.currentPage.charAt(0).toUpperCase() + state.currentPage.slice(1)"/>
+            <h1 t-esc="pageTitle"/>
             <p t-esc="state.today"/>
           </div>
           <div style="flex:1"/>
@@ -239,14 +260,14 @@
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c7">
               <div class="rm-ch">
-                <div><div class="rm-ct">Revenue Flow</div><div class="rm-cs">Income → Expense → Profit</div></div>
+                <div><div class="rm-ct">Flux des revenus</div><div class="rm-cs">Revenus -> Dépenses -> Bénéfice</div></div>
                 <span class="rm-tag rm-tag-b">Sankey</span>
               </div>
               <div style="height:280px;position:relative;z-index:2" id="sankeyC"/>
             </div>
             <div class="rm-card rm-c5">
               <div class="rm-ch">
-                <div><div class="rm-ct">Portfolio Health Radar</div><div class="rm-cs">6 KPI dimensions scored</div></div>
+                <div><div class="rm-ct">Santé du portefeuille</div><div class="rm-cs">Évaluation selon 6 indicateurs</div></div>
                 <span class="rm-tag rm-tag-b">Radar</span>
               </div>
               <div style="height:280px;position:relative;z-index:2" id="radarC"/>
@@ -257,8 +278,8 @@
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c8">
               <div class="rm-ch">
-                <div><div class="rm-ct">Revenue Forecast</div><div class="rm-cs">Actuals + 3-month projection</div></div>
-                <span class="rm-tag">FY Live</span>
+                <div><div class="rm-ct">Prévision des revenus</div><div class="rm-cs">Réalisé + projection sur 3 mois</div></div>
+                <span class="rm-tag">Exercice en cours</span>
               </div>
               <div style="height:280px;position:relative;z-index:2">
                 <canvas id="fcC"/>
@@ -266,7 +287,7 @@
             </div>
             <div class="rm-card rm-c4">
               <div class="rm-ch">
-                <div><div class="rm-ct">Occupancy Gauge</div><div class="rm-cs">Portfolio utilisation</div></div>
+                <div><div class="rm-ct">Jauge d’occupation</div><div class="rm-cs">Utilisation du portefeuille</div></div>
                 <span class="rm-tag" t-esc="occupancyBreakdown"/>
               </div>
               <div class="rm-gauge-wrap" id="gaugeC"/>
@@ -277,18 +298,18 @@
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c5">
               <div class="rm-ch">
-                <div><div class="rm-ct">Revenue Mix</div><div class="rm-cs">By property type</div></div>
+                <div><div class="rm-ct">Répartition des revenus</div><div class="rm-cs">Par type de bien</div></div>
               </div>
               <div style="height:260px;position:relative;z-index:2" id="mixC"/>
             </div>
             <div class="rm-card rm-c7">
               <div class="rm-ch">
-                <div><div class="rm-ct">Top Properties</div><div class="rm-cs">By revenue — last 3 months</div></div>
-                <span class="rm-tag">Live</span>
+                <div><div class="rm-ct">Biens les plus rentables</div><div class="rm-cs">Par revenus — 3 derniers mois</div></div>
+                <span class="rm-tag">En direct</span>
               </div>
               <div class="rm-top-list">
                 <t t-foreach="topProps" t-as="p" t-key="p_index">
-                  <div class="rm-top-item" t-on-click="() =&gt; openOdooView('property.details', [['id','=',p.id]], 'form', 'Top Properties', p.id)">
+                  <div class="rm-top-item" t-on-click="() =&gt; openOdooView('property.details', [['id','=',p.id]], 'form', 'Biens les plus rentables', p.id)">
                     <div class="rm-top-rank" t-esc="p_index + 1"/>
                     <div style="flex:1">
                       <div class="rm-top-name" t-esc="p.name"/>
@@ -312,7 +333,7 @@
               <div class="rm-ch">
                 <div>
                   <div class="rm-ct">Leads Dashboard</div>
-                  <div class="rm-cs">Pipeline health · conversion · sources</div>
+                  <div class="rm-cs">Santé du pipeline · conversion · sources</div>
                 </div>
                 <span class="rm-tag rm-tag-b">CRM</span>
               </div>
@@ -328,7 +349,7 @@
                   </div>
                 </t>
                 <t t-if="(leads.tiles || []).length === 0">
-                  <div class="rm-empty" style="width:100%">No lead data available</div>
+                  <div class="rm-empty" style="width:100%">Aucune donnée prospect disponible</div>
                 </t>
               </div>
 
@@ -336,19 +357,19 @@
               <div class="rm-row rm-r12" style="margin-top:10px">
                 <div class="rm-card rm-c5" style="padding:12px">
                   <div class="rm-ch">
-                    <div><div class="rm-ct">Pipeline Funnel</div><div class="rm-cs">New → Qualified → Won</div></div>
+                    <div><div class="rm-ct">Entonnoir du pipeline</div><div class="rm-cs">Nouveau -> Qualifié -> Gagné</div></div>
                   </div>
                   <div style="height:220px" id="leadFunnelC"/>
                 </div>
                 <div class="rm-card rm-c4" style="padding:12px">
                   <div class="rm-ch">
-                    <div><div class="rm-ct">Source-wise Leads</div><div class="rm-cs">Last 6 months</div></div>
+                    <div><div class="rm-ct">Prospects par source</div><div class="rm-cs">6 derniers mois</div></div>
                   </div>
                   <div style="height:220px"><canvas id="leadSourceC"/></div>
                 </div>
                 <div class="rm-card rm-c3" style="padding:12px">
                   <div class="rm-ch">
-                    <div><div class="rm-ct">Conversion Rate</div><div class="rm-cs">Won vs resolved</div></div>
+                    <div><div class="rm-ct">Taux de conversion</div><div class="rm-cs">Gagnés vs traités</div></div>
                   </div>
                   <div style="height:220px" id="leadConvC"/>
                 </div>
@@ -359,16 +380,16 @@
           <!-- Overdue Invoices Table -->
           <div class="rm-card rm-c12">
             <div class="rm-ch">
-              <div><div class="rm-ct">Overdue Invoices</div><div class="rm-cs">Unpaid past due date</div></div>
-              <span class="rm-tag rm-tag-r">Action Needed</span>
+              <div><div class="rm-ct">Factures en retard</div><div class="rm-cs">Impayées après échéance</div></div>
+              <span class="rm-tag rm-tag-r">Action requise</span>
             </div>
             <table class="rm-tbl">
               <thead>
-                <tr><th>Tenant</th><th>Property</th><th>Due Date</th><th>Amount</th><th>Days Overdue</th><th>Status</th></tr>
+                <tr><th>Locataire</th><th>Bien</th><th>Date d’échéance</th><th>Montant</th><th>Jours de retard</th><th>Statut</th></tr>
               </thead>
               <tbody>
                 <t t-foreach="overdue" t-as="inv" t-key="inv_index">
-                  <tr t-on-click="() =&gt; openOdooView('account.move', [['payment_state','not in',['paid','in_payment']], ['id', '=', inv.id]], 'form', 'Overdue Invoices', inv.id)">
+                  <tr t-on-click="() =&gt; openOdooView('account.move', [['payment_state','not in',['paid','in_payment']], ['id', '=', inv.id]], 'form', 'Factures en retard', inv.id)">
                     <td t-esc="inv.tenant"/>
                     <td t-esc="inv.property"/>
                     <td t-esc="fmtDate(inv.due)"/>
@@ -401,11 +422,11 @@
           </div>
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c8">
-              <div class="rm-ch"><div><div class="rm-ct">Occupancy by Type</div></div><span class="rm-tag">Live</span></div>
+              <div class="rm-ch"><div><div class="rm-ct">Occupation par type</div></div><span class="rm-tag">En direct</span></div>
               <div style="height:260px"><canvas id="ptypeC"/></div>
             </div>
             <div class="rm-card rm-c4">
-              <div class="rm-ch"><div><div class="rm-ct">Portfolio Mix</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Composition du portefeuille</div></div></div>
               <div style="height:260px" id="pmixC"/>
             </div>
           </div>
@@ -413,12 +434,12 @@
           <div class="rm-card rm-c12">
             <div class="rm-ch">
               <div>
-                <div class="rm-ct">Recent Properties</div>
-                <div class="rm-cs">Added in the last 3 days</div>
+                <div class="rm-ct">Biens récents</div>
+                <div class="rm-cs">Ajoutés au cours des 3 derniers jours</div>
               </div>
-              <span class="rm-tag" t-esc="(currentPageData.recent_properties || []).length + ' new'"/>
+              <span class="rm-tag" t-esc="(currentPageData.recent_properties || []).length + ' nouveau(x)'"/>
               <button class="rm-hbtn" style="margin-left:8px"
-                      t-on-click="() =&gt; openOdooView('property.details', [], 'list', 'All Properties')">
+                      t-on-click="() =&gt; openOdooView('property.details', [], 'list', 'Tous les biens')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M7 17L17 7M17 7H9M17 7v8"/>
                 </svg>
@@ -464,11 +485,11 @@
           <!-- Rent collection -->
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c8">
-              <div class="rm-ch"><div><div class="rm-ct">Monthly Rent Collection</div><div class="rm-cs">Collected vs outstanding</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Encaissement mensuel des loyers</div><div class="rm-cs">Encaissé vs restant dû</div></div></div>
               <div style="height:260px"><canvas id="rentC"/></div>
             </div>
             <div class="rm-card rm-c4">
-              <div class="rm-ch"><div><div class="rm-ct">Collection Rate</div><div class="rm-cs">By property type</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Taux d’encaissement</div><div class="rm-cs">Par type de bien</div></div></div>
               <div style="height:260px" id="rentD"/>
             </div>
           </div>
@@ -476,14 +497,14 @@
           <!-- Active rent contracts (live rent book) -->
           <div class="rm-card rm-c12">
             <div class="rm-ch">
-              <div><div class="rm-ct">Active Rent Contracts</div><div class="rm-cs">Currently running</div></div>
-              <span class="rm-tag rm-tag-b" t-esc="(currentPageData.rent_table || []).length + ' active'"/>
+              <div><div class="rm-ct">Contrats de location actifs</div><div class="rm-cs">Contrats en cours</div></div>
+              <span class="rm-tag rm-tag-b" t-esc="(currentPageData.rent_table || []).length + ' actif(s)'"/>
             </div>
             <table class="rm-tbl">
-              <thead><tr><th>Ref</th><th>Tenant</th><th>Property</th><th>Monthly Rent</th><th>Expiry</th><th>Days Left</th><th>Status</th></tr></thead>
+              <thead><tr><th>Réf</th><th>Locataire</th><th>Bien</th><th>Loyer mensuel</th><th>Expiration</th><th>Jours restants</th><th>Statut</th></tr></thead>
               <tbody>
                 <t t-foreach="currentPageData.rent_table || []" t-as="r" t-key="r_index">
-                  <tr t-on-click="() =&gt; openOdooView('tenancy.details', [['contract_type','=','running_contract'], ['id', '=', r.id]], 'form', 'Active Rent Contracts', r.id)">
+                  <tr t-on-click="() =&gt; openOdooView('tenancy.details', [['contract_type','=','running_contract'], ['id', '=', r.id]], 'form', 'Contrats de location actifs', r.id)">
                     <td t-esc="r.seq"/>
                     <td t-esc="r.tenant"/>
                     <td t-esc="r.property"/>
@@ -497,7 +518,7 @@
                   </tr>
                 </t>
                 <t t-if="(currentPageData.rent_table || []).length === 0">
-                  <tr><td colspan="6" class="rm-empty">No active rent contracts</td></tr>
+                  <tr><td colspan="6" class="rm-empty">Aucun contrat de location actif</td></tr>
                 </t>
               </tbody>
             </table>
@@ -505,19 +526,19 @@
 
           <!-- Contract lifecycle (moved in from the old Contracts page) -->
           <div class="rm-card rm-c12">
-            <div class="rm-ch"><div><div class="rm-ct">Contracts Timeline</div><div class="rm-cs">Start → end, latest 30</div></div></div>
+            <div class="rm-ch"><div><div class="rm-ct">Chronologie des contrats</div><div class="rm-cs">Début -> fin, 30 derniers</div></div></div>
             <div style="height:320px" id="cgC"/>
           </div>
           <div class="rm-card rm-c12">
             <div class="rm-ch">
-              <div><div class="rm-ct">Contract List</div><div class="rm-cs">All contracts</div></div>
-              <span class="rm-tag" t-esc="(currentPageData.contract_list || []).length + ' total'"/>
+              <div><div class="rm-ct">Liste des contrats</div><div class="rm-cs">Tous les contrats</div></div>
+              <span class="rm-tag" t-esc="(currentPageData.contract_list || []).length + ' au total'"/>
             </div>
             <table class="rm-tbl">
-              <thead><tr><th>Ref</th><th>Tenant</th><th>Property</th><th>Monthly Rent</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+              <thead><tr><th>Réf</th><th>Locataire</th><th>Bien</th><th>Loyer mensuel</th><th>Début</th><th>Fin</th><th>Statut</th></tr></thead>
               <tbody>
                 <t t-foreach="currentPageData.contract_list || []" t-as="c" t-key="c_index">
-                  <tr t-on-click="() =&gt; openOdooView('tenancy.details', [['id', '=', c.id]], 'form', 'Contract', c.id)">
+                  <tr t-on-click="() =&gt; openOdooView('tenancy.details', [['id', '=', c.id]], 'form', 'Contrat', c.id)">
                     <td t-esc="c.seq"/>
                     <td t-esc="c.tenant"/>
                     <td t-esc="c.property"/>
@@ -529,6 +550,106 @@
                 </t>
                 <t t-if="(currentPageData.contract_list || []).length === 0">
                   <tr><td colspan="7" class="rm-empty">No contracts yet</td></tr>
+                </t>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── MANDATE DASHBOARDS ── -->
+        <div t-if="state.currentPage === 'mandates_rent' || state.currentPage === 'mandates_sale'" class="rm-page">
+          <div class="rm-stat-bar">
+            <t t-foreach="currentPageData.stat_bar || []" t-as="sb" t-key="sb_index">
+              <div class="rm-sb-item rm-kpi" t-on-click="() =&gt; onKpiClick(sb)" style="cursor:pointer">
+                <div class="rm-sb-val" t-esc="sb.v"/>
+                <div class="rm-sb-key" t-esc="sb.k"/>
+                <div t-att-class="'rm-sb-delta rm-' + sb.cl" t-esc="sb.d"/>
+              </div>
+            </t>
+          </div>
+
+          <div t-if="currentPageData.has_data === false" class="rm-card rm-c12 rm-mandate-empty">
+            <div class="rm-empty">
+              Aucun mandat disponible pour cette catégorie.
+            </div>
+          </div>
+
+          <div class="rm-row rm-r12">
+            <div class="rm-card rm-c7">
+              <div class="rm-ch">
+                <div>
+                  <div class="rm-ct">Honoraires par type de mandat</div>
+                  <div class="rm-cs">Montant total des honoraires agence</div>
+                </div>
+                <span class="rm-tag rm-tag-b">ApexCharts</span>
+              </div>
+              <div style="height:280px;position:relative;z-index:2" id="mandateFeeByTypeC"/>
+            </div>
+            <div class="rm-card rm-c5">
+              <div class="rm-ch">
+                <div>
+                  <div class="rm-ct">Répartition par état</div>
+                  <div class="rm-cs">Cycle de vie des mandats</div>
+                </div>
+              </div>
+              <div style="height:280px;position:relative;z-index:2" id="mandateStateDonutC"/>
+            </div>
+          </div>
+
+          <div class="rm-row rm-r12">
+            <div class="rm-card rm-c6">
+              <div class="rm-ch">
+                <div>
+                  <div class="rm-ct">Évolution des honoraires</div>
+                  <div class="rm-cs">Agrégé par date de début</div>
+                </div>
+              </div>
+              <div style="height:300px;position:relative;z-index:2" id="mandateFeesTimelineC"/>
+            </div>
+            <div class="rm-card rm-c6">
+              <div class="rm-ch">
+                <div>
+                  <div class="rm-ct">Projection sur 90 jours</div>
+                  <div class="rm-cs">Réel en ligne pleine · prévision en pointillé</div>
+                </div>
+                <span class="rm-tag">90 jours</span>
+              </div>
+              <div style="height:300px;position:relative;z-index:2" id="mandateProjectionC"/>
+            </div>
+          </div>
+
+          <div class="rm-card rm-c12">
+            <div class="rm-ch">
+              <div>
+                <div class="rm-ct">Derniers mandats</div>
+                <div class="rm-cs">Vue rapide des mandats récents</div>
+              </div>
+              <button class="rm-hbtn" style="margin-left:8px"
+                      t-on-click="() =&gt; openMandates(currentPageData.operation_type || 'rent')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 17L17 7M17 7H9M17 7v8"/>
+                </svg>
+              </button>
+            </div>
+            <table class="rm-tbl">
+              <thead>
+                <tr><th>Référence</th><th>Mandant</th><th>Type</th><th>Honoraires</th><th>Début</th><th>Fin</th><th>État</th><th>Paiement</th></tr>
+              </thead>
+              <tbody>
+                <t t-foreach="currentPageData.recent || []" t-as="m" t-key="m_index">
+                  <tr t-on-click="() =&gt; openOdooView('property.mandate', [['id', '=', m.id]], 'form', 'Mandat', m.id)">
+                    <td t-esc="m.name"/>
+                    <td t-esc="m.owner || '—'"/>
+                    <td t-esc="m.type"/>
+                    <td t-esc="m.fee"/>
+                    <td t-esc="fmtDate(m.start)"/>
+                    <td t-esc="fmtDate(m.end)"/>
+                    <td><span t-att-class="'rm-pill rm-pill-' + statusPill(m.state)" t-esc="m.state_label"/></td>
+                    <td><span t-att-class="'rm-pill rm-pill-' + statusPill(m.payment)" t-esc="m.payment_label || '—'"/></td>
+                  </tr>
+                </t>
+                <t t-if="(currentPageData.recent || []).length === 0">
+                  <tr><td colspan="8" class="rm-empty">Aucun mandat à afficher</td></tr>
                 </t>
               </tbody>
             </table>
@@ -548,21 +669,21 @@
           </div>
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c8">
-              <div class="rm-ch"><div><div class="rm-ct">Sales Pipeline — Funnel</div></div><span class="rm-tag rm-tag-b">Funnel</span></div>
+              <div class="rm-ch"><div><div class="rm-ct">Pipeline des ventes — entonnoir</div></div><span class="rm-tag rm-tag-b">Entonnoir</span></div>
               <div style="height:280px" id="funnelC"/>
             </div>
             <div class="rm-card rm-c4">
-              <div class="rm-ch"><div><div class="rm-ct">Sales by Type</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Ventes par type</div></div></div>
               <div style="height:280px" id="salesD"/>
             </div>
           </div>
           <div class="rm-card rm-c12">
-            <div class="rm-ch"><div><div class="rm-ct">Sales Contracts</div></div></div>
+            <div class="rm-ch"><div><div class="rm-ct">Contrats de vente</div></div></div>
             <table class="rm-tbl">
-              <thead><tr><th>#Ref</th><th>Property</th><th>Type</th><th>Price</th><th>Stage</th><th>Agent</th></tr></thead>
+              <thead><tr><th>#Réf</th><th>Bien</th><th>Type</th><th>Prix</th><th>Étape</th><th>Agent</th></tr></thead>
               <tbody>
                 <t t-foreach="currentPageData.sales_table || []" t-as="s" t-key="s_index">
-                  <tr t-on-click="() =&gt; openOdooView('property.vendor', [['id', '=', s.id]], 'form', 'Sale Contracts', s.id)">
+                  <tr t-on-click="() =&gt; openOdooView('property.vendor', [['id', '=', s.id]], 'form', 'Contrats de vente', s.id)">
                     <td t-esc="s.sold_seq"/>
                     <td t-esc="s.property"/>
                     <td t-esc="s.type"/>
@@ -596,17 +717,17 @@
               <div style="height:260px"><canvas id="maintC"/></div>
             </div>
             <div class="rm-card rm-c4">
-              <div class="rm-ch"><div><div class="rm-ct">By Category</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Par catégorie</div></div></div>
               <div style="height:260px" id="maintP"/>
             </div>
           </div>
           <div class="rm-card rm-c12">
-            <div class="rm-ch"><div><div class="rm-ct">Maintenance Requests</div></div></div>
+            <div class="rm-ch"><div><div class="rm-ct">Demandes de maintenance</div></div></div>
             <table class="rm-tbl">
-              <thead><tr><th>Request</th><th>Property</th><th>Category</th><th>Priority</th><th>Assigned</th><th>Status</th></tr></thead>
+              <thead><tr><th>Demande</th><th>Bien</th><th>Catégorie</th><th>Priorité</th><th>Assigné à</th><th>Statut</th></tr></thead>
               <tbody>
                 <t t-foreach="currentPageData.maintenance_table || []" t-as="m" t-key="m_index">
-                  <tr t-on-click="() =&gt; openOdooView('maintenance.request', [['id', '=', m.id]], 'form', 'Maintenance Requests', m.id)">
+                  <tr t-on-click="() =&gt; openOdooView('maintenance.request', [['id', '=', m.id]], 'form', 'Demandes de maintenance', m.id)">
                     <td t-esc="m.name"/>
                     <td t-esc="m.property"/>
                     <td t-esc="m.category"/>
@@ -617,7 +738,7 @@
                   </tr>
                 </t>
                 <t t-if="(currentPageData.maintenance_table || []).length === 0">
-                  <tr><td colspan="6" class="rm-empty">No maintenance requests found</td></tr>
+                  <tr><td colspan="6" class="rm-empty">Aucune demande de maintenance trouvée</td></tr>
                 </t>
               </tbody>
             </table>
@@ -637,21 +758,21 @@
           </div>
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c8">
-              <div class="rm-ch"><div><div class="rm-ct">Broker Performance</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Performance des courtiers</div></div></div>
               <div style="height:280px"><canvas id="bpC"/></div>
             </div>
             <div class="rm-card rm-c4">
-              <div class="rm-ch"><div><div class="rm-ct">Commission Breakdown</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Répartition des commissions</div></div></div>
               <div style="height:280px" id="bcD"/>
             </div>
           </div>
           <div class="rm-card rm-c12">
-            <div class="rm-ch"><div><div class="rm-ct">Broker Directory</div></div></div>
+            <div class="rm-ch"><div><div class="rm-ct">Annuaire des courtiers</div></div></div>
             <table class="rm-tbl">
-              <thead><tr><th>Broker</th><th>Phone</th><th>Deals</th><th>Commission</th><th>Last Deal</th></tr></thead>
+              <thead><tr><th>Courtier</th><th>Téléphone</th><th>Transactions</th><th>Commission</th><th>Dernière transaction</th></tr></thead>
               <tbody>
                 <t t-foreach="currentPageData.broker_table || []" t-as="b" t-key="b_index">
-                  <tr t-on-click="() =&gt; openOdooView('res.partner', [['user_type','=','broker'], ['id', '=', b.id]], 'form', 'Broker', b.id)">
+                  <tr t-on-click="() =&gt; openOdooView('res.partner', [['user_type','=','broker'], ['id', '=', b.id]], 'form', 'Courtier', b.id)">
                     <td t-esc="b.broker"/>
                     <td t-esc="b.phone || '—'"/>
                     <td t-esc="b.deals"/>
@@ -660,7 +781,7 @@
                   </tr>
                 </t>
                 <t t-if="(currentPageData.broker_table || []).length === 0">
-                  <tr><td colspan="5" class="rm-empty">No brokers found</td></tr>
+                  <tr><td colspan="5" class="rm-empty">Aucun courtier trouvé</td></tr>
                 </t>
               </tbody>
             </table>
@@ -674,25 +795,25 @@
           <div class="rm-card rm-c12">
             <div class="rm-ch">
               <div>
-                <div class="rm-ct">Property Map</div>
-                <div class="rm-cs">OpenStreetMap · click a marker for details</div>
+                <div class="rm-ct">Carte des biens</div>
+                <div class="rm-cs">OpenStreetMap · cliquez sur un marqueur pour voir les détails</div>
               </div>
-              <span class="rm-tag rm-tag-b" t-esc="(currentPageData.properties || []).length + ' mapped'"/>
+              <span class="rm-tag rm-tag-b" t-esc="(currentPageData.properties || []).length + ' cartographié(s)'"/>
             </div>
             <div id="propertyMap" class="rm-map-canvas"/>
             <div t-if="(currentPageData.properties || []).length === 0" class="rm-empty">
-              No properties with coordinates yet. Add Latitude/Longitude to properties to see them here.
+              Aucun bien avec coordonnées pour le moment. Ajoutez latitude/longitude aux biens pour les afficher ici.
             </div>
           </div>
 
           <!-- Secondary analytics: regional + city breakdown -->
           <div class="rm-row rm-r12">
             <div class="rm-card rm-c7">
-              <div class="rm-ch"><div><div class="rm-ct">Regional Distribution</div><div class="rm-cs">Total vs rented per region</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Répartition régionale</div><div class="rm-cs">Total vs loués par région</div></div></div>
               <div style="height:260px"><canvas id="regC"/></div>
             </div>
             <div class="rm-card rm-c5">
-              <div class="rm-ch"><div><div class="rm-ct">City Distribution</div><div class="rm-cs">Top 8 cities</div></div></div>
+              <div class="rm-ch"><div><div class="rm-ct">Répartition par ville</div><div class="rm-cs">Top 8 villes</div></div></div>
               <div style="height:260px" id="cityC"/>
             </div>
           </div>
@@ -706,7 +827,7 @@
       <aside class="rm-rp">
         <!-- Mini KPIs -->
         <div>
-          <div class="rm-rp-sec-title">Key Metrics <span>Live</span></div>
+          <div class="rm-rp-sec-title">Indicateurs clés <span>En direct</span></div>
           <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px">
             <t t-foreach="rightPanel.kpis || []" t-as="rk" t-key="rk_index">
               <div class="rm-rp-kpi" style="cursor:pointer" t-on-click="() => onRightPanelKpiClick(rk)">
@@ -725,13 +846,13 @@
 
         <!-- Revenue Spark -->
         <div>
-          <div class="rm-rp-sec-title">Revenue — 30 Days <span t-esc="rightPanel.spark_total || ''"/></div>
+          <div class="rm-rp-sec-title">Revenus — 30 jours <span t-esc="rightPanel.spark_total || ''"/></div>
           <div style="height:90px;margin-top:8px;"><canvas id="rpSparkCanvas"/></div>
         </div>
 
         <!-- Upcoming Events -->
         <div>
-          <div class="rm-rp-sec-title">Upcoming Events <span t-esc="upcomingEvents.length + ' this period'"/></div>
+          <div class="rm-rp-sec-title">Événements à venir <span t-esc="upcomingEvents.length + ' sur cette période'"/></div>
           <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px">
             <t t-foreach="upcomingEvents.slice(0,5)" t-as="ev" t-key="ev_index">
               <div class="rm-event-item" t-on-click="() =&gt; openOdooView('tenancy.details', [['id', '=', ev.id]], 'form', 'Upcoming Events', ev.id)">
@@ -743,33 +864,33 @@
               </div>
             </t>
             <t t-if="upcomingEvents.length === 0">
-              <div class="rm-empty">No upcoming expirations in 14 days</div>
+              <div class="rm-empty">Aucune expiration prévue dans les 14 jours</div>
             </t>
           </div>
         </div>
 
         <!-- Activity Feed -->
         <div>
-          <div class="rm-rp-sec-title">Live Activity <span>Auto-refresh</span></div>
+          <div class="rm-rp-sec-title">Activité en direct <span>Actualisation automatique</span></div>
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
             <t t-foreach="activityFeed.slice(0,5)" t-as="act" t-key="act_index">
               <div class="rm-act-item" style="cursor:pointer" t-on-click="() => onActivityFeedClick(act)">
                 <div class="rm-act-dot"/>
                 <div style="flex:1">
-                  <div class="rm-act-body" t-esc="act.body || 'Activity logged'"/>
+                  <div class="rm-act-body" t-esc="act.body || 'Activité enregistrée'"/>
                   <div class="rm-act-meta" t-esc="act.author + ' · ' + (act.label || act.model)"/>
                 </div>
               </div>
             </t>
             <t t-if="activityFeed.length === 0">
-              <div class="rm-empty">No recent activity</div>
+              <div class="rm-empty">Aucune activité récente</div>
             </t>
           </div>
         </div>
 
         <!-- Maintenance Mini Donut -->
         <div>
-          <div class="rm-rp-sec-title" style="cursor:pointer" t-on-click="() => onMaintenanceStatusClick(null)">Maintenance Status</div>
+          <div class="rm-rp-sec-title" style="cursor:pointer" t-on-click="() => onMaintenanceStatusClick(null)">Statut de la maintenance</div>
           <div style="height:160px;margin-top:8px"><div id="rpDonut" style="height:160px"/></div>
         </div>
       </aside>

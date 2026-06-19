@@ -180,6 +180,60 @@ const TRANSLATIONS = {
     "Escalated": "Escaladé",
     "Total": "Total",
     "No units yet": "Aucune unité pour le moment",
+    "Commercial": "Commercial",
+    "Other": "Autre",
+    "Untitled": "Sans titre",
+    "Unassigned": "Non assigné",
+    "N/A": "N/A",
+    "Portfolio avg · FY": "Moyenne portefeuille · exercice",
+    "All properties": "Tous les biens",
+    "All rent contracts": "Tous les contrats de location",
+    "Next 60 days · action needed": "60 prochains jours · action requise",
+    "Action needed": "Action requise",
+    "Past end date": "Date de fin dépassée",
+    "All time": "Historique complet",
+    "All stages": "Toutes les étapes",
+    "This month": "Ce mois-ci",
+    "Total Sales Contracts": "Total contrats de vente",
+    "Properties Sold": "Biens vendus",
+    "Sales Revenue": "Revenus des ventes",
+    "Total Requests": "Total des demandes",
+    "Open Tickets": "Tickets ouverts",
+    "Resolved Tickets": "Tickets résolus",
+    "Resolved": "Résolus",
+    "Total Contracts": "Total des contrats",
+    "Active Brokers": "Courtiers actifs",
+    "Total Commission": "Commission totale",
+    "Sale + Rent": "Vente + location",
+    "Sale + Rent · All time": "Vente + location · historique complet",
+    "Commission — Sale Contracts": "Commission — contrats de vente",
+    "Sale Commission": "Commission vente",
+    "Rental Commission": "Commission location",
+    "Commission vente": "Commission vente",
+    "Commission location": "Commission location",
+    "Rent Income": "Revenus locatifs",
+    "Deposit Income": "Cautions",
+    "Maintenance Income": "Revenus maintenance",
+    "Sales Income": "Revenus de vente",
+    "Other Rent Income": "Autres revenus locatifs",
+    "Broker Commission": "Commission courtier",
+    "Operating Expenses": "Charges opérationnelles",
+    "Net Profit": "Bénéfice net",
+    "Yield": "Rendement",
+    "Contracts": "Contrats",
+    "Growth": "Croissance",
+    "Current": "Actuel",
+    "Previous": "Précédent",
+    "Won": "Gagné",
+    "Closed-won": "Gagnés",
+    "Direct / Unknown": "Direct / inconnu",
+    "Vacant Units": "Biens disponibles",
+    "Revenue / Month": "Revenus / mois",
+    "Expiring (30d)": "Expiration (30 j)",
+    "Refund": "Remboursé",
+    "Locked": "Verrouillé",
+    "Sale Commission —": "Commission vente —",
+    "Rental Commission —": "Commission location —",
 };
 
 const PAGE_TITLES = {
@@ -188,6 +242,8 @@ const PAGE_TITLES = {
     properties: "Biens",
     rent: "Locations et contrats",
     sales: "Ventes",
+    mandates_rent: "Mandats de location",
+    mandates_sale: "Mandats de vente",
     maintenance: "Maintenance",
     brokers: "Courtiers",
 };
@@ -209,7 +265,26 @@ function translateText(value) {
             .replace(/^(\d+) units$/, "$1 unité(s)")
             .replace(/^(\d+) invoices$/, "$1 facture(s)")
             .replace(/^(\d+) in last 30d$/, "$1 au cours des 30 derniers jours")
-            .replace(/(\d+)d left/g, "$1 j restant(s)");
+            .replace(/(\d+)d left/g, "$1 j restant(s)")
+            .replace(/\bMonday\b/g, "lundi")
+            .replace(/\bTuesday\b/g, "mardi")
+            .replace(/\bWednesday\b/g, "mercredi")
+            .replace(/\bThursday\b/g, "jeudi")
+            .replace(/\bFriday\b/g, "vendredi")
+            .replace(/\bSaturday\b/g, "samedi")
+            .replace(/\bSunday\b/g, "dimanche")
+            .replace(/\bJanuary\b/g, "janvier")
+            .replace(/\bFebruary\b/g, "février")
+            .replace(/\bMarch\b/g, "mars")
+            .replace(/\bApril\b/g, "avril")
+            .replace(/\bMay\b/g, "mai")
+            .replace(/\bJune\b/g, "juin")
+            .replace(/\bJuly\b/g, "juillet")
+            .replace(/\bAugust\b/g, "août")
+            .replace(/\bSeptember\b/g, "septembre")
+            .replace(/\bOctober\b/g, "octobre")
+            .replace(/\bNovember\b/g, "novembre")
+            .replace(/\bDecember\b/g, "décembre");
     }
 
     if (translated === trimmed) {

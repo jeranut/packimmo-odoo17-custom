@@ -16,16 +16,16 @@ _logger = logging.getLogger(__name__)
 
 
 TYPE_LABELS = {
-    'land':        'Land',
-    'residential': 'Residential',
+    'land':        'Terrain',
+    'residential': 'Résidentiel',
     'commercial':  'Commercial',
-    'industrial':  'Industrial',
+    'industrial':  'Industriel',
 }
 
 
 MAINTENANCE_TYPE = {
     'corrective': 'Corrective',
-    'preventive': 'Preventive',
+    'preventive': 'Préventive',
 }
 
 # Models whose chatter should populate the live activity feed.
@@ -41,13 +41,13 @@ ACTIVITY_MODELS = (
 
 # Human labels for each model surfaced in the activity feed.
 ACTIVITY_MODEL_LABELS = {
-    'tenancy.details':     'Rent Contract',
-    'property.details':    'Property',
-    'property.vendor':     'Sale Contract',
+    'tenancy.details':     'Contrat de location',
+    'property.details':    'Bien',
+    'property.vendor':     'Contrat de vente',
     'maintenance.request': 'Maintenance',
-    'rent.invoice':        'Rent Invoice',
-    'account.move':        'Invoice',
-    'crm.lead':            'Lead',
+    'rent.invoice':        'Facture de location',
+    'account.move':        'Facture',
+    'crm.lead':            'Prospect',
 }
 
 # How `mail.message.message_type` maps to the visual kind used by the UI.
@@ -209,6 +209,10 @@ class RentalDashboardController(http.Controller):
         try:
             return {
                 'currency': self._get_currency_info(),
+                'company_name': request.env.company.display_name,
+                'portfolio_value': self._get_commercial_portfolio_value(),
+                'potential_fees': self._get_potential_mandate_fees(),
+                'collected_fees': self._get_collected_mandate_fees(),
                 'kpis': self._get_kpis(),
                 'sankey': self._get_sankey(),
                 'radar': self._get_radar(),
@@ -238,6 +242,30 @@ class RentalDashboardController(http.Controller):
             'position': currency.position or 'before',
             'decimals': currency.decimal_places,
         }
+
+    def _company_ids(self):
+        """Active companies selected in Odoo's multi-company switcher."""
+        return request.env.companies.ids or [request.env.company.id]
+
+    def _company_domain(self):
+        return [('company_id', 'in', self._company_ids())]
+
+    def _company_sql(self, alias=None):
+        prefix = f"{alias}." if alias else ""
+        return f"{prefix}company_id = ANY(%s)"
+
+    def _company_param(self):
+        return [self._company_ids()]
+
+    def _record_in_active_companies(self, model, res_id):
+        if not model or not res_id or model not in request.env:
+            return False
+        record = request.env[model].browse(res_id).exists()
+        if not record:
+            return False
+        if 'company_id' not in record._fields:
+            return True
+        return not record.company_id or record.company_id.id in self._company_ids()
 
     # ──────────────────────────────────────────────────────────────────────────
     # PAGE-SPECIFIC ENDPOINTS (lazy-loaded when user navigates to that page)
@@ -333,6 +361,12 @@ class RentalDashboardController(http.Controller):
             'city_trend': self._get_city_trend(),
         }
 
+    @http.route('/rental/dashboard/mandates', type='json', auth='user', methods=['POST'])
+    def get_mandates_page(self, operation_type='rent'):
+        """Data for mandate dashboards, split by operation type."""
+        operation_type = operation_type if operation_type in ('rent', 'sale') else 'rent'
+        return self._get_mandates_dashboard(operation_type)
+
     def _lang_extract(self, col, alias=None):
         """
         Returns a SQL expression that extracts the correct translation
@@ -377,10 +411,11 @@ class RentalDashboardController(http.Controller):
         cr = request.env.cr
 
         # ── Occupancy Rate ──────────────────────────────────────────────────
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) FILTER (WHERE stage = 'on_lease')   AS rented, COUNT(*) FILTER (WHERE stage = 'sale')        AS in_sale, COUNT(*) FILTER (WHERE stage = 'available')   AS available, COUNT(*) AS total
                    FROM property_details
-                   """)
+                   WHERE {self._company_sql()}
+                   """, self._company_param())
         prop = cr.dictfetchone() or {}
         total_props = prop.get('total', 0) or 1
         occupied = (prop.get('rented', 0) or 0) + (prop.get('in_sale', 0) or 0)
@@ -389,65 +424,70 @@ class RentalDashboardController(http.Controller):
         # ── Revenue (current month invoices) ─────────────────────────────────
         today = date.today()
         first_of_month = today.replace(day=1)
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(amount_untaxed_signed), 0) AS revenue
                    FROM account_move
                    WHERE move_type IN ('out_invoice')
                      AND state = 'posted'
                      AND invoice_date >= %s
                      AND invoice_date <= %s
-                   """, (first_of_month, today))
+                     AND {self._company_sql()}
+                   """, (first_of_month, today, *self._company_param()))
         rev_row = cr.fetchone()
         revenue_curr = float(rev_row[0]) if rev_row else 0.0
 
         # Previous month for trend
         prev_first = (first_of_month - timedelta(days=1)).replace(day=1)
         prev_last = first_of_month - timedelta(days=1)
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(amount_untaxed_signed), 0) AS revenue
                    FROM account_move
                    WHERE move_type = 'out_invoice'
                      AND state = 'posted'
                      AND invoice_date >= %s
                      AND invoice_date <= %s
-                   """, (prev_first, prev_last))
+                     AND {self._company_sql()}
+                   """, (prev_first, prev_last, *self._company_param()))
         rev_prev_row = cr.fetchone()
         revenue_prev = float(rev_prev_row[0]) if rev_prev_row and rev_prev_row[0] else 1.0
         rev_trend = round((revenue_curr - revenue_prev) / revenue_prev * 100, 1) if revenue_prev else 0
 
         # ── Active Rent Contracts ─────────────────────────────────────────────
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) AS running
                    FROM tenancy_details
                    WHERE contract_type = 'running_contract'
-                   """)
+                     AND {self._company_sql()}
+                   """, self._company_param())
         contracts_row = cr.dictfetchone() or {}
         active_contracts = contracts_row.get('running', 0) or 0
 
         # ── Renewals Due (next 60 days) ───────────────────────────────────────
         due_cutoff = today + timedelta(days=60)
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*)
                    FROM tenancy_details
                    WHERE contract_type = 'running_contract'
                      AND duration_end_date BETWEEN %s AND %s
-                   """, (today, due_cutoff))
+                     AND {self._company_sql()}
+                   """, (today, due_cutoff, *self._company_param()))
         renewals_row = cr.fetchone()
         renewals_due = int(renewals_row[0]) if renewals_row else 0
 
         # ── Churn (exits last 30 days) ────────────────────────────────────────
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*)
                    FROM tenancy_details
                    WHERE contract_type IN ('cancel_contract', 'close_contract', 'expire_contract')
                      AND write_date >= NOW() - INTERVAL '30 days'
-                   """)
+                     AND {self._company_sql()}
+                   """, self._company_param())
         churn_row = cr.fetchone()
         churned = int(churn_row[0]) if churn_row else 0
         churn_rate = round(churned / total_props * 100, 1) if total_props else 0
 
         # ── Churn Sparkline (last 9 months, month-by-month) ───────────────────
-        cr.execute("""
+        cr.execute(f"""
                    WITH months AS (SELECT generate_series(
                                                   DATE_TRUNC('month', NOW()) - INTERVAL '8 months',
                                                   DATE_TRUNC('month', NOW()),
@@ -459,6 +499,7 @@ class RentalDashboardController(http.Controller):
                                           WHERE
                                               contract_type IN ('cancel_contract', 'close_contract', 'expire_contract')
                                             AND write_date >= NOW() - INTERVAL '9 months'
+                                            AND {self._company_sql()}
                    GROUP BY DATE_TRUNC('month', write_date)
                        )
                    SELECT m.month_start,
@@ -466,7 +507,7 @@ class RentalDashboardController(http.Controller):
                    FROM months m
                             LEFT JOIN monthly_churn mc ON m.month_start = mc.month_start
                    ORDER BY m.month_start ASC
-                   """)
+                   """, self._company_param())
         churn_spark_rows = cr.fetchall()
 
         # Build sparkline as churn rates (churned / total_props * 100)
@@ -476,7 +517,7 @@ class RentalDashboardController(http.Controller):
         ]
 
         # ── Rental Yield (annualised rent / property value approx) ────────────
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(DATE_TRUNC('month', rc.start_date), 'Mon YYYY') AS month,
                 COALESCE(SUM(
                     CASE p.rent_unit
@@ -502,9 +543,11 @@ class RentalDashboardController(http.Controller):
                    ON rc.property_id = p.id
                    WHERE p.stage = 'on_lease'
                      AND rc.contract_type = 'running_contract'
+                     AND {self._company_sql('p')}
+                     AND {self._company_sql('rc')}
                    GROUP BY DATE_TRUNC('month', rc.start_date)
                    ORDER BY DATE_TRUNC('month', rc.start_date)
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
 
         rows = cr.dictfetchall() or []
 
@@ -531,41 +574,41 @@ class RentalDashboardController(http.Controller):
 
         return [
             {
-                'l': 'Occupancy Rate', 'v': f"{occupancy_rate}%", 'tr': 0.0,
-                'sub': f"{occupied} of {total_props} units",
+                'l': 'Taux d’occupation', 'v': f"{occupancy_rate}%", 'tr': 0.0,
+                'sub': f"{occupied} sur {total_props} unités",
                 'ic': 'M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6',
                 'd': occ_spark,
-                'action': {'model': 'property.details', 'name': 'Occupancy Rate',
+                'action': {'model': 'property.details', 'name': 'Taux d’occupation',
                            'domain': [('stage', 'in', ('on_lease', 'sale'))]},
             },
             {
-                'l': 'Total Revenue', 'v': format_money(revenue_curr), 'tr': rev_trend,
-                'sub': f"{today.strftime('%b %Y')} · All properties",
+                'l': 'Revenus totaux', 'v': format_money(revenue_curr), 'tr': rev_trend,
+                'sub': f"{today.strftime('%m/%Y')} · Tous les biens",
                 'ic': 'M12 3v18M17 7H9.5a2.5 2.5 0 000 5h5a2.5 2.5 0 010 5H6',
                 'd': rev_spark,
-                'action': {'model': 'account.move', 'name': 'Total Revenue',
+                'action': {'model': 'account.move', 'name': 'Revenus totaux',
                            'domain': [('move_type', '=', 'out_invoice'), ('state', '=', 'posted'),
                                       ('invoice_date', '>=', str(first_of_month)), ('invoice_date', '<=', str(today))]},
             },
             {
-                'l': 'Rental Yield', 'v': f"{rental_yield}%", 'tr': 0.0,
-                'sub': 'Portfolio avg · FY',
+                'l': 'Rendement locatif', 'v': f"{rental_yield}%", 'tr': 0.0,
+                'sub': 'Moyenne portefeuille · exercice',
                 'ic': 'M3 17l6-6 4 4 8-8M14 7h7v7',
                 'd': sparkline_data,
                 'action': {'model': 'property.details', 'name': 'Rental Yield',
                            'domain': [('sale_lease', '=', 'for_tenancy')]},
             },
             {
-                'l': 'Active Contracts', 'v': str(active_contracts), 'tr': 0.0,
-                'sub': 'All rent contracts',
+                'l': 'Contrats actifs', 'v': str(active_contracts), 'tr': 0.0,
+                'sub': 'Tous les contrats de location',
                 'ic': 'M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5',
                 'd': contract_spark,
                 'action': {'model': 'tenancy.details', 'name': 'Active Contracts',
                            'domain': [('contract_type', '=', 'running_contract')]},
             },
             {
-                'l': 'Churn Rate', 'v': f"{churn_rate}%", 'tr': 0.0,
-                'sub': f"{churned} exits · last 30 days",
+                'l': 'Taux de résiliation', 'v': f"{churn_rate}%", 'tr': 0.0,
+                'sub': f"{churned} sortie(s) · 30 derniers jours",
                 'ic': 'M3 17l6-6 4 4 8-8M14 17h7v-7',
                 'd': churn_spark,
                 'action': {'model': 'tenancy.details', 'name': 'Churn Rate',
@@ -574,8 +617,8 @@ class RentalDashboardController(http.Controller):
                                ('write_date', '>=', (today - timedelta(days=30)).isoformat())]},
             },
             {
-                'l': 'Renewals Due', 'v': str(renewals_due), 'tr': 0.0,
-                'sub': 'Next 60 days · action needed',
+                'l': 'Renouvellements à venir', 'v': str(renewals_due), 'tr': 0.0,
+                'sub': '60 prochains jours · action requise',
                 'ic': 'M3 5h18M3 10h18M3 15h12',
                 'd': [max(0, renewals_due - (8 - i) * 2) for i in range(9)],
                 'action': {'model': 'tenancy.details', 'name': 'Renewals Due',
@@ -588,14 +631,15 @@ class RentalDashboardController(http.Controller):
     def _occupancy_sparkline_9(self):
         """9-month occupancy rate history (one SQL query)."""
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    WITH months AS (SELECT generate_series(
                                                   date_trunc('month', NOW() - INTERVAL '8 months'),
                                                   date_trunc('month', NOW()),
                                                   '1 month'
                                           ) AS mo),
                         totals AS (SELECT COUNT(*) AS t
-                                   FROM property_details)
+                                   FROM property_details
+                                   WHERE {self._company_sql()})
                    SELECT TO_CHAR(m.mo, 'Mon') AS label,
                           ROUND(
                                   100.0 * COUNT(td.id) FILTER (WHERE td.start_date <= (m.mo + INTERVAL '1 month - 1 day')
@@ -605,32 +649,34 @@ class RentalDashboardController(http.Controller):
                               , 1)             AS occ
                    FROM months m
                             LEFT JOIN tenancy_details td ON TRUE
+                                AND {self._company_sql('td')}
                    GROUP BY m.mo
                    ORDER BY m.mo
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
         rows = cr.fetchall()
         return [float(r[1] or 0) for r in rows] or [0] * 9
 
     def _revenue_sparkline_9(self):
         """9-month revenue sparkline (in Lakhs)."""
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(date_trunc('month', invoice_date), 'Mon')          AS mo,
                           ROUND(COALESCE(SUM(amount_untaxed_signed), 0) / 100000, 1) AS rev_l
                    FROM account_move
                    WHERE move_type = 'out_invoice'
                      AND state = 'posted'
                      AND invoice_date >= NOW() - INTERVAL '9 months'
+                     AND {self._company_sql()}
                    GROUP BY date_trunc('month', invoice_date)
                    ORDER BY date_trunc('month', invoice_date)
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [float(r[1] or 0) for r in rows] or [0] * 9
 
     def _contract_sparkline_9(self):
         """9-month running contract count."""
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    WITH months AS (SELECT generate_series(
                                                   date_trunc('month', NOW() - INTERVAL '8 months'),
                                                   date_trunc('month', NOW()),
@@ -644,9 +690,10 @@ class RentalDashboardController(http.Controller):
                 ) AS cnt
                    FROM months m
                             LEFT JOIN tenancy_details td ON TRUE
+                                AND {self._company_sql('td')}
                    GROUP BY m.mo
                    ORDER BY m.mo
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [int(r[1] or 0) for r in rows] or [0] * 9
 
@@ -680,13 +727,14 @@ class RentalDashboardController(http.Controller):
         )
 
         # Rent-book income, categorised by rent.invoice.type
-        cr.execute("""
+        cr.execute(f"""
                    SELECT ri.type,
                           COALESCE(SUM(ri.amount), 0) AS total
                    FROM rent_invoice ri
                    WHERE ri.invoice_date >= %s
+                     AND {self._company_sql('ri')}
                    GROUP BY ri.type
-                   """, (fy_start,))
+                   """, (fy_start, *self._company_param()))
         rent_by_type = {row[0]: float(row[1] or 0) for row in cr.fetchall()}
         rent_income = rent_by_type.get('rent', 0.0) + rent_by_type.get('full_rent', 0.0)
         deposit_income = rent_by_type.get('deposit', 0.0)
@@ -694,12 +742,13 @@ class RentalDashboardController(http.Controller):
         other_rent_income = rent_by_type.get('penalty', 0.0) + rent_by_type.get('other', 0.0)
 
         # Sales income — realised from sold property_vendor records
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(sale_price), 0) AS total
                    FROM property_vendor
                    WHERE stage = 'sold'
                      AND date >= %s
-                   """, (fy_start,))
+                     AND {self._company_sql()}
+                   """, (fy_start, *self._company_param()))
         sales_income = float((cr.fetchone() or [0])[0])
 
         # Broker commissions (real outflows from both sale + rent contracts)
@@ -708,7 +757,8 @@ class RentalDashboardController(http.Controller):
                    FROM property_vendor
                    WHERE is_any_broker = TRUE
                      AND date >= %s
-                   """, (fy_start,))
+                     AND {self._company_sql()}
+                   """, (fy_start, *self._company_param()))
         sale_commission = float((cr.fetchone() or [0])[0])
 
         cr.execute(f"""
@@ -716,18 +766,20 @@ class RentalDashboardController(http.Controller):
                    FROM tenancy_details
                    WHERE is_any_broker = TRUE
                      AND start_date >= %s
-                   """, (fy_start,))
+                     AND {self._company_sql()}
+                   """, (fy_start, *self._company_param()))
         rent_commission = float((cr.fetchone() or [0])[0])
         broker_commission = sale_commission + rent_commission
 
         # Vendor bills (real operating expenses)
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(amount_untaxed_signed), 0) AS expense
                    FROM account_move
                    WHERE move_type = 'in_invoice'
                      AND state = 'posted'
                      AND invoice_date >= %s
-                   """, (fy_start,))
+                     AND {self._company_sql()}
+                   """, (fy_start, *self._company_param()))
         operating_expense = abs(float((cr.fetchone() or [0])[0]))
 
         total_revenue = rent_income + deposit_income + maintenance_income + other_rent_income + sales_income
@@ -742,27 +794,27 @@ class RentalDashboardController(http.Controller):
             return {'source': src, 'target': tgt, 'value': round(value, 2)}
 
         nodes = [
-            {'name': 'Rent Income'},
-            {'name': 'Deposit Income'},
-            {'name': 'Maintenance Income'},
-            {'name': 'Sales Income'},
-            {'name': 'Total Revenue'},
-            {'name': 'Broker Commission'},
-            {'name': 'Operating Expenses'},
-            {'name': 'Net Profit'},
+            {'name': 'Revenus locatifs'},
+            {'name': 'Cautions'},
+            {'name': 'Revenus maintenance'},
+            {'name': 'Revenus de vente'},
+            {'name': 'Revenus totaux'},
+            {'name': 'Commission courtier'},
+            {'name': 'Charges opérationnelles'},
+            {'name': 'Bénéfice net'},
         ]
         if other_rent_income > 0:
-            nodes.insert(3, {'name': 'Other Rent Income'})
+            nodes.insert(3, {'name': 'Autres revenus locatifs'})
 
         raw_links = [
-            link('Rent Income',         'Total Revenue', rent_income),
-            link('Deposit Income',      'Total Revenue', deposit_income),
-            link('Maintenance Income',  'Total Revenue', maintenance_income),
-            link('Other Rent Income',   'Total Revenue', other_rent_income),
-            link('Sales Income',        'Total Revenue', sales_income),
-            link('Total Revenue',       'Broker Commission',  broker_commission),
-            link('Total Revenue',       'Operating Expenses', operating_expense),
-            link('Total Revenue',       'Net Profit',         net_profit),
+            link('Revenus locatifs',         'Revenus totaux', rent_income),
+            link('Cautions',                 'Revenus totaux', deposit_income),
+            link('Revenus maintenance',      'Revenus totaux', maintenance_income),
+            link('Autres revenus locatifs',  'Revenus totaux', other_rent_income),
+            link('Revenus de vente',         'Revenus totaux', sales_income),
+            link('Revenus totaux',           'Commission courtier',      broker_commission),
+            link('Revenus totaux',           'Charges opérationnelles',  operating_expense),
+            link('Revenus totaux',           'Bénéfice net',             net_profit),
         ]
         links = [l for l in raw_links if l is not None]
 
@@ -806,30 +858,32 @@ class RentalDashboardController(http.Controller):
         prev_month_end = month_start - timedelta(days=1)
 
         # Occupancy now (snapshot) vs first day of the current month
-        cr.execute("""
+        cr.execute(f"""
                    SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE stage = 'on_lease')
                                    / NULLIF(COUNT(*), 0), 1)
                    FROM property_details
-                   """)
+                   WHERE {self._company_sql()}
+                   """, self._company_param())
         occ_curr = float((cr.fetchone() or [0])[0] or 0)
 
-        cr.execute("""
+        cr.execute(f"""
                    SELECT ROUND(100.0 *
                                 COUNT(DISTINCT td.property_id) FILTER (
                                     WHERE td.start_date <= %s
                                       AND (td.duration_end_date IS NULL
                                            OR td.duration_end_date >= %s)
                                 )
-                                / NULLIF((SELECT COUNT(*) FROM property_details), 0), 1)
+                                / NULLIF((SELECT COUNT(*) FROM property_details WHERE {self._company_sql()}), 0), 1)
                    FROM tenancy_details td
-                   WHERE td.contract_type = 'running_contract'
-                      OR td.duration_end_date >= %s
-                   """, (prev_month_end, prev_month_start, prev_month_start))
+                   WHERE (td.contract_type = 'running_contract'
+                      OR td.duration_end_date >= %s)
+                     AND {self._company_sql('td')}
+                   """, (prev_month_end, prev_month_start, *self._company_param(), prev_month_start, *self._company_param()))
         occ_prev = float((cr.fetchone() or [0])[0] or 0)
 
         # Collection rate — paid / invoiced, for each period
         def _collection_rate(start, end):
-            cr.execute("""
+            cr.execute(f"""
                        SELECT ROUND(100.0 *
                                     COALESCE(SUM(CASE WHEN payment_state = 'paid'
                                                       THEN amount_untaxed_signed ELSE 0 END), 0)
@@ -838,7 +892,8 @@ class RentalDashboardController(http.Controller):
                        WHERE move_type = 'out_invoice'
                          AND state = 'posted'
                          AND invoice_date BETWEEN %s AND %s
-                       """, (start, end))
+                         AND {self._company_sql()}
+                       """, (start, end, *self._company_param()))
             return float((cr.fetchone() or [0])[0] or 0)
 
         coll_curr = _collection_rate(month_start, today)
@@ -846,13 +901,14 @@ class RentalDashboardController(http.Controller):
 
         # Maintenance health — % closed tickets in the period
         def _maintenance_score(start, end):
-            cr.execute("""
+            cr.execute(f"""
                        SELECT COUNT(*) FILTER (WHERE ms.done IS TRUE) AS closed,
                               COUNT(*)                                AS total
                        FROM maintenance_request mr
                             LEFT JOIN maintenance_stage ms ON mr.stage_id = ms.id
                        WHERE mr.create_date BETWEEN %s AND %s
-                       """, (start, end))
+                         AND {self._company_sql('mr')}
+                       """, (start, end, *self._company_param()))
             row = cr.dictfetchone() or {}
             total = row.get('total', 0) or 0
             closed = row.get('closed', 0) or 0
@@ -863,7 +919,7 @@ class RentalDashboardController(http.Controller):
 
         # Contracts health — % running contracts active during each period
         def _contracts_score(at_date):
-            cr.execute("""
+            cr.execute(f"""
                        SELECT ROUND(100.0 *
                                     COUNT(*) FILTER (
                                         WHERE start_date <= %s
@@ -873,7 +929,8 @@ class RentalDashboardController(http.Controller):
                                     )
                                     / NULLIF(COUNT(*), 0), 1)
                        FROM tenancy_details
-                       """, (at_date, at_date))
+                       WHERE {self._company_sql()}
+                       """, (at_date, at_date, *self._company_param()))
             return float((cr.fetchone() or [0])[0] or 0)
 
         cont_curr = _contracts_score(today)
@@ -881,14 +938,16 @@ class RentalDashboardController(http.Controller):
 
         # Yield score — normalised 15% annual yield == 100
         def _yield_score(as_of):
-            cr.execute("""
+            cr.execute(f"""
                        SELECT COALESCE(SUM(p.price) * 12, 0) AS annual_rent,
                               COALESCE(SUM(p.price), 0)      AS unit_price_sum
                        FROM property_details p
                                 JOIN tenancy_details td ON td.property_id = p.id
                        WHERE td.start_date <= %s
                          AND (td.duration_end_date IS NULL OR td.duration_end_date >= %s)
-                       """, (as_of, as_of))
+                         AND {self._company_sql('p')}
+                         AND {self._company_sql('td')}
+                       """, (as_of, as_of, *self._company_param(), *self._company_param()))
             row = cr.fetchone() or (0, 0)
             annual, denom = float(row[0] or 0), float(row[1] or 0)
             if denom <= 0:
@@ -900,7 +959,7 @@ class RentalDashboardController(http.Controller):
         yield_prev = _yield_score(prev_month_end)
 
         # Revenue growth — % of prior period revenue, capped at 100
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(
                               CASE WHEN invoice_date >= %s AND invoice_date <= %s
                                    THEN amount_untaxed_signed ELSE 0 END
@@ -917,11 +976,13 @@ class RentalDashboardController(http.Controller):
                    WHERE move_type = 'out_invoice'
                      AND state = 'posted'
                      AND invoice_date >= %s
+                     AND {self._company_sql()}
                    """, (
             month_start, today,
             prev_month_start, prev_month_end,
             (prev_month_start - timedelta(days=31)).replace(day=1), prev_month_start,
             (prev_month_start - timedelta(days=31)).replace(day=1),
+            *self._company_param(),
         ))
         gr_row = cr.dictfetchone() or {}
         curr_rev = abs(float(gr_row.get('curr', 0) or 0))
@@ -938,12 +999,12 @@ class RentalDashboardController(http.Controller):
 
         return {
             'indicators': [
-                {'name': 'Occupancy',      'max': 100},
-                {'name': 'Yield',          'max': 100},
+                {'name': 'Occupation',     'max': 100},
+                {'name': 'Rendement',      'max': 100},
                 {'name': 'Collection',     'max': 100},
                 {'name': 'Maintenance',    'max': 100},
-                {'name': 'Contracts',      'max': 100},
-                {'name': 'Growth',         'max': 100},
+                {'name': 'Contrats',       'max': 100},
+                {'name': 'Croissance',     'max': 100},
             ],
             'current':  [occ_curr,  yield_curr,  coll_curr,  maint_curr,  cont_curr,  growth_curr],
             'previous': [occ_prev,  yield_prev,  coll_prev,  maint_prev,  cont_prev,  growth_prev],
@@ -956,16 +1017,17 @@ class RentalDashboardController(http.Controller):
     def _get_forecast(self, days=90):
         """Monthly revenue forecast — historical actuals + projected."""
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(date_trunc('month', invoice_date), 'Mon YY')            AS label,
                           ROUND(COALESCE(SUM(amount_untaxed_signed), 0) / 100000, 1) AS rev
                    FROM account_move
                    WHERE move_type = 'out_invoice'
                      AND state = 'posted'
                      AND invoice_date >= NOW() - INTERVAL '12 months'
+                     AND {self._company_sql()}
                    GROUP BY date_trunc('month', invoice_date)
                    ORDER BY date_trunc('month', invoice_date)
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         labels = [r[0] for r in rows]
         actuals = [float(r[1] or 0) for r in rows]
@@ -994,10 +1056,11 @@ class RentalDashboardController(http.Controller):
 
     def _get_occupancy_gauge(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) FILTER (WHERE stage = 'on_lease')  AS rented, COUNT(*) FILTER (WHERE stage = 'available') AS available, COUNT(*) FILTER (WHERE stage = 'booked')    AS booked, COUNT(*) FILTER (WHERE stage = 'sold')      AS sold, COUNT(*) AS total
                    FROM property_details
-                   """)
+                   WHERE {self._company_sql()}
+                   """, self._company_param())
         row = cr.dictfetchone() or {}
         total = row.get('total', 0) or 1
         rented = row.get('rented', 0) or 0
@@ -1017,7 +1080,7 @@ class RentalDashboardController(http.Controller):
 
     def _get_revenue_mix(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT p.type                                                        AS prop_type,
                           ROUND(COALESCE(SUM(am.amount_untaxed_signed), 0) / 100000, 1) AS rev_l,
                           COUNT(am.id)                                                  AS inv_count
@@ -1027,9 +1090,11 @@ class RentalDashboardController(http.Controller):
                    WHERE am.move_type = 'out_invoice'
                      AND am.state = 'posted'
                      AND am.invoice_date >= NOW() - INTERVAL '6 months'
+                     AND {self._company_sql('am')}
+                     AND {self._company_sql('p')}
                    GROUP BY p.type
                    ORDER BY rev_l DESC
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
         rows = cr.fetchall()
         if not rows:
             rows = [('residential', 0, 0), ('commercial', 0, 0)]
@@ -1051,15 +1116,17 @@ class RentalDashboardController(http.Controller):
                        AND am.state = 'posted'
                        AND am.move_type = 'out_invoice'
                        AND am.invoice_date >= NOW() - INTERVAL '3 months'
+                       AND {self._company_sql('am')}
+                   WHERE {self._company_sql('p')}
                    GROUP BY p.id, p.name, p.type, p.stage, p.city
                    ORDER BY rev_l DESC NULLS LAST
                        LIMIT 6
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
         rows = cr.fetchall()
         return [
             {
                 'name': r[0] or '',
-                'type': TYPE_LABELS.get(r[1], 'Residential'),
+                'type': TYPE_LABELS.get(r[1], 'Résidentiel'),
                 'stage': r[2],
                 'rev': format_money(float(r[3] or 0)),
                 'city': r[4] or '',
@@ -1091,8 +1158,9 @@ class RentalDashboardController(http.Controller):
                      AND am.state = 'posted'
                      AND am.payment_state NOT IN ('paid', 'in_payment')
                      AND am.invoice_date_due < %s
+                     AND {self._company_sql('am')}
                    ORDER BY days_overdue DESC LIMIT 10
-                   """, (today, today))
+                   """, (today, today, *self._company_param()))
         rows = cr.fetchall()
         return [
             {
@@ -1115,13 +1183,12 @@ class RentalDashboardController(http.Controller):
         cr = request.env.cr
         today = date.today()
 
-        # Portfolio value
-        cr.execute("SELECT COALESCE(SUM(price), 0) FROM property_details")
-        pv_row = cr.fetchone()
-        portfolio_value = float(pv_row[0] if pv_row else 0)
+        portfolio_value = self._get_commercial_portfolio_value()
+        potential_fees = self._get_potential_mandate_fees()
+        collected_fees = self._get_collected_mandate_fees()
 
         # Average lease term (months)
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(AVG(
                                            EXTRACT(MONTH FROM AGE(COALESCE(duration_end_date, NOW()), start_date)) +
                                            EXTRACT(YEAR FROM AGE(COALESCE(duration_end_date, NOW()), start_date)) * 12
@@ -1129,33 +1196,36 @@ class RentalDashboardController(http.Controller):
                    FROM tenancy_details
                    WHERE start_date IS NOT NULL
                      AND contract_type = 'running_contract'
-                   """)
+                     AND {self._company_sql()}
+                   """, self._company_param())
         alt_row = cr.fetchone()
         avg_lease = round(float(alt_row[0] if alt_row else 0), 0)
 
         # Pending invoices
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) AS cnt, COALESCE(SUM(amount_residual), 0) AS total
                    FROM account_move
                    WHERE move_type = 'out_invoice'
                      AND state = 'posted'
                      AND payment_state NOT IN ('paid', 'in_payment')
-                   """)
+                     AND {self._company_sql()}
+                   """, self._company_param())
         pending_row = cr.dictfetchone() or {}
         pending_amt = float(pending_row.get('total', 0) or 0)
         pending_cnt = int(pending_row.get('cnt', 0) or 0)
 
         # Revenue 30 day sparkline
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(gs::date, 'DD') AS day,
                 COALESCE(SUM(am.amount_untaxed_signed), 0) AS rev
                    FROM generate_series(%s - INTERVAL '29 days', %s, INTERVAL '1 day') gs
                        LEFT JOIN account_move am
                    ON am.invoice_date = gs:: date
                        AND am.move_type = 'out_invoice' AND am.state = 'posted'
+                       AND {self._company_sql('am')}
                    GROUP BY gs
                    ORDER BY gs
-                   """, (today, today))
+                   """, (today, today, *self._company_param()))
         spark_rows = cr.fetchall()
         spark_data = [round(float(r[1] or 0), 1) for r in spark_rows]
 
@@ -1164,10 +1234,7 @@ class RentalDashboardController(http.Controller):
         monthly_collection_target = self._estimate_collection_target()
         collection_month_to_date = sum(spark_data)
 
-        portfolio_pct = min(
-            int(collection_month_to_date / monthly_collection_target * 100)
-            if monthly_collection_target else 0, 100
-        )
+        portfolio_pct = 100 if portfolio_value else 0
         lease_pct = min(int(avg_lease / 24 * 100), 100) if avg_lease else 0
         pending_pct = min(
             int(pending_amt / monthly_collection_target * 100)
@@ -1175,17 +1242,81 @@ class RentalDashboardController(http.Controller):
         )
 
         return {
+            'portfolio_value': portfolio_value,
+            'potential_fees': potential_fees,
+            'collected_fees': collected_fees,
             'kpis': [
-                {'lbl': 'Portfolio Value', 'val': format_money(portfolio_value),
-                 'pct': portfolio_pct, 'd': 'Total asset value'},
-                {'lbl': 'Avg Lease Term', 'val': f"{int(avg_lease)} mo",
-                 'pct': lease_pct, 'd': 'Running contracts'},
-                {'lbl': 'Pending Invoices', 'val': format_money(pending_amt),
-                 'pct': pending_pct, 'd': f"{pending_cnt} invoices"},
+                {'lbl': 'Valeur du portefeuille', 'val': format_money(portfolio_value),
+                 'pct': portfolio_pct, 'd': 'Actifs commercialisables'},
+                {'lbl': 'Honoraires potentiels', 'val': format_money(potential_fees),
+                 'pct': 100 if potential_fees else 0, 'd': 'Mandats signés'},
+                {'lbl': 'Honoraires encaissés', 'val': format_money(collected_fees),
+                 'pct': min(int(collected_fees / potential_fees * 100), 100) if potential_fees else 0,
+                 'd': 'Factures payées'},
+                {'lbl': 'Durée moyenne des baux', 'val': f"{int(avg_lease)} mo",
+                 'pct': lease_pct, 'd': 'Contrats en cours'},
+                {'lbl': 'Factures en attente', 'val': format_money(pending_amt),
+                 'pct': pending_pct, 'd': f"{pending_cnt} facture(s)"},
             ],
             'spark_data': spark_data,
             'spark_total': format_money(collection_month_to_date),
         }
+
+    def _get_commercial_portfolio_value(self):
+        """
+        Packimmo portfolio value:
+        available properties + properties under an active absolute-exclusive mandate.
+        Property ids are de-duplicated before summing price.
+        """
+        Property = request.env['property.details']
+        property_domain = self._company_domain() + [('stage', '=', 'available')]
+
+        if self._mandate_model_available():
+            absolute_mandates = request.env['property.mandate'].search(self._company_domain() + [
+                ('state', '=', 'active'),
+                ('mandate_type', '=', 'exclusive_absolute'),
+            ])
+            absolute_property_ids = absolute_mandates.mapped('property_ids').ids
+            if absolute_property_ids:
+                property_domain = self._company_domain() + ['|', ('stage', '=', 'available'), ('id', 'in', absolute_property_ids)]
+
+        properties = Property.search(property_domain)
+        return float(sum(properties.mapped('price') or [0.0]))
+
+    def _get_potential_mandate_fees(self):
+        if not self._mandate_model_available():
+            return 0.0
+
+        mandates = request.env['property.mandate'].search(self._company_domain() + [
+            ('state', 'in', ['active', 'completed']),
+            ('mandate_type', 'in', ['simple', 'exclusive', 'exclusive_absolute']),
+        ])
+        return float(sum(mandates.mapped('total_fee_amount') or [0.0]))
+
+    def _get_collected_mandate_fees(self):
+        if not self._mandate_model_available():
+            return 0.0
+
+        Mandate = request.env['property.mandate']
+        mandates = Mandate.search(self._company_domain() + [
+            ('state', '!=', 'cancelled'),
+            ('mandate_type', 'in', ['simple', 'exclusive', 'exclusive_absolute']),
+        ])
+
+        collected = 0.0
+        if 'invoice_ids' in Mandate._fields:
+            for mandate in mandates:
+                invoices = mandate.invoice_ids.filtered(lambda inv: inv.move_type == 'out_invoice' and inv.state == 'posted')
+                if invoices and all(inv.payment_state == 'paid' for inv in invoices):
+                    collected += mandate.total_fee_amount or 0.0
+                elif not invoices and mandate.invoice_payment_status == 'paid':
+                    collected += mandate.total_fee_amount or 0.0
+        else:
+            collected = sum(mandates.filtered(
+                lambda mandate: mandate.invoice_payment_status == 'paid'
+            ).mapped('total_fee_amount') or [0.0])
+
+        return float(collected)
 
     def _estimate_collection_target(self):
         """
@@ -1194,7 +1325,7 @@ class RentalDashboardController(http.Controller):
         Returns 0 if no running contracts exist.
         """
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(
                        CASE td.payment_term
                            WHEN 'daily'     THEN td.total_rent * 30
@@ -1207,7 +1338,8 @@ class RentalDashboardController(http.Controller):
                    ), 0)
                    FROM tenancy_details td
                    WHERE td.contract_type = 'running_contract'
-                   """)
+                     AND {self._company_sql('td')}
+                   """, self._company_param())
         row = cr.fetchone()
         return float(row[0] or 0) if row else 0.0
 
@@ -1231,8 +1363,9 @@ class RentalDashboardController(http.Controller):
                             LEFT JOIN res_partner rp ON rp.id = td.tenancy_id
                    WHERE td.contract_type = 'running_contract'
                      AND td.duration_end_date BETWEEN %s AND %s
+                     AND {self._company_sql('td')}
                    ORDER BY td.duration_end_date LIMIT 8
-                   """, (today, cutoff))
+                   """, (today, cutoff, *self._company_param()))
         rows = cr.fetchall()
         return [
             {
@@ -1298,6 +1431,9 @@ class RentalDashboardController(http.Controller):
 
         feed = []
         for msg_date, body_html, subject, author_name, res_id, model, message_type, subtype_name in rows:
+            if not self._record_in_active_companies(model, res_id):
+                continue
+
             subtype_str = _resolve_translated(subtype_name)
 
             # Build the display text — try body first, then subject,
@@ -1307,7 +1443,7 @@ class RentalDashboardController(http.Controller):
                     _strip_html(body_html)
                     or (subject or '').strip()
                     or subtype_str.strip()
-                    or f"Activity on {ACTIVITY_MODEL_LABELS.get(model, model)}"
+                    or f"Activité sur {ACTIVITY_MODEL_LABELS.get(model, model)}"
             )
 
             feed.append({
@@ -1331,15 +1467,16 @@ class RentalDashboardController(http.Controller):
 
     def _get_maintenance_status(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT ms.id        AS stage_id,
                           ms.name      AS stage_name,
                           COUNT(mr.id) AS cnt
                    FROM maintenance_request mr
                             LEFT JOIN maintenance_stage ms ON mr.stage_id = ms.id
+                   WHERE {self._company_sql('mr')}
                    GROUP BY ms.id, ms.name
                    ORDER BY ms.sequence
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         result = []
         for r in rows:
@@ -1350,9 +1487,9 @@ class RentalDashboardController(http.Controller):
                 name = raw_name or 'Unknown'
             result.append({'name': name, 'value': int(r[2] or 0)})
         return result or [
-            {'name': 'Done', 'value': 0},
-            {'name': 'In Progress', 'value': 0},
-            {'name': 'New', 'value': 0},
+            {'name': 'Terminé', 'value': 0},
+            {'name': 'En cours', 'value': 0},
+            {'name': 'Nouveau', 'value': 0},
         ]
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -1362,17 +1499,19 @@ class RentalDashboardController(http.Controller):
     def _get_sidebar_glance(self):
         cr = request.env.cr
         today = date.today()
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) FILTER (WHERE stage = 'available')  AS available, COUNT(*) FILTER (WHERE stage = 'on_lease')   AS rented, COUNT(*) FILTER (WHERE stage = 'sold')       AS sold, COUNT(*) AS total
                    FROM property_details
-                   """)
+                   WHERE {self._company_sql()}
+                   """, self._company_param())
         row = cr.dictfetchone() or {}
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*)
                    FROM tenancy_details
                    WHERE contract_type = 'running_contract'
                      AND duration_end_date BETWEEN %s AND %s
-                   """, (today, today + timedelta(days=30)))
+                     AND {self._company_sql()}
+                   """, (today, today + timedelta(days=30), *self._company_param()))
         exp_row = cr.fetchone()
         return {
             'available': row.get('available', 0),
@@ -1380,6 +1519,149 @@ class RentalDashboardController(http.Controller):
             'sold': row.get('sold', 0),
             'total': row.get('total', 0),
             'expiring_30d': int(exp_row[0] if exp_row else 0),
+            'mandates_rent': self._get_mandate_count('rent'),
+            'mandates_sale': self._get_mandate_count('sale'),
+        }
+
+    def _mandate_model_available(self):
+        return bool(request.env.registry.get('property.mandate'))
+
+    def _get_mandate_count(self, operation_type):
+        if not self._mandate_model_available():
+            return 0
+        return request.env['property.mandate'].search_count(
+            self._company_domain() + [('operation_type', '=', operation_type)]
+        )
+
+    def _empty_mandate_dashboard(self, operation_type):
+        label = 'location' if operation_type == 'rent' else 'vente'
+        return {
+            'operation_type': operation_type,
+            'title': f"Mandats de {label}",
+            'stat_bar': [
+                {'k': 'Total mandats', 'v': '0', 'd': 'Aucun mandat', 'cl': 'a'},
+                {'k': 'Montant total honoraires', 'v': format_money(0), 'd': 'Honoraires agence', 'cl': 'up'},
+                {'k': 'Mandats actifs', 'v': '0', 'd': 'En cours', 'cl': 'up'},
+                {'k': 'Mandats terminés', 'v': '0', 'd': 'Clôturés', 'cl': 'up'},
+                {'k': 'Factures non payées', 'v': '0', 'd': 'À suivre', 'cl': 'dn'},
+                {'k': 'Expire sous 30 jours', 'v': '0', 'd': 'À anticiper', 'cl': 'a'},
+            ],
+            'fees_by_type': [],
+            'state_distribution': [],
+            'fees_timeline': {'labels': [], 'values': []},
+            'projection': {'labels': [], 'actual': [], 'forecast': []},
+            'recent': [],
+            'has_data': False,
+        }
+
+    def _get_mandate_selection_label(self, field_name, value):
+        if not value or not self._mandate_model_available():
+            return value or ''
+        selection = request.env['property.mandate']._fields[field_name].selection
+        if callable(selection):
+            selection = selection(request.env['property.mandate'])
+        return dict(selection).get(value, value.replace('_', ' ').title())
+
+    def _get_mandates_dashboard(self, operation_type):
+        if not self._mandate_model_available():
+            return self._empty_mandate_dashboard(operation_type)
+
+        Mandate = request.env['property.mandate']
+        domain = self._company_domain() + [('operation_type', '=', operation_type)]
+        today = fields.Date.context_today(Mandate)
+        until_30 = today + timedelta(days=30)
+        label = 'location' if operation_type == 'rent' else 'vente'
+
+        mandates = Mandate.search(domain)
+        total = len(mandates)
+        total_fees = sum(mandates.mapped('total_fee_amount') or [0.0])
+        active_count = len(mandates.filtered(lambda m: m.state == 'active'))
+        completed_count = len(mandates.filtered(lambda m: m.state == 'completed'))
+        unpaid_count = len(mandates.filtered(lambda m: m.invoice_payment_status in ('not_paid', 'partial')))
+        expiring_count = len(mandates.filtered(lambda m: m.state == 'active' and m.end_date and today <= m.end_date <= until_30))
+
+        fees_by_type = []
+        grouped_type = Mandate.read_group(domain, ['total_fee_amount:sum'], ['mandate_type'], lazy=False)
+        for row in grouped_type:
+            fees_by_type.append({
+                'type': self._get_mandate_selection_label('mandate_type', row.get('mandate_type')),
+                'amount': row.get('total_fee_amount') or 0.0,
+            })
+
+        state_distribution = []
+        grouped_state = Mandate.read_group(domain, ['id:count'], ['state'], lazy=False)
+        for row in grouped_state:
+            state_distribution.append({
+                'state': self._get_mandate_selection_label('state', row.get('state')),
+                'value': row.get('state_count') or row.get('__count') or 0,
+                'raw_state': row.get('state'),
+            })
+
+        timeline = {}
+        for mandate in mandates.filtered(lambda m: m.start_date):
+            key = mandate.start_date.strftime('%Y-%m')
+            timeline[key] = timeline.get(key, 0.0) + (mandate.total_fee_amount or 0.0)
+        timeline_labels = sorted(timeline)
+
+        projection_labels = []
+        actual = []
+        forecast = []
+        actual_by_date = {}
+        for mandate in mandates.filtered(lambda m: m.start_date and m.start_date <= today):
+            key = mandate.start_date.isoformat()
+            actual_by_date[key] = actual_by_date.get(key, 0.0) + (mandate.total_fee_amount or 0.0)
+
+        active_mandates = mandates.filtered(lambda m: m.state == 'active' and m.start_date and m.end_date and m.total_fee_amount)
+        for offset in range(-90, 91):
+            day = today + timedelta(days=offset)
+            projection_labels.append(day.isoformat())
+            actual.append(actual_by_date.get(day.isoformat(), 0.0) if offset <= 0 else None)
+            day_projection = 0.0
+            if offset >= 0:
+                for mandate in active_mandates:
+                    if mandate.start_date <= day <= mandate.end_date:
+                        duration_days = max((mandate.end_date - mandate.start_date).days + 1, 1)
+                        day_projection += (mandate.total_fee_amount or 0.0) / duration_days
+            forecast.append(day_projection if offset >= 0 else None)
+
+        recent = []
+        for mandate in Mandate.search(domain, order='start_date desc, id desc', limit=8):
+            recent.append({
+                'id': mandate.id,
+                'name': mandate.name,
+                'owner': mandate.owner_id.display_name or '',
+                'type': self._get_mandate_selection_label('mandate_type', mandate.mandate_type),
+                'fee': format_money(mandate.total_fee_amount),
+                'start': mandate.start_date.isoformat() if mandate.start_date else False,
+                'end': mandate.end_date.isoformat() if mandate.end_date else False,
+                'state': mandate.state,
+                'state_label': self._get_mandate_selection_label('state', mandate.state),
+                'payment': mandate.invoice_payment_status,
+                'payment_label': self._get_mandate_selection_label('invoice_payment_status', mandate.invoice_payment_status),
+            })
+
+        return {
+            'operation_type': operation_type,
+            'title': f"Mandats de {label}",
+            'stat_bar': [
+                {'k': 'Total mandats', 'v': str(total), 'd': f"Mandats de {label}", 'cl': 'up',
+                 'action': {'model': 'property.mandate', 'domain': domain, 'name': f"Mandats de {label}"}},
+                {'k': 'Montant total honoraires', 'v': format_money(total_fees), 'd': 'Honoraires agence', 'cl': 'up'},
+                {'k': 'Mandats actifs', 'v': str(active_count), 'd': 'En cours', 'cl': 'up',
+                 'action': {'model': 'property.mandate', 'domain': domain + [('state', '=', 'active')], 'name': f"Mandats actifs - {label}"}},
+                {'k': 'Mandats terminés', 'v': str(completed_count), 'd': 'Clôturés', 'cl': 'up',
+                 'action': {'model': 'property.mandate', 'domain': domain + [('state', '=', 'completed')], 'name': f"Mandats terminés - {label}"}},
+                {'k': 'Factures non payées', 'v': str(unpaid_count), 'd': 'Non payé / partiel', 'cl': 'dn',
+                 'action': {'model': 'property.mandate', 'domain': domain + [('invoice_payment_status', 'in', ['not_paid', 'partial'])], 'name': f"Factures mandats non payées - {label}"}},
+                {'k': 'Expire sous 30 jours', 'v': str(expiring_count), 'd': 'À anticiper', 'cl': 'a',
+                 'action': {'model': 'property.mandate', 'domain': domain + [('state', '=', 'active'), ('end_date', '>=', today.isoformat()), ('end_date', '<=', until_30.isoformat())], 'name': f"Mandats expirant - {label}"}},
+            ],
+            'fees_by_type': fees_by_type,
+            'state_distribution': state_distribution,
+            'fees_timeline': {'labels': timeline_labels, 'values': [timeline[k] for k in timeline_labels]},
+            'projection': {'labels': projection_labels, 'actual': actual, 'forecast': forecast},
+            'recent': recent,
+            'has_data': total > 0,
         }
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -1412,10 +1694,10 @@ class RentalDashboardController(http.Controller):
         if not lead_exists:
             return {
                 'tiles': [
-                    {'k': 'Total Leads',      'v': '0', 'd': 'CRM not installed', 'cl': 'up'},
-                    {'k': 'Qualified',        'v': '0', 'd': '—', 'cl': 'up'},
-                    {'k': 'Converted',        'v': '0', 'd': '—', 'cl': 'up'},
-                    {'k': 'Conversion Rate',  'v': '0%', 'd': '—', 'cl': 'up'},
+                    {'k': 'Total des prospects',      'v': '0', 'd': 'CRM non installé', 'cl': 'up'},
+                    {'k': 'Qualifiés',                'v': '0', 'd': '—', 'cl': 'up'},
+                    {'k': 'Convertis',                'v': '0', 'd': '—', 'cl': 'up'},
+                    {'k': 'Taux de conversion',       'v': '0%', 'd': '—', 'cl': 'up'},
                 ],
                 'funnel':   [],
                 'by_source': [],
@@ -1423,7 +1705,7 @@ class RentalDashboardController(http.Controller):
             }
 
         if stage_exists:
-            cr.execute("""
+            cr.execute(f"""
                        SELECT COUNT(*) FILTER (WHERE l.active IS TRUE)                      AS total,
                               COUNT(*) FILTER (WHERE l.active IS TRUE
                                                AND l.probability >= 50
@@ -1434,10 +1716,11 @@ class RentalDashboardController(http.Controller):
                               COUNT(*) FILTER (WHERE l.create_date >= NOW() - INTERVAL '30 days') AS last_30
                        FROM crm_lead l
                             LEFT JOIN crm_stage s ON s.id = l.stage_id
-                       """)
+                       WHERE {self._company_sql('l')}
+                       """, self._company_param())
         else:
             # Fallback when crm.stage is absent — fall back to probability heuristics.
-            cr.execute("""
+            cr.execute(f"""
                        SELECT COUNT(*) FILTER (WHERE active IS TRUE)                          AS total,
                               COUNT(*) FILTER (WHERE active IS TRUE
                                                AND probability >= 50 AND probability < 100)  AS qualified,
@@ -1445,7 +1728,8 @@ class RentalDashboardController(http.Controller):
                               COUNT(*) FILTER (WHERE active IS FALSE AND probability < 100)  AS lost,
                               COUNT(*) FILTER (WHERE create_date >= NOW() - INTERVAL '30 days') AS last_30
                        FROM crm_lead
-                       """)
+                       WHERE {self._company_sql()}
+                       """, self._company_param())
         row = cr.dictfetchone() or {}
 
         total = int(row.get('total', 0) or 0)
@@ -1459,23 +1743,24 @@ class RentalDashboardController(http.Controller):
 
         # Source-wise distribution
         try:
-            cr.execute("""
-                       SELECT COALESCE(us.name, 'Direct / Unknown') AS source,
+            cr.execute(f"""
+                       SELECT COALESCE(us.name, 'Direct / inconnu') AS source,
                               COUNT(l.id)                           AS leads,
                               COUNT(l.id) FILTER (WHERE l.probability = 100) AS converted
                        FROM crm_lead l
                             LEFT JOIN utm_source us ON us.id = l.source_id
                        WHERE l.create_date >= NOW() - INTERVAL '6 months'
+                         AND {self._company_sql('l')}
                        GROUP BY us.name
                        ORDER BY leads DESC
                        LIMIT 8
-                       """)
+                       """, self._company_param())
             source_rows = cr.fetchall()
         except Exception:
             source_rows = []
 
         by_source = [
-            {'source': r[0] or 'Direct / Unknown',
+            {'source': r[0] or 'Direct / inconnu',
              'leads':     int(r[1] or 0),
              'converted': int(r[2] or 0)}
             for r in source_rows
@@ -1486,17 +1771,17 @@ class RentalDashboardController(http.Controller):
         # of those is "Won". We pass RAW counts so the funnel depicts
         # absolute drop-off, not relative percentages.
         funnel = [
-            {'stage': 'New',       'value': total},
-            {'stage': 'Qualified', 'value': qualified},   # qualified includes downstream
-            {'stage': 'Won',       'value': won},
+            {'stage': 'Nouveau',   'value': total},
+            {'stage': 'Qualifié',  'value': qualified},   # qualified includes downstream
+            {'stage': 'Gagné',     'value': won},
         ]
 
         tiles = [
-            {'k': 'Total Leads',     'v': str(total),     'd': f'{last_30} in last 30d', 'cl': 'up'},
-            {'k': 'Qualified',       'v': str(qualified), 'd': 'In-flight',               'cl': 'up'},
-            {'k': 'Converted (Won)', 'v': str(won),       'd': 'Closed-won',              'cl': 'up'},
-            {'k': 'Conversion Rate', 'v': f'{conversion_rate}%',
-             'd': f'{won}/{denom or 1} resolved', 'cl': 'up' if conversion_rate >= 20 else 'a'},
+            {'k': 'Total des prospects', 'v': str(total),     'd': f'{last_30} au cours des 30 derniers jours', 'cl': 'up'},
+            {'k': 'Qualifiés',           'v': str(qualified), 'd': 'En cours',                            'cl': 'up'},
+            {'k': 'Convertis (gagnés)',  'v': str(won),       'd': 'Gagnés',                              'cl': 'up'},
+            {'k': 'Taux de conversion',  'v': f'{conversion_rate}%',
+             'd': f'{won}/{denom or 1} traités', 'cl': 'up' if conversion_rate >= 20 else 'a'},
         ]
 
         return {
@@ -1518,49 +1803,52 @@ class RentalDashboardController(http.Controller):
 
     def _get_property_stat_bar(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) AS total,
                           COUNT(*)    FILTER (WHERE stage = 'on_lease')   AS rented, ROUND(100.0 * COUNT(*) FILTER (WHERE stage = 'on_lease') / NULLIF(COUNT(*), 0), 1) AS occ,
                           COUNT(*)    FILTER (WHERE stage = 'available')  AS vacant
                    FROM property_details
-                   """)
+                   WHERE {self._company_sql()}
+                   """, self._company_param())
         row = cr.dictfetchone() or {}
         return [
             {
-                'v': str(row.get('total', 0)), 'k': 'Total Properties', 'd': 'Active', 'cl': 'up',
-                'action': {'model': 'property.details', 'name': 'Total Properties', 'domain': []},
+                'v': str(row.get('total', 0)), 'k': 'Total des biens', 'd': 'Actif', 'cl': 'up',
+                'action': {'model': 'property.details', 'name': 'Total des biens', 'domain': []},
             },
             {
-                'v': f"{row.get('occ', 0)}%", 'k': 'Occupancy', 'd': 'Current', 'cl': 'up',
-                'action': {'model': 'property.details', 'name': 'Occupied Property', 'domain': [('stage', '=', 'on_lease')]},
+                'v': f"{row.get('occ', 0)}%", 'k': 'Occupation', 'd': 'Actuel', 'cl': 'up',
+                'action': {'model': 'property.details', 'name': 'Biens occupés', 'domain': [('stage', '=', 'on_lease')]},
             },
             {
-                'v': str(row.get('vacant', 0)), 'k': 'Vacant Units', 'd': 'Available', 'cl': 'dn',
-                'action': {'model': 'property.details', 'name': 'Occupancy Rate', 'domain': [('stage', '=', 'available')]},
+                'v': str(row.get('vacant', 0)), 'k': 'Biens disponibles', 'd': 'Disponibles', 'cl': 'dn',
+                'action': {'model': 'property.details', 'name': 'Biens disponibles', 'domain': [('stage', '=', 'available')]},
             },
         ]
 
     def _get_occupancy_by_type(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT type,
                           COUNT(*) FILTER (WHERE stage = 'on_lease') AS occupied, COUNT(*) AS total
                    FROM property_details
+                   WHERE {self._company_sql()}
                    GROUP BY type
                    ORDER BY total DESC
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [{'type': TYPE_LABELS.get(r[0]), 'occupied': int(r[1] or 0), 'total': int(r[2] or 0)} for r in rows]
 
     def _get_portfolio_mix(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT type, COUNT(*) AS cnt
                    FROM property_details
+                   WHERE {self._company_sql()}
                    GROUP BY type
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
-        return [{'type': TYPE_LABELS.get(r[0]) or 'other', 'count': int(r[1] or 0)} for r in rows]
+        return [{'type': TYPE_LABELS.get(r[0]) or 'Autre', 'count': int(r[1] or 0)} for r in rows]
 
     def _get_recent_properties(self):
         """
@@ -1582,15 +1870,16 @@ class RentalDashboardController(http.Controller):
                           p.create_date
                    FROM property_details p
                    WHERE p.create_date >= NOW() - INTERVAL '3 days'
+                     AND {self._company_sql('p')}
                    ORDER BY p.create_date DESC
                    LIMIT 24
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [
             {
                 'id':         r[0],
-                'name':       r[1] or 'Untitled',
-                'type':       TYPE_LABELS.get(r[2]) or 'Other',
+                'name':       r[1] or 'Sans titre',
+                'type':       TYPE_LABELS.get(r[2]) or 'Autre',
                 'stage':      r[3],
                 'sale_lease': r[4],
                 'amount':     float(r[5] or 0),
@@ -1609,25 +1898,27 @@ class RentalDashboardController(http.Controller):
         """Legacy rent-only stat bar — retained for older endpoints."""
         cr = request.env.cr
         today = date.today()
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(amount_untaxed_signed), 0) AS this_month_rev
                    FROM account_move am
                             LEFT JOIN tenancy_details td ON td.id = am.tenancy_id
                    WHERE am.move_type = 'out_invoice'
                      AND am.state = 'posted'
                      AND am.invoice_date >= %s
-                   """, (today.replace(day=1),))
+                     AND {self._company_sql('am')}
+                   """, (today.replace(day=1), *self._company_param()))
         rev = float((cr.fetchone() or [0])[0] or 0)
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*)
                    FROM tenancy_details
                    WHERE contract_type = 'running_contract'
-                   """)
+                     AND {self._company_sql()}
+                   """, self._company_param())
         active_cnt = int((cr.fetchone() or [0])[0])
         return [
-            {'v': str(active_cnt), 'k': 'Active Contracts', 'd': 'Running', 'cl': 'up'},
-            {'v': format_money(rev), 'k': 'Revenue / Month',
-             'd': 'This month', 'cl': 'up'},
+            {'v': str(active_cnt), 'k': 'Contrats actifs', 'd': 'En cours', 'cl': 'up'},
+            {'v': format_money(rev), 'k': 'Revenus / mois',
+             'd': 'Ce mois-ci', 'cl': 'up'},
         ]
 
     def _get_rental_contracts_stat_bar(self):
@@ -1641,54 +1932,56 @@ class RentalDashboardController(http.Controller):
         month_start = today.replace(day=1)
         exp_cutoff = today + timedelta(days=30)
 
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*)                                                    AS total,
                           COUNT(*) FILTER (WHERE contract_type = 'running_contract')  AS running,
                           COUNT(*) FILTER (WHERE duration_end_date BETWEEN %s AND %s) AS expiring,
                           COUNT(*) FILTER (WHERE duration_end_date < %s
                                            AND contract_type = 'running_contract')    AS overdue
                    FROM tenancy_details
-                   """, (today, exp_cutoff, today))
+                   WHERE {self._company_sql()}
+                   """, (today, exp_cutoff, today, *self._company_param()))
         contract_row = cr.dictfetchone() or {}
 
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(SUM(amount_untaxed_signed), 0)
                    FROM account_move am
                             LEFT JOIN tenancy_details td ON td.id = am.tenancy_id
                    WHERE am.move_type = 'out_invoice'
                      AND am.state = 'posted'
                      AND am.invoice_date >= %s
-                   """, (month_start,))
+                     AND {self._company_sql('am')}
+                   """, (month_start, *self._company_param()))
         month_revenue = float((cr.fetchone() or [0])[0] or 0)
 
         return [
             {'v': str(contract_row.get('running', 0) or 0),
-             'k': 'Active Contracts', 'd': 'Running', 'cl': 'up',
+             'k': 'Contrats actifs', 'd': 'En cours', 'cl': 'up',
              'action': {'model': 'tenancy.details', 'name': 'Active Contracts',
                         'domain': [('contract_type', '=', 'running_contract')]}},
             {'v': format_money(month_revenue),
-             'k': 'Revenue / Month', 'd': 'This month', 'cl': 'up',
+             'k': 'Revenus / mois', 'd': 'Ce mois-ci', 'cl': 'up',
              'action': {'model': 'account.move', 'name': 'Monthly Revenue',
                         'domain': [('move_type', '=', 'out_invoice'), ('state', '=', 'posted'),
                                    ('invoice_date', '>=', str(month_start))]}},
             {'v': str(contract_row.get('expiring', 0) or 0),
-             'k': 'Expiring (30d)', 'd': 'Action needed', 'cl': 'a',
+             'k': 'Expiration (30 j)', 'd': 'Action requise', 'cl': 'a',
              'action': {'model': 'tenancy.details', 'name': 'Expiring Contracts',
                         'domain': [('duration_end_date', '>=', str(today)),
                                    ('duration_end_date', '<=', str(exp_cutoff))]}},
             {'v': str(contract_row.get('overdue', 0) or 0),
-             'k': 'Overdue', 'd': 'Past end date', 'cl': 'dn',
+             'k': 'En retard', 'd': 'Date de fin dépassée', 'cl': 'dn',
              'action': {'model': 'tenancy.details', 'name': 'Overdue Contracts',
                         'domain': [('contract_type', '=', 'running_contract'),
                                    ('duration_end_date', '<', str(today))]}},
             {'v': str(contract_row.get('total', 0) or 0),
-             'k': 'Total Contracts', 'd': 'All time', 'cl': 'up',
+             'k': 'Total des contrats', 'd': 'Historique complet', 'cl': 'up',
              'action': {'model': 'tenancy.details', 'name': 'All Contracts', 'domain': []}},
         ]
 
     def _get_monthly_rent_collection(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(date_trunc('month', invoice_date), 'Mon YY')                                                         AS mo,
                           ROUND(SUM(amount_untaxed_signed) FILTER (WHERE payment_state = 'paid') / 100000, 1)                     AS collected,
                           ROUND(SUM(amount_untaxed_signed) FILTER (WHERE payment_state NOT IN ('paid','in_payment')) / 100000, 1) AS outstanding
@@ -1696,9 +1989,10 @@ class RentalDashboardController(http.Controller):
                    WHERE move_type = 'out_invoice'
                      AND state = 'posted'
                      AND invoice_date >= NOW() - INTERVAL '12 months'
+                     AND {self._company_sql()}
                    GROUP BY date_trunc('month', invoice_date)
                    ORDER BY date_trunc('month', invoice_date)
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return {
             'labels': [r[0] for r in rows],
@@ -1708,7 +2002,7 @@ class RentalDashboardController(http.Controller):
 
     def _get_collection_by_type(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(p.type, 'other')                                AS prop_type,
                           ROUND(100.0 *
                                 SUM(CASE WHEN am.payment_state = 'paid' THEN am.amount_untaxed_signed ELSE 0 END)
@@ -1720,10 +2014,13 @@ class RentalDashboardController(http.Controller):
                      AND am.state = 'posted'
                      AND am.invoice_date >= NOW() - INTERVAL '3 months'
                      AND td.contract_type = 'running_contract'
+                     AND {self._company_sql('am')}
+                     AND {self._company_sql('td')}
+                     AND {self._company_sql('p')}
                    GROUP BY COALESCE (p.type, 'other')
-                   """)
+                   """, (*self._company_param(), *self._company_param(), *self._company_param()))
         rows = cr.fetchall()
-        return [{'type': TYPE_LABELS.get(r[0], 'Other'), 'rate': float(r[1] or 0)} for r in rows]
+        return [{'type': TYPE_LABELS.get(r[0], 'Autre'), 'rate': float(r[1] or 0)} for r in rows]
 
     def _get_rent_table(self):
         cr = request.env.cr
@@ -1740,8 +2037,9 @@ class RentalDashboardController(http.Controller):
                             LEFT JOIN property_details pd ON pd.id = td.property_id
                             LEFT JOIN res_partner rp ON rp.id = td.tenancy_id
                    WHERE td.contract_type = 'running_contract'
+                     AND {self._company_sql('td')}
                    ORDER BY td.duration_end_date NULLS LAST LIMIT 20
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [
             {
@@ -1762,46 +2060,49 @@ class RentalDashboardController(http.Controller):
 
     def _get_sales_stat_bar(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) AS total,
                           COUNT(*)    FILTER (WHERE stage = 'sold') AS sold, COALESCE(SUM(sale_price) FILTER(WHERE stage = 'sold'), 0) AS revenue
                    FROM property_vendor
-                   """)
+                   WHERE {self._company_sql()}
+                   """, self._company_param())
         row = cr.dictfetchone() or {}
         rev = float(row.get('revenue', 0) or 0)
         return [
-            {'v': str(row.get('total', 0)), 'k': 'Total Sales Contracts', 'd': 'All stages', 'cl': 'up',
+            {'v': str(row.get('total', 0)), 'k': 'Total contrats de vente', 'd': 'Toutes les étapes', 'cl': 'up',
              'action': {'model': 'property.vendor', 'name': 'All Sale Contracts', 'domain': []}},
-            {'v': str(row.get('sold', 0)), 'k': 'Properties Sold', 'd': 'Completed', 'cl': 'up',
-             'action': {'model': 'property.vendor', 'name': 'Properties Sold', 'domain': [('stage', '=', 'sold')]}},
-            {'v': format_money(rev), 'k': 'Sales Revenue', 'd': 'Total', 'cl': 'up',
-             'action': {'model': 'property.vendor', 'name': 'Sales Revenue', 'domain': [('stage', '=', 'sold')]}},
+            {'v': str(row.get('sold', 0)), 'k': 'Biens vendus', 'd': 'Terminé', 'cl': 'up',
+             'action': {'model': 'property.vendor', 'name': 'Biens vendus', 'domain': [('stage', '=', 'sold')]}},
+            {'v': format_money(rev), 'k': 'Revenus des ventes', 'd': 'Total', 'cl': 'up',
+             'action': {'model': 'property.vendor', 'name': 'Revenus des ventes', 'domain': [('stage', '=', 'sold')]}},
         ]
 
     def _get_sales_funnel(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT stage, COUNT(*) AS cnt
                    FROM property_vendor
+                   WHERE {self._company_sql()}
                    GROUP BY stage
                    ORDER BY COUNT(*) DESC
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
-        stage_labels = {'booked': 'Booked', 'sold': 'Sold', 'refund': 'Refund', 'cancel': 'Cancelled',
-                        'locked': 'Locked'}
-        return [{'stage': stage_labels.get(r[0], r[0] or 'Other'), 'count': int(r[1] or 0)} for r in rows]
+        stage_labels = {'booked': 'Réservé', 'sold': 'Vendu', 'refund': 'Remboursé', 'cancel': 'Annulé',
+                        'locked': 'Verrouillé'}
+        return [{'stage': stage_labels.get(r[0], r[0] or 'Autre'), 'count': int(r[1] or 0)} for r in rows]
 
     def _get_sales_by_type(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(pd.type, 'other') AS prop_type,
                           COUNT(pv.id)               AS cnt
                    FROM property_vendor pv
                             LEFT JOIN property_details pd ON pd.id = pv.property_id
+                   WHERE {self._company_sql('pv')}
                    GROUP BY COALESCE(pd.type, 'other')
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
-        return [{'type': TYPE_LABELS.get(r[0], 'Other'), 'count': int(r[1] or 0)} for r in rows]
+        return [{'type': TYPE_LABELS.get(r[0], 'Autre'), 'count': int(r[1] or 0)} for r in rows]
 
     def _get_sales_table(self):
         cr = request.env.cr
@@ -1816,12 +2117,13 @@ class RentalDashboardController(http.Controller):
                    FROM property_vendor pv
                             LEFT JOIN property_details pd ON pd.id = pv.property_id
                             LEFT JOIN res_partner rp2 ON rp2.id = pv.broker_id
+                   WHERE {self._company_sql('pv')}
                    ORDER BY pv.date DESC LIMIT 20
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [
             {
-                'property': r[0] or 'N/A', 'type': TYPE_LABELS.get(r[1], 'Residential'),
+                'property': r[0] or 'N/A', 'type': TYPE_LABELS.get(r[1], 'Résidentiel'),
                 'price': format_money(float(r[2] or 0)), 'stage': r[3] or 'booked',
                 'agent': r[4] or 'N/A',
                 'id': r[5] or 0,
@@ -1836,7 +2138,7 @@ class RentalDashboardController(http.Controller):
 
     def _get_maintenance_stat_bar(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(mr.id) AS total,
 
                           COUNT(mr.id)    FILTER (
@@ -1849,22 +2151,23 @@ class RentalDashboardController(http.Controller):
 
                    FROM maintenance_request mr
                             LEFT JOIN maintenance_stage ms ON mr.stage_id = ms.id
-                   """)
+                   WHERE {self._company_sql('mr')}
+                   """, self._company_param())
         row = cr.dictfetchone() or {}
         return [
-            {'v': str(row.get('total', 0)), 'k': 'Total Requests', 'd': 'All time', 'cl': 'up',
+            {'v': str(row.get('total', 0)), 'k': 'Total des demandes', 'd': 'Historique complet', 'cl': 'up',
              'action': {'model': 'maintenance.request', 'name': 'All Maintenance Requests', 'domain': []}},
-            {'v': str(row.get('open_cnt', 0)), 'k': 'Open Tickets', 'd': 'Active', 'cl': 'dn',
+            {'v': str(row.get('open_cnt', 0)), 'k': 'Tickets ouverts', 'd': 'Actif', 'cl': 'dn',
              'action': {'model': 'maintenance.request', 'name': 'Open Tickets',
                         'domain': [('stage_id.done', '=', False)]}},
-            {'v': str(row.get('done_cnt', 0)), 'k': 'Resolved', 'd': 'Completed', 'cl': 'up',
+            {'v': str(row.get('done_cnt', 0)), 'k': 'Résolus', 'd': 'Terminé', 'cl': 'up',
              'action': {'model': 'maintenance.request', 'name': 'Resolved Tickets',
                         'domain': [('stage_id.done', '=', True)]}},
         ]
 
     def _get_ticket_trends(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(date_trunc('month', mr.create_date), 'Mon YY') AS mo,
 
                           COUNT(mr.id)                                              FILTER (
@@ -1879,10 +2182,11 @@ class RentalDashboardController(http.Controller):
                             LEFT JOIN maintenance_stage ms ON mr.stage_id = ms.id
 
                    WHERE mr.create_date >= NOW() - INTERVAL '12 months'
+                     AND {self._company_sql('mr')}
 
                    GROUP BY date_trunc('month', mr.create_date)
                    ORDER BY date_trunc('month', mr.create_date)
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return {
             'labels': [r[0] for r in rows],
@@ -1893,15 +2197,16 @@ class RentalDashboardController(http.Controller):
 
     def _get_maintenance_by_category(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COALESCE(maintenance_type, 'other') AS cat,
                           COUNT(*)                            AS cnt
                    FROM maintenance_request
+                   WHERE {self._company_sql()}
                    GROUP BY maintenance_type
                    ORDER BY cnt DESC
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
-        return [{'cat': MAINTENANCE_TYPE.get(r[0], 'Other'), 'count': int(r[1] or 0)} for r in rows]
+        return [{'cat': MAINTENANCE_TYPE.get(r[0], 'Autre'), 'count': int(r[1] or 0)} for r in rows]
 
     def _get_maintenance_table(self):
         cr = request.env.cr
@@ -1921,14 +2226,15 @@ class RentalDashboardController(http.Controller):
                             LEFT JOIN res_users ru ON ru.id = mr.user_id
                             LEFT JOIN res_partner rp ON rp.id = ru.partner_id
 
+                   WHERE {self._company_sql('mr')}
                    ORDER BY mr.create_date DESC LIMIT 20
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [
             {
                 'name': r[0] or 'N/A', 'property': r[1] or 'N/A',
                 'category': MAINTENANCE_TYPE.get(r[2]) or 'Corrective', 'priority': r[3] or '0',
-                'assigned': r[4] or 'Unassigned', 'stage': r[5] or 'new', 'id': r[6] or 0
+                'assigned': r[4] or 'Non assigné', 'stage': r[5] or 'Nouveau', 'id': r[6] or 0
             }
             for r in rows
         ]
@@ -1940,24 +2246,25 @@ class RentalDashboardController(http.Controller):
     def _get_contracts_stat_bar(self):
         cr = request.env.cr
         today = date.today()
-        cr.execute("""
+        cr.execute(f"""
                    SELECT COUNT(*) AS total,
                           COUNT(*)    FILTER (WHERE contract_type = 'running_contract') AS running, COUNT(*) FILTER (WHERE duration_end_date BETWEEN %s AND %s) AS expiring, COUNT(*) FILTER (WHERE duration_end_date < %s AND contract_type = 'running_contract') AS overdue
                    FROM tenancy_details
-                   """, (today, today + timedelta(days=30), today))
+                   WHERE {self._company_sql()}
+                   """, (today, today + timedelta(days=30), today, *self._company_param()))
         row = cr.dictfetchone() or {}
         exp_cutoff = today + timedelta(days=30)
         return [
-            {'v': str(row.get('total', 0)), 'k': 'Total Contracts', 'd': 'All time', 'cl': 'up',
+            {'v': str(row.get('total', 0)), 'k': 'Total des contrats', 'd': 'Historique complet', 'cl': 'up',
              'action': {'model': 'tenancy.details', 'name': 'All Contracts', 'domain': []}},
-            {'v': str(row.get('running', 0)), 'k': 'Running', 'd': 'Active', 'cl': 'up',
+            {'v': str(row.get('running', 0)), 'k': 'En cours', 'd': 'Actif', 'cl': 'up',
              'action': {'model': 'tenancy.details', 'name': 'Running Contracts',
                         'domain': [('contract_type', '=', 'running_contract')]}},
-            {'v': str(row.get('expiring', 0)), 'k': 'Expiring (30d)', 'd': 'Action needed', 'cl': 'a',
+            {'v': str(row.get('expiring', 0)), 'k': 'Expiration (30 j)', 'd': 'Action requise', 'cl': 'a',
              'action': {'model': 'tenancy.details', 'name': 'Expiring Contracts',
                         'domain': [('duration_end_date', '>=', str(today)),
                                    ('duration_end_date', '<=', str(exp_cutoff))]}},
-            {'v': str(row.get('overdue', 0)), 'k': 'Overdue', 'd': 'Past end date', 'cl': 'dn',
+            {'v': str(row.get('overdue', 0)), 'k': 'En retard', 'd': 'Date de fin dépassée', 'cl': 'dn',
              'action': {'model': 'tenancy.details', 'name': 'Overdue Contracts',
                         'domain': [('contract_type', '=', 'running_contract'),
                                    ('duration_end_date', '<', str(today))]}},
@@ -1967,7 +2274,7 @@ class RentalDashboardController(http.Controller):
         """Return contract timeline data for Gantt chart (first 30 contracts)."""
         cr = request.env.cr
         today = date.today()
-        cr.execute("""
+        cr.execute(f"""
                    SELECT td.tenancy_seq AS seq,
                           rp.name        AS tenant,
                           td.start_date,
@@ -1979,8 +2286,9 @@ class RentalDashboardController(http.Controller):
                             LEFT JOIN property_details pd ON pd.id = td.property_id
                    WHERE td.start_date IS NOT NULL
                      AND td.contract_type IN ('running_contract', 'new_contract')
+                     AND {self._company_sql('td')}
                    ORDER BY td.start_date DESC LIMIT 30
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         result = []
         for r in rows:
@@ -2016,8 +2324,9 @@ class RentalDashboardController(http.Controller):
                    FROM tenancy_details td
                             LEFT JOIN res_partner rp ON rp.id = td.tenancy_id
                             LEFT JOIN property_details pd ON pd.id = td.property_id
+                   WHERE {self._company_sql('td')}
                    ORDER BY td.write_date DESC LIMIT 20
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [
             {
@@ -2053,6 +2362,7 @@ class RentalDashboardController(http.Controller):
                 FROM property_vendor pv
                 WHERE pv.is_any_broker = TRUE
                   AND pv.broker_id IS NOT NULL
+                  AND {self._company_sql('pv')}
                 GROUP BY pv.broker_id
             ),
             rent_side AS (
@@ -2061,6 +2371,7 @@ class RentalDashboardController(http.Controller):
                 FROM tenancy_details td
                 WHERE td.is_any_broker = TRUE
                   AND td.broker_id IS NOT NULL
+                  AND {self._company_sql('td')}
                 GROUP BY td.broker_id
             )
             SELECT COUNT(DISTINCT broker_id)        AS broker_count,
@@ -2070,17 +2381,17 @@ class RentalDashboardController(http.Controller):
                 UNION ALL
                 SELECT broker_id, commission FROM rent_side
             ) combined
-        """)
+        """, (*self._company_param(), *self._company_param()))
         row = cr.dictfetchone() or {}
         broker_count = int(row.get('broker_count', 0) or 0)
         total_commission = float(row.get('total_commission', 0) or 0)
         return [
             {'v': str(broker_count),
-             'k': 'Active Brokers', 'd': 'Sale + Rent', 'cl': 'up',
+             'k': 'Courtiers actifs', 'd': 'Vente + location', 'cl': 'up',
              'action': {'model': 'res.partner', 'name': 'Active Brokers',
                         'domain': [('user_type', '=', 'broker')]}},
             {'v': format_money(total_commission),
-             'k': 'Total Commission', 'd': 'Sale + Rent · All time', 'cl': 'up',
+             'k': 'Commission totale', 'd': 'Vente + location · historique complet', 'cl': 'up',
              'action': {'model': 'property.vendor', 'name': 'Commission — Sale Contracts',
                         'domain': [('is_any_broker', '=', True)]}},
         ]
@@ -2096,6 +2407,7 @@ class RentalDashboardController(http.Controller):
                               0                                         AS rent_deals
                        FROM property_vendor pv
                        WHERE pv.is_any_broker = TRUE AND pv.broker_id IS NOT NULL
+                         AND {self._company_sql('pv')}
                        GROUP BY pv.broker_id
                        UNION ALL
                        SELECT td.broker_id,
@@ -2104,6 +2416,7 @@ class RentalDashboardController(http.Controller):
                               COUNT(td.id)                              AS rent_deals
                        FROM tenancy_details td
                        WHERE td.is_any_broker = TRUE AND td.broker_id IS NOT NULL
+                         AND {self._company_sql('td')}
                        GROUP BY td.broker_id
                    )
                    SELECT rp.name,
@@ -2114,7 +2427,7 @@ class RentalDashboardController(http.Controller):
                    GROUP BY rp.name
                    ORDER BY total_deals DESC
                    LIMIT 10
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
         rows = cr.fetchall()
         return [
             {
@@ -2143,6 +2456,7 @@ class RentalDashboardController(http.Controller):
                           COALESCE(SUM({broker_sale_commission_expr()}), 0) AS total_commission
                    FROM property_vendor
                    WHERE is_any_broker = TRUE
+                     AND {self._company_sql()}
                    GROUP BY commission_type
                    UNION ALL
                    SELECT 'Rent'                           AS source,
@@ -2155,8 +2469,9 @@ class RentalDashboardController(http.Controller):
                           COALESCE(SUM({broker_rent_commission_expr()}), 0)     AS total_commission
                    FROM tenancy_details
                    WHERE is_any_broker = TRUE
+                     AND {self._company_sql()}
                    GROUP BY commission_type
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
         rows = cr.fetchall()
         breakdown = [
             {
@@ -2175,8 +2490,8 @@ class RentalDashboardController(http.Controller):
         return {
             'breakdown': breakdown,
             'by_source': [
-                {'name': 'Sale Commission',   'value': round(sale_total, 2)},
-                {'name': 'Rental Commission', 'value': round(rent_total, 2)},
+                {'name': 'Commission vente',    'value': round(sale_total, 2)},
+                {'name': 'Commission location', 'value': round(rent_total, 2)},
             ],
             'totals': {
                 'sale':  sale_total,
@@ -2199,6 +2514,7 @@ class RentalDashboardController(http.Controller):
                               MAX(pv.date)                              AS last_deal
                        FROM property_vendor pv
                        WHERE pv.is_any_broker = TRUE AND pv.broker_id IS NOT NULL
+                         AND {self._company_sql('pv')}
                        GROUP BY pv.broker_id
                        UNION ALL
                        SELECT td.broker_id,
@@ -2207,6 +2523,7 @@ class RentalDashboardController(http.Controller):
                               MAX(td.start_date)                        AS last_deal
                        FROM tenancy_details td
                        WHERE td.is_any_broker = TRUE AND td.broker_id IS NOT NULL
+                         AND {self._company_sql('td')}
                        GROUP BY td.broker_id
                    )
                    SELECT rp.id,
@@ -2220,7 +2537,7 @@ class RentalDashboardController(http.Controller):
                    GROUP BY rp.id, rp.name, rp.phone
                    ORDER BY total_deals DESC
                    LIMIT 20
-                   """)
+                   """, (*self._company_param(), *self._company_param()))
         rows = cr.fetchall()
         return [
             {
@@ -2255,7 +2572,8 @@ class RentalDashboardController(http.Controller):
                      AND p.latitude != ''
                      AND p.longitude IS NOT NULL
                      AND p.longitude != ''
-                   """)
+                     AND {self._company_sql('p')}
+                   """, self._company_param())
         rows = cr.fetchall()
         result = []
         for r in rows:
@@ -2265,7 +2583,7 @@ class RentalDashboardController(http.Controller):
                 if lat is None or lng is None:
                     continue
                 result.append({
-                    'id': r[0], 'name': r[1], 'type': TYPE_LABELS.get(r[2], 'Residential'),
+                    'id': r[0], 'name': r[1], 'type': TYPE_LABELS.get(r[2], 'Résidentiel'),
                     'stage': r[3], 'lat': lat, 'lng': lng,
                     'rent': float(r[6] or 0), 'price': float(r[7] or 0),
                     'city': r[8] or '', 'area': float(r[9] or 0),
@@ -2276,15 +2594,16 @@ class RentalDashboardController(http.Controller):
 
     def _get_regional_data(self):
         cr = request.env.cr
-        cr.execute("""
-                   SELECT COALESCE(pr.name, 'Unassigned') AS region,
+        cr.execute(f"""
+                   SELECT COALESCE(pr.name, 'Non assigné') AS region,
                           COUNT(pd.id)                    AS total,
                           COUNT(pd.id)                       FILTER (WHERE pd.stage = 'on_lease') AS rented
                    FROM property_details pd
                             LEFT JOIN property_region pr ON pr.id = pd.region_id
+                   WHERE {self._company_sql('pd')}
                    GROUP BY pr.name
                    ORDER BY total DESC LIMIT 10
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [{'region': r[0], 'total': int(r[1] or 0), 'rented': int(r[2] or 0)} for r in rows]
 
@@ -2295,31 +2614,34 @@ class RentalDashboardController(http.Controller):
                           COUNT(*)                                AS cnt
                    FROM property_details p
                             LEFT JOIN property_res_city rc ON rc.id = p.city_id
+                   WHERE {self._company_sql('p')}
                    GROUP BY rc.id, rc.name
                    ORDER BY cnt DESC LIMIT 8
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [{'city': r[0], 'count': int(r[1] or 0)} for r in rows]
 
     def _get_density_data(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT type, COUNT(*) AS cnt
                    FROM property_details
+                   WHERE {self._company_sql()}
                    GROUP BY type
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return [{'type': r[0] or 'other', 'count': int(r[1] or 0)} for r in rows]
 
     def _get_city_trend(self):
         cr = request.env.cr
-        cr.execute("""
+        cr.execute(f"""
                    SELECT TO_CHAR(date_trunc('month', create_date), 'Mon YY') AS mo,
                           COUNT(*)                                            AS new_props
                    FROM property_details
                    WHERE create_date >= NOW() - INTERVAL '12 months'
+                     AND {self._company_sql()}
                    GROUP BY date_trunc('month', create_date)
                    ORDER BY date_trunc('month', create_date)
-                   """)
+                   """, self._company_param())
         rows = cr.fetchall()
         return {'labels': [r[0] for r in rows], 'data': [int(r[1] or 0) for r in rows]}

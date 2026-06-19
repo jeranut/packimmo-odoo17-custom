@@ -176,8 +176,9 @@ export class RentalDashboard extends Component {
             themeName: "Teal",
             data: {},
             pageData: {},
+            companyName: "",
             currency: {symbol: '₹', position: 'before', name: 'INR'},
-            today: new Date().toLocaleDateString("en-IN", {
+            today: new Date().toLocaleDateString("fr-FR", {
                 weekday: "long",
                 day: "numeric",
                 month: "long",
@@ -267,6 +268,7 @@ export class RentalDashboard extends Component {
             if (data && data.currency) {
                 this.state.currency = data.currency;
             }
+            this.state.companyName = (data && data.company_name) || "";
         } catch (e) {
             console.error("Dashboard load error:", e);
         } finally {
@@ -283,11 +285,18 @@ export class RentalDashboard extends Component {
             maintenance: "/rental/dashboard/maintenance",
             brokers: "/rental/dashboard/brokers",
             map: "/rental/dashboard/map",
+            mandates_rent: "/rental/dashboard/mandates",
+            mandates_sale: "/rental/dashboard/mandates",
         };
         const ep = endpoints[page];
         if (!ep) return;
         try {
-            const d = await this.rpc(ep, {});
+            const params = page === "mandates_rent"
+                ? {operation_type: "rent"}
+                : page === "mandates_sale"
+                    ? {operation_type: "sale"}
+                    : {};
+            const d = await this.rpc(ep, params);
             this.state.pageData = {...this.state.pageData, [page]: d};
         } catch (e) {
             console.error(`Page data error (${page}):`, e);
@@ -344,17 +353,48 @@ export class RentalDashboard extends Component {
         }
     }
 
+    _mandateDomain(operationType, extra = []) {
+        return [["operation_type", "=", operationType], ...extra];
+    }
+
+    openMandates(operationType, extra = [], name = "") {
+        const label = operationType === "sale" ? "Mandats de vente" : "Mandats de location";
+        this.openOdooView("property.mandate", this._mandateDomain(operationType, extra), "list", name || label);
+    }
+
     // ── RIGHT PANEL CLICK HANDLERS ─────────────────────────────────────────────
     onRightPanelKpiClick(rk) {
         if (!rk) return;
         switch (rk.lbl) {
             case 'Portfolio Value':
-                this.openOdooView('property.details', [], 'list', 'Properties');
+            case 'Valeur du portefeuille':
+                this.openOdooView('property.details', [
+                    '|',
+                    ['stage', '=', 'available'],
+                    '&',
+                    ['mandate_id.state', '=', 'active'],
+                    ['mandate_id.mandate_type', '=', 'exclusive_absolute'],
+                ], 'list', 'Valeur du portefeuille');
+                break;
+            case 'Honoraires potentiels':
+                this.openOdooView('property.mandate', [
+                    ['state', 'in', ['active', 'completed']],
+                    ['mandate_type', 'in', ['simple', 'exclusive', 'exclusive_absolute']],
+                ], 'list', 'Honoraires potentiels');
+                break;
+            case 'Honoraires encaissés':
+                this.openOdooView('property.mandate', [
+                    ['state', '!=', 'cancelled'],
+                    ['invoice_payment_status', '=', 'paid'],
+                    ['mandate_type', 'in', ['simple', 'exclusive', 'exclusive_absolute']],
+                ], 'list', 'Honoraires encaissés');
                 break;
             case 'Avg Lease Term':
+            case 'Durée moyenne des baux':
                 this.openOdooView('tenancy.details', [['contract_type', '=', 'running_contract']], 'list', 'Active Contracts');
                 break;
             case 'Pending Invoices':
+            case 'Factures en attente':
                 this.openOdooView('account.move', [['move_type', '=', 'out_invoice'], ['state', '=', 'posted'], ['payment_state', 'not in', ['paid', 'in_payment']]], 'list', 'Pending Invoices');
                 break;
         }
@@ -391,7 +431,7 @@ export class RentalDashboard extends Component {
     onCommissionBreakdownClick(source) {
         if (!source) return;
         const lc = source.toLowerCase();
-        if (lc.includes('sale')) {
+        if (lc.includes('sale') || lc.includes('vente')) {
             this.openOdooView('property.vendor', [], 'list', `Sale Commission — ${source}`);
         } else {
             this.openOdooView('tenancy.details', [], 'list', `Rental Commission — ${source}`);
@@ -401,7 +441,12 @@ export class RentalDashboard extends Component {
     // ── CHART CLICK HANDLERS ───────────────────────────────────────────────────
     // Reverse-map display label → internal Selection value for property.type
     _typeFromLabel(label) {
-        const map = {'Land': 'land', 'Residential': 'residential', 'Commercial': 'commercial', 'Industrial': 'industrial'};
+        const map = {
+            'Land': 'land', 'Terrain': 'land',
+            'Residential': 'residential', 'Résidentiel': 'residential',
+            'Commercial': 'commercial',
+            'Industrial': 'industrial', 'Industriel': 'industrial',
+        };
         return map[label] || label;
     }
 
@@ -411,13 +456,13 @@ export class RentalDashboard extends Component {
         const domain = [['type', '=', internal]];
         if (isOccupied) domain.push(['stage', '=', 'on_lease']);
         else domain.push(['stage', '!=', 'on_lease']);
-        this.openOdooView('property.details', domain, 'list', `Properties — ${typeLabel}`);
+        this.openOdooView('property.details', domain, 'list', `Biens — ${typeLabel}`);
     }
 
     onRegionClick(region) {
         if (!region) return;
-        let regionDomain = region === 'Unassigned' ? [['region_id', '=', false]] : [['region_id.name', '=', region]]
-        this.openOdooView('property.details', regionDomain, 'list', `Properties — ${region}`);
+        let regionDomain = (region === 'Unassigned' || region === 'Non assigné') ? [['region_id', '=', false]] : [['region_id.name', '=', region]]
+        this.openOdooView('property.details', regionDomain, 'list', `Biens — ${region}`);
     }
 
     onTicketTrendClick(status) {
@@ -440,31 +485,40 @@ export class RentalDashboard extends Component {
         const name = params.name;
         switch (name) {
             case 'Rent Income':
+            case 'Revenus locatifs':
             case 'Deposit Income':
+            case 'Cautions':
             case 'Maintenance Income':
+            case 'Revenus maintenance':
             case 'Other Rent Income':
+            case 'Autres revenus locatifs':
                 this.openOdooView('rent.invoice', [], 'list', name);
                 break;
             case 'Sales Income':
-                this.openOdooView('property.vendor', [['stage', '=', 'sold']], 'list', 'Sales Income');
+            case 'Revenus de vente':
+                this.openOdooView('property.vendor', [['stage', '=', 'sold']], 'list', 'Revenus de vente');
                 break;
             case 'Total Revenue':
-                this.openOdooView('account.move', [['move_type', '=', 'out_invoice'], ['state', '=', 'posted']], 'list', 'Total Revenue');
+            case 'Revenus totaux':
+                this.openOdooView('account.move', [['move_type', '=', 'out_invoice'], ['state', '=', 'posted']], 'list', 'Revenus totaux');
                 break;
             case 'Broker Commission':
-                this.openOdooView('property.vendor', [['is_any_broker', '=', true]], 'list', 'Broker Commissions');
+            case 'Commission courtier':
+                this.openOdooView('property.vendor', [['is_any_broker', '=', true]], 'list', 'Commissions courtier');
                 break;
             case 'Operating Expenses':
+            case 'Charges opérationnelles':
                 this.openOdooView('account.move', [['move_type', '=', 'in_invoice'], ['state', '=', 'posted']], 'list', 'Operating Expenses');
                 break;
             case 'Net Profit':
+            case 'Bénéfice net':
                 this.openOdooView('account.move', [['move_type', '=', 'out_invoice'], ['state', '=', 'posted']], 'list', 'Revenue');
                 break;
         }
     }
 
     onGaugeClick() {
-        this.openOdooView('property.details', [['stage', '=', 'on_lease']], 'list', 'Occupied Properties');
+        this.openOdooView('property.details', [['stage', '=', 'on_lease']], 'list', 'Biens occupés');
     }
 
     onRevenueMixClick(typeName) {
@@ -485,7 +539,13 @@ export class RentalDashboard extends Component {
 
     onSalesFunnelClick(stageName) {
         if (!stageName) return;
-        const stageMap = {'Booked': 'booked', 'Sold': 'sold', 'Refund': 'refund', 'Cancelled': 'cancel', 'Locked': 'locked'};
+        const stageMap = {
+            'Booked': 'booked', 'Réservé': 'booked',
+            'Sold': 'sold', 'Vendu': 'sold',
+            'Refund': 'refund', 'Remboursé': 'refund',
+            'Cancelled': 'cancel', 'Annulé': 'cancel',
+            'Locked': 'locked', 'Verrouillé': 'locked',
+        };
         const internal = stageMap[stageName];
         const domain = internal ? [['stage', '=', internal]] : [];
         this.openOdooView('property.vendor', domain, 'list', `Sale Contracts — ${stageName}`);
@@ -503,7 +563,7 @@ export class RentalDashboard extends Component {
     }
 
     // ── CHART EMPTY STATE ──────────────────────────────────────────────────────
-    _showEmptyChart(el, msg = "No data available") {
+    _showEmptyChart(el, msg = "Aucune donnée disponible") {
         if (!el) return;
         el.innerHTML = `<div class="rm-chart-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg><span>${msg}</span></div>`;
     }
@@ -586,6 +646,10 @@ export class RentalDashboard extends Component {
             case "map":
                 this._renderMapCharts(pd);
                 break;
+            case "mandates_rent":
+            case "mandates_sale":
+                this._renderMandateCharts(pd);
+                break;
         }
     }
 
@@ -596,7 +660,7 @@ export class RentalDashboard extends Component {
         kpis.forEach((k, i) => {
             const el = document.getElementById(`sp${i}`);
             if (el && (!k.d || !k.d.length)) {
-                this._showEmptyChart(el.parentElement || el, "No data");
+                this._showEmptyChart(el.parentElement || el, "Aucune donnée");
                 return;
             } else if (!el) {
                 return;
@@ -634,7 +698,7 @@ export class RentalDashboard extends Component {
         const el = document.getElementById("sankeyC");
         if (!el) return;
         if (!window.echarts || !data || !(data.links && data.links.length)) {
-            this._showEmptyChart(el, "No revenue flow data yet");
+            this._showEmptyChart(el, "Aucun flux de revenus pour le moment");
             return;
         }
         const ec = echarts.init(el);
@@ -669,7 +733,7 @@ export class RentalDashboard extends Component {
         const el = document.getElementById("radarC");
         if (!el) return;
         if (!window.echarts || !data || !(Array.isArray(data.current) && data.current.some(v => v))) {
-            this._showEmptyChart(el, "No portfolio health data yet");
+            this._showEmptyChart(el, "Aucune donnée de santé du portefeuille");
             return;
         }
         const ec = echarts.init(el);
@@ -681,12 +745,12 @@ export class RentalDashboard extends Component {
         const indicators = (Array.isArray(data.indicators) && data.indicators.length)
             ? data.indicators
             : [
-                {name: "Occupancy",   max: 100},
-                {name: "Yield",       max: 100},
+                {name: "Occupation",  max: 100},
+                {name: "Rendement",   max: 100},
                 {name: "Collection",  max: 100},
                 {name: "Maintenance", max: 100},
-                {name: "Contracts",   max: 100},
-                {name: "Growth",      max: 100},
+                {name: "Contrats",    max: 100},
+                {name: "Croissance",  max: 100},
             ];
 
         ec.setOption({
@@ -700,7 +764,7 @@ export class RentalDashboard extends Component {
                 },
             },
             legend: {
-                data: ["Current", "Previous"],
+                data: ["Actuel", "Précédent"],
                 bottom: 4,
                 textStyle: {color: t.soft, fontSize: 10},
                 itemWidth: 12, itemHeight: 6,
@@ -718,15 +782,15 @@ export class RentalDashboard extends Component {
             },
             series: [
                 {
-                    type: "radar", name: "Current", data: [{
-                        value: data.current, name: "Current",
+                    type: "radar", name: "Actuel", data: [{
+                        value: data.current, name: "Actuel",
                         itemStyle: {color: t.c1}, areaStyle: {color: hexToRgba(t.c1, 0.22)},
                         lineStyle: {color: t.c1, width: 2.5},
                     }],
                 },
                 {
-                    type: "radar", name: "Previous", data: [{
-                        value: data.previous, name: "Previous",
+                    type: "radar", name: "Précédent", data: [{
+                        value: data.previous, name: "Précédent",
                         itemStyle: {color: t.c2}, areaStyle: {color: hexToRgba(t.c2, 0.12)},
                         lineStyle: {color: t.c2, width: 2, type: "dashed"},
                     }],
@@ -741,7 +805,7 @@ export class RentalDashboard extends Component {
         const el = document.getElementById("fcC");
         if (!el) return;
         if (!window.Chart || !data || !(data.labels && data.labels.length)) {
-            this._showEmptyChart(el.parentElement || el, "No revenue forecast data yet");
+            this._showEmptyChart(el.parentElement || el, "Aucune prévision de revenus");
             return;
         }
         const t = this.state.theme;
@@ -756,11 +820,11 @@ export class RentalDashboard extends Component {
                 labels: data.labels,
                 datasets: [
                     {
-                        label: "Actuals", data: data.actuals, borderColor: t.c1, backgroundColor: g,
+                        label: "Réalisé", data: data.actuals, borderColor: t.c1, backgroundColor: g,
                         borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: t.c1
                     },
                     {
-                        label: "Projected", data: data.projected, borderColor: t.c2, borderWidth: 2,
+                        label: "Projeté", data: data.projected, borderColor: t.c2, borderWidth: 2,
                         borderDash: [6, 3], tension: 0.4, fill: false, pointRadius: 3, pointBackgroundColor: t.c2
                     },
                 ],
@@ -797,7 +861,7 @@ export class RentalDashboard extends Component {
         const el = document.getElementById("gaugeC");
         if (!el) return;
         if (!window.echarts || !data) {
-            this._showEmptyChart(el, "No occupancy data yet");
+            this._showEmptyChart(el, "Aucune donnée d’occupation");
             return;
         }
         const ec = echarts.init(el);
@@ -837,7 +901,7 @@ export class RentalDashboard extends Component {
                     offsetCenter: [0, "0%"],
                     formatter: v => `${v}%`,
                 },
-                data: [{value: data.occupancy, name: "Occupancy"}],
+                data: [{value: data.occupancy, name: "Occupation"}],
             }],
         });
         ec.on("click", () => this.onGaugeClick());
@@ -849,7 +913,7 @@ export class RentalDashboard extends Component {
         const el = document.getElementById("mixC");
         if (!el) return;
         if (!window.echarts || !data || !data.length || data.every(d => !d.revenue)) {
-            this._showEmptyChart(el, "No revenue mix data yet");
+            this._showEmptyChart(el, "Aucune répartition des revenus");
             return;
         }
         const ec = echarts.init(el);
@@ -879,7 +943,7 @@ export class RentalDashboard extends Component {
     _renderRpSpark(rp) {
         const el = document.getElementById("rpSparkCanvas");
         if (el && (!window.Chart || !rp || !rp.spark_data || !rp.spark_data.length)) {
-            this._showEmptyChart(el.parentElement || el, "No data yet");
+            this._showEmptyChart(el.parentElement || el, "Aucune donnée pour le moment");
             return;
         } else if (!el) {
             return;
@@ -910,7 +974,7 @@ export class RentalDashboard extends Component {
     _renderMaintDonut(data) {
         const el = document.getElementById("rpDonut");
         if (el && (!window.echarts || !data || !data.length || data.every(d => !d.value))) {
-            this._showEmptyChart(el, "No maintenance data yet");
+            this._showEmptyChart(el, "Aucune donnée de maintenance");
             return;
         } else if (!el) {
             return;
@@ -942,7 +1006,7 @@ export class RentalDashboard extends Component {
         // Funnel (New → Qualified → Won) — ECharts funnel
         const fEl = document.getElementById("leadFunnelC");
         if (fEl && (!window.echarts || !Array.isArray(data.funnel) || data.funnel.every(f => !f.value))) {
-            this._showEmptyChart(fEl, "No pipeline data yet");
+            this._showEmptyChart(fEl, "Aucune donnée de pipeline");
         } else if (fEl && window.echarts && Array.isArray(data.funnel)) {
             const ec = echarts.init(fEl);
             ec.setOption({
@@ -975,7 +1039,7 @@ export class RentalDashboard extends Component {
         // Source-wise leads — horizontal bar with converted overlay
         const sEl = document.getElementById("leadSourceC");
         if (sEl && (!window.Chart || !Array.isArray(data.by_source) || !data.by_source.length)) {
-            this._showEmptyChart(sEl.parentElement || sEl, "No lead source data yet");
+            this._showEmptyChart(sEl.parentElement || sEl, "Aucune donnée de source prospect");
         } else if (sEl && window.Chart && Array.isArray(data.by_source)) {
             const labels = data.by_source.map(s => s.source);
             const totals = data.by_source.map(s => s.leads);
@@ -986,13 +1050,13 @@ export class RentalDashboard extends Component {
                     labels,
                     datasets: [
                         {
-                            label: "Leads",
+                            label: "Prospects",
                             data: totals,
                             backgroundColor: hexToRgba(t.c1, 0.25),
                             borderRadius: 4,
                         },
                         {
-                            label: "Converted",
+                            label: "Convertis",
                             data: converted,
                             backgroundColor: t.c1,
                             borderRadius: 4,
@@ -1025,7 +1089,7 @@ export class RentalDashboard extends Component {
         // Conversion rate gauge — clean single-ring donut with center %
         const cEl = document.getElementById("leadConvC");
         if (cEl && (!window.echarts || !data.totals)) {
-            this._showEmptyChart(cEl, "No conversion data yet");
+            this._showEmptyChart(cEl, "Aucune donnée de conversion");
         } else if (cEl && window.echarts && data.totals) {
             const ec = echarts.init(cEl);
             const rate = data.totals.conversion_rate || 0;
@@ -1057,7 +1121,7 @@ export class RentalDashboard extends Component {
                         fontSize: 26, fontWeight: 800, color: t.c1,
                         formatter: v => `${v}%`,
                     },
-                    data: [{value: rate, name: `${data.totals.won}/${(data.totals.won + data.totals.lost + data.totals.qualified) || 1} resolved`}],
+                    data: [{value: rate, name: `${data.totals.won}/${(data.totals.won + data.totals.lost + data.totals.qualified) || 1} traités`}],
                 }],
             });
             ec.on("click", () => this.onLeadConvClick());
@@ -1071,7 +1135,7 @@ export class RentalDashboard extends Component {
         // Occupancy by type — stacked bar
         const ptEl = document.getElementById("ptypeC");
         if (ptEl && (!window.Chart || !pd.occupancy_by_type || !pd.occupancy_by_type.length)) {
-            this._showEmptyChart(ptEl.parentElement || ptEl, "No occupancy data by type yet");
+            this._showEmptyChart(ptEl.parentElement || ptEl, "Aucune occupation par type");
         } else if (ptEl && window.Chart && pd.occupancy_by_type) {
             const labels = pd.occupancy_by_type.map(d => d.type);
             const occ = pd.occupancy_by_type.map(d => d.occupied);
@@ -1081,8 +1145,8 @@ export class RentalDashboard extends Component {
                 data: {
                     labels,
                     datasets: [
-                        {label: "Occupied", data: occ, backgroundColor: t.c1, borderRadius: 5},
-                        {label: "Vacant", data: vacant, backgroundColor: hexToRgba(t.c1, 0.15), borderRadius: 5},
+                        {label: "Occupé", data: occ, backgroundColor: t.c1, borderRadius: 5},
+                        {label: "Disponible", data: vacant, backgroundColor: hexToRgba(t.c1, 0.15), borderRadius: 5},
                     ],
                 },
                 options: {
@@ -1103,7 +1167,7 @@ export class RentalDashboard extends Component {
         // Portfolio mix — pie
         const pmEl = document.getElementById("pmixC");
         if (pmEl && (!window.echarts || !pd.portfolio_mix || !pd.portfolio_mix.length)) {
-            this._showEmptyChart(pmEl, "No portfolio mix data yet");
+            this._showEmptyChart(pmEl, "Aucune composition du portefeuille");
         } else if (pmEl && window.echarts && pd.portfolio_mix) {
             const ec = echarts.init(pmEl);
             ec.setOption({
@@ -1129,7 +1193,7 @@ export class RentalDashboard extends Component {
         const moneyAxis = axisMoneyFormatter(currency);
         const rentEl = document.getElementById("rentC");
         if (rentEl && (!window.Chart || !pd.monthly_collection || !(pd.monthly_collection.labels && pd.monthly_collection.labels.length))) {
-            this._showEmptyChart(rentEl.parentElement || rentEl, "No rent collection data yet");
+            this._showEmptyChart(rentEl.parentElement || rentEl, "Aucune donnée d’encaissement des loyers");
         } else if (rentEl && window.Chart && pd.monthly_collection) {
             const mc = pd.monthly_collection;
             const g = rentEl.getContext("2d").createLinearGradient(0, 0, 0, 260);
@@ -1140,9 +1204,9 @@ export class RentalDashboard extends Component {
                 data: {
                     labels: mc.labels,
                     datasets: [
-                        {label: "Collected", data: mc.collected, backgroundColor: t.c1, borderRadius: 5},
+                        {label: "Encaissé", data: mc.collected, backgroundColor: t.c1, borderRadius: 5},
                         {
-                            label: "Outstanding",
+                            label: "Restant dû",
                             data: mc.outstanding,
                             backgroundColor: hexToRgba(t.c1, 0.18),
                             borderRadius: 5,
@@ -1170,7 +1234,7 @@ export class RentalDashboard extends Component {
         // Collection rate donut
         const rdEl = document.getElementById("rentD");
         if (rdEl && (!window.echarts || !pd.collection_by_type || !pd.collection_by_type.length)) {
-            this._showEmptyChart(rdEl, "No collection rate data yet");
+            this._showEmptyChart(rdEl, "Aucun taux d’encaissement");
         } else if (rdEl && window.echarts && pd.collection_by_type) {
             const ec = echarts.init(rdEl);
             ec.setOption({
@@ -1194,7 +1258,7 @@ export class RentalDashboard extends Component {
         const t = this.state.theme;
         const funnelEl = document.getElementById("funnelC");
         if (funnelEl && (!window.echarts || !pd.funnel || pd.funnel.every(f => !f.count))) {
-            this._showEmptyChart(funnelEl, "No sales pipeline data yet");
+            this._showEmptyChart(funnelEl, "Aucune donnée de pipeline de vente");
         } else if (funnelEl && window.echarts && pd.funnel) {
             const ec = echarts.init(funnelEl);
             ec.setOption({
@@ -1214,7 +1278,7 @@ export class RentalDashboard extends Component {
         }
         const sdEl = document.getElementById("salesD");
         if (sdEl && (!window.echarts || !pd.sales_by_type || !pd.sales_by_type.length)) {
-            this._showEmptyChart(sdEl, "No sales by type data yet");
+            this._showEmptyChart(sdEl, "Aucune vente par type");
         } else if (sdEl && window.echarts && pd.sales_by_type) {
             const ec = echarts.init(sdEl);
             ec.setOption({
@@ -1238,7 +1302,7 @@ export class RentalDashboard extends Component {
         const t = this.state.theme;
         const maintEl = document.getElementById("maintC");
         if (maintEl && (!window.Chart || !pd.ticket_trends || !(pd.ticket_trends.labels && pd.ticket_trends.labels.length))) {
-            this._showEmptyChart(maintEl.parentElement || maintEl, "No maintenance ticket data yet");
+            this._showEmptyChart(maintEl.parentElement || maintEl, "Aucune donnée de tickets de maintenance");
         } else if (maintEl && window.Chart && pd.ticket_trends) {
             const tt = pd.ticket_trends;
             const ch = new Chart(maintEl, {
@@ -1246,9 +1310,9 @@ export class RentalDashboard extends Component {
                 data: {
                     labels: tt.labels,
                     datasets: [
-                        {label: "Open", data: tt.open, backgroundColor: t.c1, borderRadius: 4},
-                        {label: "Resolved", data: tt.resolved, backgroundColor: "#1E8449", borderRadius: 4},
-                        {label: "Escalated", data: tt.escalated, backgroundColor: "#e53935", borderRadius: 4},
+                        {label: "Ouvert", data: tt.open, backgroundColor: t.c1, borderRadius: 4},
+                        {label: "Résolu", data: tt.resolved, backgroundColor: "#1E8449", borderRadius: 4},
+                        {label: "Escaladé", data: tt.escalated, backgroundColor: "#e53935", borderRadius: 4},
                     ],
                 },
                 options: {
@@ -1267,7 +1331,7 @@ export class RentalDashboard extends Component {
         }
         const maintPEl = document.getElementById("maintP");
         if (maintPEl && (!window.echarts || !pd.by_category || !pd.by_category.length)) {
-            this._showEmptyChart(maintPEl, "No category data yet");
+            this._showEmptyChart(maintPEl, "Aucune donnée par catégorie");
         } else if (maintPEl && window.echarts && pd.by_category) {
             const ec = echarts.init(maintPEl);
             ec.setOption({
@@ -1292,7 +1356,7 @@ export class RentalDashboard extends Component {
         // Gantt-style horizontal bars
         const ganttEl = document.getElementById("cgC");
         if (ganttEl && (!window.echarts || !pd.gantt || !pd.gantt.length)) {
-            this._showEmptyChart(ganttEl, "No contract timeline data yet");
+            this._showEmptyChart(ganttEl, "Aucune chronologie de contrat");
         } else if (ganttEl && window.echarts && pd.gantt) {
             const ec = echarts.init(ganttEl);
             const items = pd.gantt.slice(0, 20);
@@ -1331,7 +1395,7 @@ export class RentalDashboard extends Component {
         // ── Performance bar — horizontal, deals + commission dual series
         const bpEl = document.getElementById("bpC");
         if (bpEl && (!window.Chart || !pd.broker_performance || !pd.broker_performance.length)) {
-            this._showEmptyChart(bpEl.parentElement || bpEl, "No broker performance data yet");
+            this._showEmptyChart(bpEl.parentElement || bpEl, "Aucune performance courtier");
         } else if (bpEl && window.Chart && pd.broker_performance) {
             const bp = pd.broker_performance;
             const ch = new Chart(bpEl, {
@@ -1340,7 +1404,7 @@ export class RentalDashboard extends Component {
                     labels: bp.map(b => b.broker),
                     datasets: [
                         {
-                            label: "Deals",
+                            label: "Transactions",
                             data: bp.map(b => b.deals),
                             backgroundColor: t.c1,
                             borderRadius: 4,
@@ -1367,7 +1431,7 @@ export class RentalDashboard extends Component {
         // ── Commission breakdown donut — Sale vs Rental split
         const cbEl = document.getElementById("bcD");
         if (cbEl && (!window.echarts || !pd.commission_breakdown || !(pd.commission_breakdown.by_source || []).some(s => (s.value || 0) > 0))) {
-            this._showEmptyChart(cbEl, "No commission data yet");
+            this._showEmptyChart(cbEl, "Aucune donnée de commission");
         } else if (cbEl && window.echarts && pd.commission_breakdown) {
             const cb = pd.commission_breakdown;
             const bySource = (cb.by_source || []).filter(s => (s.value || 0) > 0);
@@ -1474,7 +1538,7 @@ export class RentalDashboard extends Component {
                 const popup = `
                     <div class="rm-map-popup">
                         <div class="rm-map-popup-header">
-                            <div class="rm-map-popup-name">${this._escapeHtml(p.name || "Untitled")}</div>
+                            <div class="rm-map-popup-name">${this._escapeHtml(p.name || "Sans titre")}</div>
                             <span class="rm-pill rm-pill-${this.statusPill(p.stage)}">${this._escapeHtml(this.statusLabel(p.stage))}</span>
                         </div>
                         <div class="rm-map-popup-meta">
@@ -1504,7 +1568,7 @@ export class RentalDashboard extends Component {
         // ── Regional distribution bar
         const regEl = document.getElementById("regC");
         if (regEl && (!window.Chart || !pd.regional || !pd.regional.length)) {
-            this._showEmptyChart(regEl.parentElement || regEl, "No regional data yet");
+            this._showEmptyChart(regEl.parentElement || regEl, "Aucune donnée régionale");
         } else if (regEl && window.Chart && pd.regional) {
             const ch = new Chart(regEl, {
                 type: "bar",
@@ -1518,7 +1582,7 @@ export class RentalDashboard extends Component {
                             borderRadius: 4,
                         },
                         {
-                            label: "Rented",
+                            label: "Loués",
                             data: pd.regional.map(r => r.rented),
                             backgroundColor: t.c1,
                             borderRadius: 4,
@@ -1542,7 +1606,7 @@ export class RentalDashboard extends Component {
         // ── City distribution donut
         const cityEl = document.getElementById("cityC");
         if (cityEl && (!window.echarts || !pd.city_distribution || !pd.city_distribution.length)) {
-            this._showEmptyChart(cityEl, "No city distribution data yet");
+            this._showEmptyChart(cityEl, "Aucune répartition par ville");
         } else if (cityEl && window.echarts && pd.city_distribution) {
             const ec = echarts.init(cityEl);
             ec.setOption({
@@ -1562,6 +1626,130 @@ export class RentalDashboard extends Component {
             });
             ec.on("click", (params) => this.onCityDonutClick(params.name));
             this._charts.push(ec);
+        }
+    }
+
+    // ── MANDATE DASHBOARDS (ApexCharts) ──────────────────────────────────────
+    _renderMandateCharts(pd) {
+        if (!pd) return;
+        const t = this.state.theme;
+        const currency = this.state.currency;
+        const colors = [t.c1, t.c2, "#f59e0b", "#1E8449", "#C62828", "#3949AB"];
+
+        const chartDefaults = {
+            fontFamily: "system-ui, sans-serif",
+            foreColor: t.soft,
+            toolbar: {show: false},
+            animations: {enabled: true, easing: "easeinout", speed: 450},
+        };
+
+        const typeEl = document.getElementById("mandateFeeByTypeC");
+        const feesByType = pd.fees_by_type || [];
+        if (typeEl && (!window.ApexCharts || !feesByType.length || feesByType.every(d => !d.amount))) {
+            this._showEmptyChart(typeEl, "Aucun honoraire par type");
+        } else if (typeEl && window.ApexCharts) {
+            const ch = new ApexCharts(typeEl, {
+                chart: {...chartDefaults, type: "bar", height: 280},
+                series: [{name: "Honoraires", data: feesByType.map(d => d.amount || 0)}],
+                labels: feesByType.map(d => d.type || "Non défini"),
+                colors: [t.c1],
+                plotOptions: {bar: {horizontal: true, borderRadius: 6, barHeight: "52%"}},
+                dataLabels: {enabled: false},
+                grid: {borderColor: hexToRgba(t.c1, 0.08)},
+                xaxis: {
+                    categories: feesByType.map(d => d.type || "Non défini"),
+                    labels: {formatter: v => formatMoney(v, currency)},
+                },
+                tooltip: {y: {formatter: v => formatMoney(v, currency)}},
+            });
+            ch.render();
+            this._charts.push(ch);
+        }
+
+        const stateEl = document.getElementById("mandateStateDonutC");
+        const states = pd.state_distribution || [];
+        if (stateEl && (!window.ApexCharts || !states.length || states.every(d => !d.value))) {
+            this._showEmptyChart(stateEl, "Aucune répartition par état");
+        } else if (stateEl && window.ApexCharts) {
+            const ch = new ApexCharts(stateEl, {
+                chart: {...chartDefaults, type: "donut", height: 280},
+                series: states.map(d => d.value || 0),
+                labels: states.map(d => d.state || "Non défini"),
+                colors,
+                legend: {position: "bottom", fontSize: "11px"},
+                dataLabels: {enabled: false},
+                stroke: {width: 3, colors: ["#fff"]},
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: "68%",
+                            labels: {
+                                show: true,
+                                total: {show: true, label: "Total", color: t.soft},
+                                value: {color: t.text, fontWeight: 800},
+                            },
+                        },
+                    },
+                },
+            });
+            ch.render();
+            this._charts.push(ch);
+        }
+
+        const timelineEl = document.getElementById("mandateFeesTimelineC");
+        const timeline = pd.fees_timeline || {};
+        if (timelineEl && (!window.ApexCharts || !(timeline.labels || []).length)) {
+            this._showEmptyChart(timelineEl, "Aucune évolution d'honoraires");
+        } else if (timelineEl && window.ApexCharts) {
+            const ch = new ApexCharts(timelineEl, {
+                chart: {...chartDefaults, type: "area", height: 300},
+                series: [{name: "Honoraires", data: timeline.values || []}],
+                colors: [t.c1],
+                fill: {
+                    type: "gradient",
+                    gradient: {shadeIntensity: 0.2, opacityFrom: 0.28, opacityTo: 0.02, stops: [0, 95]},
+                },
+                stroke: {curve: "smooth", width: 3},
+                dataLabels: {enabled: false},
+                grid: {borderColor: hexToRgba(t.c1, 0.08)},
+                xaxis: {categories: timeline.labels || [], labels: {rotate: -35}},
+                yaxis: {labels: {formatter: v => formatMoney(v, currency)}},
+                tooltip: {y: {formatter: v => formatMoney(v, currency)}},
+            });
+            ch.render();
+            this._charts.push(ch);
+        }
+
+        const projectionEl = document.getElementById("mandateProjectionC");
+        const projection = pd.projection || {};
+        if (projectionEl && (!window.ApexCharts || !(projection.labels || []).length)) {
+            this._showEmptyChart(projectionEl, "Aucune projection disponible");
+        } else if (projectionEl && window.ApexCharts) {
+            const ch = new ApexCharts(projectionEl, {
+                chart: {...chartDefaults, type: "line", height: 300},
+                series: [
+                    {name: "Réel", data: projection.actual || []},
+                    {name: "Prévision", data: projection.forecast || []},
+                ],
+                colors: [t.c1, t.c2],
+                stroke: {curve: "smooth", width: [3, 3], dashArray: [0, 6]},
+                markers: {size: 0, hover: {size: 4}},
+                dataLabels: {enabled: false},
+                grid: {borderColor: hexToRgba(t.c1, 0.08)},
+                xaxis: {
+                    categories: projection.labels || [],
+                    tickAmount: 6,
+                    labels: {formatter: v => this.fmtDate(v)},
+                },
+                yaxis: {labels: {formatter: v => formatMoney(v, currency)}},
+                legend: {position: "top", horizontalAlign: "right"},
+                tooltip: {
+                    x: {formatter: v => this.fmtDate(v)},
+                    y: {formatter: v => formatMoney(v, currency)},
+                },
+            });
+            ch.render();
+            this._charts.push(ch);
         }
     }
 
@@ -1613,10 +1801,13 @@ export class RentalDashboard extends Component {
         // drills into the exact same records the number represents.
         switch (tile.k) {
             case "Total Leads":
+            case "Total des prospects":
                 return [["active", "=", true]];
             case "Qualified":
+            case "Qualifiés":
                 return [["active", "=", true], ["probability", ">=", 50]];
             case "Converted (Won)":
+            case "Convertis (gagnés)":
                 return [["stage_id.is_won", "=", true]];
             default:
                 return [];
@@ -1627,7 +1818,7 @@ export class RentalDashboard extends Component {
         const g = this.state.data.occupancy_gauge || {};
         const rented = g.rented || 0;
         const total = g.total || 0;
-        return total ? `${rented} / ${total} units` : "No units yet";
+        return total ? `${rented} / ${total} unités` : "Aucune unité pour le moment";
     }
 
     get currencyInfo() {
@@ -1642,8 +1833,28 @@ export class RentalDashboard extends Component {
         return this.state.pageData[this.state.currentPage] || {};
     }
 
+    get pageTitle() {
+        const map = {
+            dashboard: "TABLEAU DE BORD",
+            properties: "Biens",
+            rent: "Locations et contrats",
+            sales: "Ventes",
+            maintenance: "Maintenance",
+            brokers: "Courtiers",
+            map: "Vue cartographique",
+            mandates_rent: "Mandats de location",
+            mandates_sale: "Mandats de vente",
+        };
+        if (this.state.currentPage === "dashboard") {
+            return this.state.companyName
+                ? `TABLEAU DE BORD - ${this.state.companyName}`
+                : "TABLEAU DE BORD";
+        }
+        return map[this.state.currentPage] || this.state.currentPage.charAt(0).toUpperCase() + this.state.currentPage.slice(1);
+    }
+
     fmtDate(d) {
-        return d ? new Date(d).toLocaleDateString("en-IN") : "—";
+        return d ? new Date(d).toLocaleDateString("fr-FR") : "—";
     }
 
     statusPill(s) {
@@ -1658,17 +1869,20 @@ export class RentalDashboard extends Component {
 
     statusLabel(s) {
         const map = {
-            running_contract: "Running", new_contract: "Draft",
-            cancel_contract: "Cancelled", close_contract: "Closed", expire_contract: "Expired",
-            on_lease: "Rented", available: "Available", booked: "Booked", sold: "Sold",
-            paid: "Paid", not_paid: "Overdue", in_payment: "In Payment",
-            done: "Done", active: "Active", expiring: "Expiring", overdue: "Overdue",
+            running_contract: "En cours", new_contract: "Brouillon",
+            cancel_contract: "Annulé", close_contract: "Clôturé", expire_contract: "Expiré",
+            on_lease: "Loué", available: "Disponible", booked: "Réservé", sold: "Vendu",
+            paid: "Payé", not_paid: "En retard", in_payment: "En paiement",
+            done: "Terminé", active: "Actif", expiring: "Expire bientôt", overdue: "En retard",
+            draft: "Brouillon", submitted: "À valider", approved: "Approuvé",
+            completed: "Terminé", expired: "Expiré", cancelled: "Annulé",
+            partial: "Partiel", reversed: "Annulé",
         };
         return map[s] || String(s ?? "").replace(/_/g, " ");
     }
 
     priorityLabel(p) {
-        return ["Low", "Normal", "High", "Critical"][parseInt(p) || 0];
+        return ["Faible", "Normale", "Élevée", "Critique"][parseInt(p) || 0];
     }
 
     daysDiff(d) {
@@ -1676,7 +1890,7 @@ export class RentalDashboard extends Component {
     }
 
     kpiTrend(kpi) {
-        const isChurn = kpi.l === "Churn Rate";
+        const isChurn = kpi.l === "Churn Rate" || kpi.l === "Taux de résiliation";
         if (!kpi.tr) return null;
         const positive = isChurn ? kpi.tr < 0 : kpi.tr > 0;
         return {cls: positive ? "up" : "dn", arrow: positive ? "↑" : "↓", val: Math.abs(kpi.tr)};
