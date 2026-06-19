@@ -96,6 +96,11 @@ class PropertyFloorLevel(models.Model):
 class PropertyDetails(models.Model):
     _inherit = "property.details"
 
+    property_seq = fields.Char(
+        readonly=True,
+        copy=False,
+    )
+
     floor_occupation = fields.Selection(
         [
             ("plain_pied", "Bien de plain-pied"),

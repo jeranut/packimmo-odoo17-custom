@@ -27,6 +27,13 @@ class PropertyProject(models.Model):
         help="Exemple : 6176-H",
     )
 
+    project_sequence = fields.Char(
+        default="New",
+        required=False,
+        readonly=True,
+        copy=False,
+    )
+
     @api.model
     def fields_get(self, allfields=None, attributes=None):
         res = super().fields_get(allfields, attributes)
@@ -67,8 +74,33 @@ class PropertyProject(models.Model):
     def _onchange_region_city_sync(self):
         self._sync_region_city()
 
+    def _get_project_sequence_prefix(self, property_type):
+        return {
+            "residential": "RES",
+            "commercial": "COM",
+            "land": "TER",
+        }.get(property_type)
+
+    def _get_project_sequence(self, property_type, sequence_date):
+        prefix = self._get_project_sequence_prefix(property_type)
+        if not prefix:
+            return "New"
+
+        sequence_date = fields.Date.to_date(sequence_date) or fields.Date.context_today(self)
+        return f"{prefix}/{sequence_date:%m}/{sequence_date:%Y}/"
+
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            sequence = vals.get("project_sequence")
+            if sequence and sequence not in ("New", "Nouveau"):
+                continue
+
+            vals["project_sequence"] = self._get_project_sequence(
+                vals.get("property_type"),
+                vals.get("date_of_project") or fields.Date.context_today(self),
+            )
+
         records = super().create(vals_list)
         records._sync_region_city()
         return records

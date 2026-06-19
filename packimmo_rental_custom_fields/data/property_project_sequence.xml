@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="seq_property_project_residential" model="ir.sequence">
+        <field name="name">Property Project Residential</field>
+        <field name="code">property.project.residential</field>
+        <field name="prefix">RES/%(month)s/%(year)s/</field>
+        <field name="padding">0</field>
+        <field name="use_date_range" eval="False" />
+        <field name="company_id" eval="False" />
+    </record>
+
+    <record id="seq_property_project_commercial" model="ir.sequence">
+        <field name="name">Property Project Commercial</field>
+        <field name="code">property.project.commercial</field>
+        <field name="prefix">COM/%(month)s/%(year)s/</field>
+        <field name="padding">0</field>
+        <field name="use_date_range" eval="False" />
+        <field name="company_id" eval="False" />
+    </record>
+
+    <record id="seq_property_project_land" model="ir.sequence">
+        <field name="name">Property Project Terrain</field>
+        <field name="code">property.project.land</field>
+        <field name="prefix">TER/%(month)s/%(year)s/</field>
+        <field name="padding">0</field>
+        <field name="use_date_range" eval="False" />
+        <field name="company_id" eval="False" />
+    </record>
+
+</odoo>

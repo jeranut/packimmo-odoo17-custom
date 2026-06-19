@@ -43,6 +43,12 @@
             <xpath expr="//field[@name='property_title_number']" position="attributes">
                 <attribute name="required">property_type == 'land'</attribute>
             </xpath>
+
+            <xpath expr="//field[@name='project_sequence']" position="attributes">
+                <attribute name="readonly">1</attribute>
+                <attribute name="required">0</attribute>
+            </xpath>
+
             <xpath expr="//field[@name='region_id']" position="attributes">
                 <attribute name="options">{'no_create': False, 'no_quick_create': False,
                     'no_create_edit': False}</attribute>
@@ -56,6 +62,18 @@
 
         </field>
     </record>
+
+    <record id="property_project_view_tree_readonly_sequence" model="ir.ui.view">
+        <field name="name">property.project.view.tree.readonly.sequence</field>
+        <field name="model">property.project</field>
+        <field name="inherit_id" ref="rental_management.property_project_view_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='project_sequence']" position="attributes">
+                <attribute name="readonly">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="property_project_view_form_allow_create_edit_landlord" model="ir.ui.view">
             <field name="name">property.project.view.form.allow.create.edit.landlord</field>
             <field name="model">property.project</field>

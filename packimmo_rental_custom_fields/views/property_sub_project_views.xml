@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="create_sub_project_wizard_view_form_readonly_code" model="ir.ui.view">
+        <field name="name">create.sub.project.wizard.view.form.readonly.code</field>
+        <field name="model">subproject.creation</field>
+        <field name="inherit_id" ref="rental_management.create_sub_project_wizard_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='project_sequence']" position="attributes">
+                <attribute name="readonly">1</attribute>
+                <attribute name="required">0</attribute>
+                <attribute name="force_save">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="property_sub_project_view_form_readonly_sequence" model="ir.ui.view">
+        <field name="name">property.sub.project.view.form.readonly.sequence</field>
+        <field name="model">property.sub.project</field>
+        <field name="inherit_id" ref="rental_management.property_sub_project_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='project_sequence']" position="attributes">
+                <attribute name="readonly">1</attribute>
+                <attribute name="required">0</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="action_property_sub_project_morcellement" model="ir.actions.act_window">
         <field name="name">Morcellements</field>
         <field name="res_model">property.sub.project</field>

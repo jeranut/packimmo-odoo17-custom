@@ -201,10 +201,8 @@ class ProjectTask(models.Model):
         if mandate.state == "completed":
             if mandate.mandate_type == "exclusive_absolute":
                 return self._get_contract_stage(project)
-            if mandate.mandate_type == "exclusive":
+            if mandate.mandate_type in ("exclusive", "simple"):
                 return self._get_inventory_stage(project)
-            if mandate.mandate_type == "simple":
-                return self._get_end_stage(project)
 
         return self.env["project.task.type"]
 

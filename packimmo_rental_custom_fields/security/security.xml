@@ -54,6 +54,63 @@
     <field name="perm_unlink" eval="0"/>
 </record>
 
+<!-- Multi-entreprise : compléments aux règles standard rental_management -->
+<record id="rule_sale_invoice_company_only" model="ir.rule">
+    <field name="name">Sale Invoice - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_sale_invoice"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_penalty_invoice_company_only" model="ir.rule">
+    <field name="name">Penalty Invoice - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_penalty_invoice"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_sale_inquiry_company_only" model="ir.rule">
+    <field name="name">Sale Inquiry - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_sale_inquiry"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_tenancy_inquiry_company_only" model="ir.rule">
+    <field name="name">Tenancy Inquiry - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_tenancy_inquiry"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_maintenance_request_company_only" model="ir.rule">
+    <field name="name">Maintenance Request - Multi Company</field>
+    <field name="model_id" ref="maintenance.model_maintenance_request"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_maintenance_product_line_company_only" model="ir.rule">
+    <field name="name">Maintenance Product Line - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_maintenance_product_line"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_tenancy_service_line_company_only" model="ir.rule">
+    <field name="name">Tenancy Service Line - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_tenancy_service_line"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
+<record id="rule_contract_extra_service_line_company_only" model="ir.rule">
+    <field name="name">Contract Extra Service Line - Multi Company</field>
+    <field name="model_id" ref="rental_management.model_contract_extra_service_line"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+</record>
+
 
 
 </odoo>

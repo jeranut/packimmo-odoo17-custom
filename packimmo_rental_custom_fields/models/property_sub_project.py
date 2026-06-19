@@ -1,4 +1,4 @@
-from odoo import api, models,fields
+from odoo import api, fields, models
 
 
 class PropertySubProject(models.Model):
@@ -12,6 +12,12 @@ class PropertySubProject(models.Model):
             ("land", "Terrain"),
         ],
         string="Property Type",
+    )
+
+    project_sequence = fields.Char(
+        readonly=True,
+        required=False,
+        copy=False,
     )
 
     @api.model
@@ -44,6 +50,7 @@ class PropertySubProject(models.Model):
             vals = rec._get_address_vals_from_project(rec.property_project_id)
             for field_name, value in vals.items():
                 rec[field_name] = value
+            rec.project_sequence = rec.property_project_id.project_sequence
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -52,6 +59,7 @@ class PropertySubProject(models.Model):
             if project_id:
                 project = self.env["property.project"].browse(project_id)
                 vals.update(self._get_address_vals_from_project(project))
+                vals["project_sequence"] = project.project_sequence
 
         return super().create(vals_list)
 
@@ -61,5 +69,6 @@ class PropertySubProject(models.Model):
         if "property_project_id" in vals and vals.get("property_project_id"):
             project = self.env["property.project"].browse(vals["property_project_id"])
             vals.update(self._get_address_vals_from_project(project))
+            vals["project_sequence"] = project.project_sequence
 
         return super().write(vals)
