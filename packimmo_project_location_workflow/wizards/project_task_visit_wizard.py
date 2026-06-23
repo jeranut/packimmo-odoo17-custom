@@ -18,6 +18,7 @@ class ProjectTaskVisitWizard(models.TransientModel):
     visit_client_id = fields.Many2one(
         "res.partner",
         string="Client",
+        domain=[("user_type", "=", "customer")],
         required=True,
     )
 
@@ -29,12 +30,7 @@ class ProjectTaskVisitWizard(models.TransientModel):
         """Enregistre la visite, crée une sous-tâche et déplace la tâche vers VISITE."""
         self.ensure_one()
 
-        visit_stage = self.env["project.task.type"].search([
-            ("name", "ilike", "VISITE"),
-            "|",
-            ("project_ids", "in", [self.task_id.project_id.id]),
-            ("project_ids", "=", False),
-        ], limit=1)
+        visit_stage = self.task_id._get_visit_stage(self.task_id.project_id)
 
         if not visit_stage:
             raise UserError(_("L'étape VISITE est introuvable."))
@@ -45,9 +41,12 @@ class ProjectTaskVisitWizard(models.TransientModel):
             "stage_id": visit_stage.id,
         })
 
-        self.env["project.task"].create({
+        self.env["project.task"].with_context(
+            packimmo_allow_workflow_task_create=True
+        ).create({
             "name": _("Visite - %s") % self.visit_client_id.display_name,
             "project_id": self.task_id.project_id.id,
+            "company_id": self.task_id.company_id.id,
             "parent_id": self.task_id.id,
             "display_in_project": False,
             "visit_client_id": self.visit_client_id.id,

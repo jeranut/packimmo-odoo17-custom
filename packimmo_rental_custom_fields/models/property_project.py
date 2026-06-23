@@ -81,13 +81,26 @@ class PropertyProject(models.Model):
             "land": "TER",
         }.get(property_type)
 
+    def _get_project_sequence_code(self, property_type):
+        return {
+            "residential": "property.project.residential",
+            "commercial": "property.project.commercial",
+            "land": "property.project.land",
+        }.get(property_type)
+
     def _get_project_sequence(self, property_type, sequence_date):
-        prefix = self._get_project_sequence_prefix(property_type)
-        if not prefix:
+        sequence_code = self._get_project_sequence_code(property_type)
+        if not sequence_code:
             return "New"
 
         sequence_date = fields.Date.to_date(sequence_date) or fields.Date.context_today(self)
-        return f"{prefix}/{sequence_date:%m}/{sequence_date:%Y}/"
+        return (
+            self.env["ir.sequence"].next_by_code(
+                sequence_code,
+                sequence_date=sequence_date,
+            )
+            or "New"
+        )
 
     @api.model_create_multi
     def create(self, vals_list):

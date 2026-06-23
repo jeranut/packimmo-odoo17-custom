@@ -1339,23 +1339,20 @@ class RentalDashboardController(http.Controller):
     def _get_commercial_portfolio_value(self):
         """
         Packimmo portfolio value:
-        available properties + properties under an active absolute-exclusive mandate.
-        Property ids are de-duplicated before summing price.
+        potential mandate fees + property prices under an active
+        absolute-exclusive mandate.
         """
-        Property = request.env['property.details']
-        property_domain = self._company_domain() + [('stage', '=', 'available')]
+        portfolio_value = self._get_potential_mandate_fees()
 
         if self._mandate_model_available():
             absolute_mandates = request.env['property.mandate'].search(self._company_domain() + [
                 ('state', '=', 'active'),
                 ('mandate_type', '=', 'exclusive_absolute'),
             ])
-            absolute_property_ids = absolute_mandates.mapped('property_ids').ids
-            if absolute_property_ids:
-                property_domain = self._company_domain() + ['|', ('stage', '=', 'available'), ('id', 'in', absolute_property_ids)]
+            absolute_properties = absolute_mandates.mapped('property_ids')
+            portfolio_value += sum(absolute_properties.mapped('price') or [0.0])
 
-        properties = Property.search(property_domain)
-        return float(sum(properties.mapped('price') or [0.0]))
+        return float(portfolio_value)
 
     def _get_potential_mandate_fees(self):
         if not self._mandate_model_available():

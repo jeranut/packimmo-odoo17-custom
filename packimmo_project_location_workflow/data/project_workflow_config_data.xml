@@ -1,28 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo>
 
-    <record id="packimmo_workflow_config_location" model="packimmo.project.workflow.config">
-        <field name="project_id" search="[('name', '=', 'LOCATION')]"/>
-        <field name="default_user_id" ref="base.user_admin"/>
-        <field name="active">True</field>
-    </record>
-
-    <record id="packimmo_workflow_config_gestion" model="packimmo.project.workflow.config">
-        <field name="project_id" search="[('name', '=', 'GESTION')]"/>
-        <field name="default_user_id" ref="base.user_admin"/>
-        <field name="active">True</field>
-    </record>
-
-    <record id="packimmo_workflow_config_vente" model="packimmo.project.workflow.config">
-        <field name="project_id" search="[('name', '=', 'VENTE')]"/>
-        <field name="default_user_id" ref="base.user_admin"/>
-        <field name="active">True</field>
-    </record>
-
-    <record id="packimmo_workflow_config_morcellement" model="packimmo.project.workflow.config">
-        <field name="project_id" search="[('name', '=', 'MORCELLEMENT')]"/>
-        <field name="default_user_id" ref="base.user_admin"/>
-        <field name="active">True</field>
-    </record>
+    <function model="project.task.type" name="_ensure_packimmo_locked_workflow_stages"/>
+    <function model="packimmo.project.workflow.config" name="_init_default_workflow_configs"/>
 
 </odoo>

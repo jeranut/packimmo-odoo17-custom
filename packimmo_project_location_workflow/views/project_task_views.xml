@@ -11,8 +11,15 @@
                 <filter string="Projet LOCATION"
                         name="filter_location_project"
                         domain="[('project_id.name', '=', 'LOCATION')]"/>
+                <filter string="Projet VENTE"
+                        name="filter_sale_project"
+                        domain="[('project_id.name', '=', 'VENTE')]"/>
+                <filter string="Projet MORCELLEMENT"
+                        name="filter_morcellement_project"
+                        domain="[('project_id.name', '=', 'MORCELLEMENT')]"/>
 
                 <field name="property_id"/>
+                <field name="property_seq"/>
                 <field name="property_type"/>
                 <field name="property_subtype_id"/>
                 <field name="property_subtype_name"/>
@@ -53,15 +60,19 @@
         <field name="inherit_id" ref="project.view_task_tree2"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']" position="after">
+                <field name="property_seq" optional="show"/>
                 <field name="property_id" optional="show"/>
+                <field name="property_sale_lease" optional="hide"/>
                 <field name="property_type" optional="show"/>
                 <field name="property_subtype_id" optional="show"/>
                 <field name="property_subtype_name" optional="hide"/>
                 <field name="property_mandate_type" optional="show"/>
                 <field name="property_mandate_end_date" optional="show"/>
                 <field name="date_deadline" optional="show"/>
+                <field name="property_price_per_area" optional="hide"/>
                 <field name="property_display_price" optional="show"/>
                 <field name="property_display_currency_id" optional="hide"/>
+                <field name="property_rent_unit" optional="hide"/>
                 <field name="property_landlord_id" optional="show"/>
                 <field name="property_address" optional="show"/>
             </xpath>
@@ -77,15 +88,21 @@
             <xpath expr="//kanban" position="inside">
                 <field name="stage_id"/>
                 <field name="property_id"/>
+                <field name="property_sale_lease"/>
                 <field name="property_image"/>
                 <field name="property_type"/>
                 <field name="property_subtype_id"/>
                 <field name="property_subtype_name"/>
+                <field name="property_unit_map_label"/>
+                <field name="property_subproject_name"/>
+                <field name="property_seq"/>
                 <field name="property_mandate_type"/>
                 <field name="property_mandate_end_date"/>
                 <field name="date_deadline"/>
+                <field name="property_price_per_area"/>
                 <field name="property_display_price"/>
                 <field name="property_display_currency_id"/>
+                <field name="property_rent_unit"/>
                 <field name="property_landlord_id"/>
                 <field name="property_address"/>
                 <field name="can_plan_visit"/>
@@ -139,6 +156,11 @@
                     <field name="property_mandate_type"/>
                 </div>
 
+                <div t-if="record.property_seq.raw_value" class="text-muted">
+                    <strong>Réf bien :</strong>
+                    <field name="property_seq"/>
+                </div>
+
                 <div t-if="record.property_mandate_end_date.raw_value or (record.date_deadline.raw_value and !['1_done', '1_canceled'].includes(record.state.raw_value))"
                      class="text-muted d-flex flex-wrap align-items-center gap-1">
                     <strong>Fin mandat :</strong>
@@ -151,13 +173,41 @@
                     </span>
                 </div>
 
-                <div t-if="record.property_display_price.raw_value" class="text-muted">
-                    <strong>Loyer :</strong>
-                    <field name="property_display_price"
-                           widget="monetary"
-                           options="{'currency_field': 'property_display_currency_id'}"/>
-                    <span> / mois</span>
-                </div>
+                <t t-if="record.property_type.raw_value == 'land'">
+                    <div t-if="record.property_unit_map_label.raw_value" class="text-muted">
+                        <strong>Référence :</strong>
+                        <field name="property_unit_map_label"/>
+                    </div>
+                    <div t-if="record.property_subproject_name.raw_value" class="text-muted">
+                        <strong>Phase :</strong>
+                        <field name="property_subproject_name"/>
+                    </div>
+                    <div t-if="record.property_price_per_area.raw_value" class="text-muted">
+                        <strong>Prix / m² :</strong>
+                        <field name="property_price_per_area"
+                               widget="monetary"
+                               options="{'currency_field': 'property_display_currency_id'}"/>
+                        <span> / m²</span>
+                    </div>
+                    <div t-if="record.property_display_price.raw_value" class="text-muted">
+                        <strong>Prix total :</strong>
+                        <field name="property_display_price"
+                               widget="monetary"
+                               options="{'currency_field': 'property_display_currency_id'}"/>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div t-if="record.property_display_price.raw_value" class="text-muted">
+                        <strong t-if="record.property_sale_lease.raw_value == 'for_tenancy'">Loyer :</strong>
+                        <strong t-else="">Prix :</strong>
+                        <field name="property_display_price"
+                               widget="monetary"
+                               options="{'currency_field': 'property_display_currency_id'}"/>
+                        <span t-if="record.property_sale_lease.raw_value == 'for_tenancy'">
+                            / <field name="property_rent_unit"/>
+                        </span>
+                    </div>
+                </t>
 
                 <div t-if="record.property_landlord_id.raw_value" class="text-muted">
                     <strong>Propriétaire :</strong>
@@ -174,10 +224,39 @@
         </field>
     </record>
 
+    <record id="view_task_kanban_packimmo_workflow_no_stage_create" model="ir.ui.view">
+        <field name="name">project.task.kanban.packimmo.workflow.no.stage.create</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="packimmo_project_location_workflow.view_task_kanban_packimmo_location"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="create">false</attribute>
+                <attribute name="quick_create">false</attribute>
+                <attribute name="group_create">false</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_kanban_packimmo_morcellement_no_create" model="ir.ui.view">
+        <field name="name">project.task.kanban.packimmo.morcellement.no.create</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="packimmo_project_location_workflow.view_task_kanban_packimmo_workflow_no_stage_create"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="create">false</attribute>
+                <attribute name="quick_create">false</attribute>
+                <attribute name="group_create">false</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_task_form_packimmo_location" model="ir.ui.view">
         <field name="name">project.task.form.packimmo.location</field>
         <field name="model">project.task</field>
         <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="priority">90</field>
         <field name="arch" type="xml">
 
             <xpath expr="//div[@name='button_box']/span[@id='end_button_box']" position="before">
@@ -200,19 +279,38 @@
                 </button>
             </xpath>
 
+            <xpath expr="//form/sheet/group/group/field[@name='project_id']" position="after">
+                <field name="packimmo_is_visit_workflow_task" invisible="1"/>
+            </xpath>
+
             <xpath expr="//sheet" position="inside">
                 <group string="Bien immobilier Packimmo">
                     <field name="property_id" readonly="1"/>
+                    <field name="property_sale_lease" readonly="1"/>
                     <field name="property_type" readonly="1"/>
                     <field name="property_subtype_id" readonly="1"/>
                     <field name="property_mandate_type" readonly="1"/>
                     <field name="property_mandate_end_date" readonly="1"/>
                     <field name="date_deadline" readonly="1"/>
+                    <field name="property_price_per_area" readonly="1"/>
                     <field name="property_display_price" readonly="1"/>
                     <field name="property_display_currency_id" readonly="1"/>
+                    <field name="property_rent_unit" readonly="1"/>
                     <field name="property_landlord_id" readonly="1"/>
                     <field name="property_address" readonly="1"/>
                 </group>
+            </xpath>
+
+            <xpath expr="//notebook/page[@name='sub_tasks_page']" position="attributes">
+                <attribute name="string">VISITEUR(S)</attribute>
+            </xpath>
+
+            <xpath expr="//notebook/page[@name='page_timesheets']" position="attributes">
+                <attribute name="invisible">not allow_timesheets or packimmo_is_visit_workflow_task</attribute>
+            </xpath>
+
+            <xpath expr="//notebook/page[@name='extra_info']" position="attributes">
+                <attribute name="invisible">packimmo_is_visit_workflow_task</attribute>
             </xpath>
 
             <xpath expr="//field[@name='child_ids']/tree/field[@name='name']" position="after">
@@ -220,8 +318,15 @@
                         type="object"
                         string="Valider visite"
                         class="btn btn-sm btn-primary"
-                        invisible="not show_visit_action_buttons or state == '1_canceled'"
+                        invisible="not show_validate_visit_action_button or state == '1_canceled'"
                         confirm="Confirmez-vous la validation de la visite ? Le bien passera en REGULARISATION MANDAT et ne pourra plus revenir en VISITE ou BIENS DISPONIBLE."/>
+
+                <button name="action_reserve_morcellement_visit"
+                        type="object"
+                        string="Réserver"
+                        class="btn btn-sm btn-primary"
+                        invisible="not show_reserve_action_button or state == '1_canceled'"
+                        confirm="Confirmez-vous la réservation ? Le bien passera en RESERVATION et ne pourra plus revenir à une étape précédente."/>
 
                 <button name="action_cancel_visit_and_return_kanban"
                         type="object"
@@ -235,8 +340,56 @@
                         class="btn btn-sm btn-success"
                         invisible="not show_contract_action_button or state == '1_canceled'"/>
 
+                <button name="action_location_inventory_visit"
+                        type="object"
+                        string="État des lieux"
+                        class="btn btn-sm btn-success"
+                        invisible="not show_location_inventory_action_button or state == '1_canceled'"/>
+
+                <button name="action_sale_visit"
+                        type="object"
+                        string="VENTE"
+                        class="btn btn-sm btn-success"
+                        invisible="not show_sale_action_button or state == '1_canceled'"/>
+
+                <button name="action_morcellement_promise_sale_visit"
+                        type="object"
+                        string="Promesse de vente"
+                        class="btn btn-sm btn-success"
+                        invisible="not show_morcellement_promise_action_button or state == '1_canceled'"
+                        confirm="Confirmez-vous le passage en PROMESSE DE VENTE ?"/>
+
+                <button name="action_morcellement_acte_vente"
+                        type="object"
+                        string="Acte de vente"
+                        class="btn btn-sm btn-success"
+                        invisible="not show_morcellement_acte_vente_button or state == '1_canceled'"
+                        confirm="Confirmez-vous le passage en ACTE DE VENTE ?"/>
+
+                <button name="action_done_sale_inventory_subtask"
+                        type="object"
+                        string="Terminé"
+                        class="btn btn-sm btn-success"
+                        invisible="not show_sale_inventory_done_button"
+                        confirm="Voulez-vous terminer la tâche ? Une tâche à l'état fini ne peut plus revenir."/>
+
+                <button name="action_done_morcellement_acte_vente"
+                        type="object"
+                        string="Terminé"
+                        class="btn btn-sm btn-success"
+                        invisible="not show_morcellement_done_button"
+                        confirm="Voulez-vous terminer la tâche ? Une tâche à l'état fini ne peut plus revenir."/>
+
                 <field name="show_visit_action_buttons" column_invisible="True"/>
+                <field name="show_validate_visit_action_button" column_invisible="True"/>
+                <field name="show_reserve_action_button" column_invisible="True"/>
                 <field name="show_contract_action_button" column_invisible="True"/>
+                <field name="show_location_inventory_action_button" column_invisible="True"/>
+                <field name="show_sale_action_button" column_invisible="True"/>
+                <field name="show_sale_inventory_done_button" column_invisible="True"/>
+                <field name="show_morcellement_promise_action_button" column_invisible="True"/>
+                <field name="show_morcellement_acte_vente_button" column_invisible="True"/>
+                <field name="show_morcellement_done_button" column_invisible="True"/>
                 <field name="visit_client_id" string="Client" optional="show"/>
                 <field name="visit_observation" string="Observation" optional="show"/>
             </xpath>

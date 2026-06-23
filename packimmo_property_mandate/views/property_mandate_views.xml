@@ -134,6 +134,7 @@
 
                             <field name="billed_to" />
                             <field name="client_id"
+                                domain="[('user_type', '=', 'customer')]"
                                 invisible="billed_to == 'owner'" />
 
                             <field name="split_billing_type"

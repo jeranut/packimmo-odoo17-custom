@@ -8,12 +8,14 @@
     'license': 'LGPL-3',
     'depends': [
         'project',
+        'hr_timesheet',
         'rental_management',
         'packimmo_rental_custom_fields',
         'packimmo_property_mandate',
     ],
     'data': [
         'security/ir.model.access.csv',
+        'security/project_workflow_config_rules.xml',
         'data/ir_cron.xml',
         'data/project_workflow_config_data.xml',
         'views/project_task_views.xml',

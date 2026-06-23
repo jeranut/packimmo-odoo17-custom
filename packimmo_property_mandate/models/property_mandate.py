@@ -322,10 +322,11 @@ class PropertyMandate(models.Model):
         store=True,
     )
     client_id = fields.Many2one(
-    "res.partner",
-    string="Locataire / Acheteur",
-    tracking=True,
-)
+        "res.partner",
+        string="Locataire / Acheteur",
+        domain=[("user_type", "=", "customer")],
+        tracking=True,
+    )
 
     split_billing_type = fields.Selection(
         [

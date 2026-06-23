@@ -1,1 +1,2 @@
 from . import contract_wizard
+from . import booking_wizard

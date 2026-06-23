@@ -14,14 +14,14 @@ function getPackimmoContext(controller) {
     };
 }
 
-async function openLocationPropertyProjectCreate(controller) {
+async function openWorkflowPropertyProjectCreate(controller) {
     if (controller.props.resModel !== "project.task") {
         return false;
     }
 
     const action = await controller.packimmoOrm.call(
         "project.task",
-        "action_open_location_property_project_create",
+        "action_open_workflow_property_project_create",
         [],
         { context: getPackimmoContext(controller) }
     );
@@ -34,10 +34,13 @@ async function openLocationPropertyProjectCreate(controller) {
     return true;
 }
 
-function isLocationPropertyProjectForm(controller) {
+function isWorkflowPropertyProjectForm(controller) {
     return (
         controller.props.resModel === "property.project"
-        && getPackimmoContext(controller).packimmo_return_to_location_kanban
+        && (
+            getPackimmoContext(controller).packimmo_return_to_location_kanban
+            || getPackimmoContext(controller).packimmo_return_to_sale_kanban
+        )
     );
 }
 
@@ -48,7 +51,7 @@ patch(KanbanController.prototype, {
     },
 
     async createRecord() {
-        if (await openLocationPropertyProjectCreate(this)) {
+        if (await openWorkflowPropertyProjectCreate(this)) {
             return;
         }
         return super.createRecord(...arguments);
@@ -62,7 +65,7 @@ patch(ListController.prototype, {
     },
 
     async createRecord() {
-        if (await openLocationPropertyProjectCreate(this)) {
+        if (await openWorkflowPropertyProjectCreate(this)) {
             return;
         }
         return super.createRecord(...arguments);
@@ -76,30 +79,35 @@ patch(FormController.prototype, {
     },
 
     async create() {
-        if (await openLocationPropertyProjectCreate(this)) {
+        if (await openWorkflowPropertyProjectCreate(this)) {
             return;
         }
         return super.create(...arguments);
     },
 
     displayName() {
-        if (isLocationPropertyProjectForm(this)) {
+        if (isWorkflowPropertyProjectForm(this)) {
             const data = this.model.root.data;
-            return data.name || data.display_name || _t("Créer un bien à louer");
+            const context = getPackimmoContext(this);
+            const defaultName = context.packimmo_return_to_sale_kanban
+                ? _t("Créer un bien à vendre")
+                : _t("Créer un bien à louer");
+            return data.name || data.display_name || defaultName;
         }
         return super.displayName(...arguments);
     },
 
     async onRecordSaved(record, changes) {
         await super.onRecordSaved(...arguments);
-        if (!isLocationPropertyProjectForm(this) || !record.resId) {
+        if (!isWorkflowPropertyProjectForm(this) || !record.resId) {
             return;
         }
 
         const action = await this.orm.call(
             "property.project",
-            "action_packimmo_after_location_create",
-            [[record.resId]]
+            "action_packimmo_after_workflow_create",
+            [[record.resId]],
+            { context: getPackimmoContext(this) }
         );
         await this.actionService.doAction(action);
     },

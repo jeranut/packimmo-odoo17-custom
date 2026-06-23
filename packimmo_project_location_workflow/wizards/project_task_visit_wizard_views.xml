@@ -10,6 +10,7 @@
                     <group>
                         <field name="task_id" readonly="1"/>
                         <field name="visit_client_id"
+                               domain="[('user_type', '=', 'customer')]"
                                options="{'no_quick_create': True, 'no_create_edit': False}"/>
                         <field name="visit_observation"
                                placeholder="Observation pendant la visite..."/>

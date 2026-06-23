@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="rule_packimmo_project_workflow_config_multi_company" model="ir.rule">
+        <field name="name">Configuration workflow Packimmo multi-société</field>
+        <field name="model_id" ref="model_packimmo_project_workflow_config"/>
+        <field name="domain_force">['|', ('project_id.company_id', '=', False), ('project_id.company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="rule_packimmo_project_task_property_multi_company" model="ir.rule">
+        <field name="name">Tâches projet Packimmo par société du bien</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="domain_force">['|', ('property_id', '=', False), '|', ('property_id.company_id', '=', False), ('property_id.company_id', 'in', company_ids)]</field>
+    </record>
+
+</odoo>
