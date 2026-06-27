@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="packimmo_recent_property_card" name="PACKIMMO Recent Property Card">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="property-card packimmo-recent-property-card">
+
+                <div class="property-image-wrapper">
+                    <img t-if="property.subproject_id and property.subproject_id.subproject_image_ids"
+                         t-att-src="'/web/image/subproject.images.line/%s/image' % property.subproject_id.subproject_image_ids[0].id"
+                         class="property-image"
+                         loading="lazy"
+                         alt="Bien immobilier"/>
+
+                    <img t-elif="property.property_project_id and property.property_project_id.project_image_ids"
+                         t-att-src="'/web/image/project.images.line/%s/image' % property.property_project_id.project_image_ids[0].id"
+                         class="property-image"
+                         loading="lazy"
+                         alt="Bien immobilier"/>
+
+                    <img t-elif="property.property_images_ids"
+                         t-att-src="'/web/image/property.images/%s/image' % property.property_images_ids[0].id"
+                         class="property-image"
+                         loading="lazy"
+                         alt="Bien immobilier"/>
+
+                    <img t-elif="property.image"
+                         t-att-src="'/web/image/property.details/%s/image' % property.id"
+                         class="property-image"
+                         loading="lazy"
+                         alt="Bien immobilier"/>
+
+                    <img t-else=""
+                         src="/web/static/img/placeholder.png"
+                         class="property-image"
+                         loading="lazy"
+                         alt="Bien immobilier"/>
+
+                    <div class="property-badge packimmo-property-badge" t-if="property.sale_lease">
+                        <i class="fa fa-tag"/>
+                        <t t-if="property.sale_lease == 'for_sale'">À vendre</t>
+                        <t t-elif="property.sale_lease == 'for_tenancy'">À louer</t>
+                    </div>
+
+                    <div class="packimmo-property-price-widget">
+                        <t t-if="property.price and property.price &gt; 0">
+                            <t t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')"/>
+                            <t t-if="property.currency_id">
+                                <t t-esc="property.currency_id.symbol"/>
+                            </t>
+                            <t t-if="property.sale_lease == 'for_tenancy'">
+                                / Mois
+                            </t>
+                        </t>
+                        <t t-else="">Nous contacter</t>
+                    </div>
+                </div>
+
+                <div class="property-content">
+                    <p class="packimmo-property-subtype" t-if="property.property_subtype_id">
+                        <t t-esc="property.property_subtype_id.name"/>
+                    </p>
+
+                    <h5 class="property-title">
+                        <t t-esc="property.name"/>
+                    </h5>
+
+                    <t t-if="not property.subproject_id and property.property_seq">
+                        <div class="pk-property-ref">
+                            Réf :
+                            <span t-esc="property.property_seq"/>
+                        </div>
+                    </t>
+
+                    <p class="property-location">
+                        <i class="fa fa-map-marker"/>
+                        <t t-esc="property.city or (property.city_id and property.city_id.name) or ''"/>
+                    </p>
+
+                    <div class="packimmo-property-description"
+                         t-if="(property.subproject_id and property.subproject_id.avail_description)
+                               or (property.property_project_id and property.property_project_id.avail_description)">
+                        <t t-if="property.subproject_id and property.subproject_id.avail_description">
+                            <t t-raw="property.subproject_id.description"/>
+                        </t>
+                        <t t-elif="property.property_project_id and property.property_project_id.avail_description">
+                            <t t-raw="property.property_project_id.description"/>
+                        </t>
+                    </div>
+
+                    <div class="property-info">
+                        <span t-if="property.bed">
+                            <i class="fa fa-bed"/>
+                            <t t-esc="property.bed"/>
+                            chambres
+                        </span>
+
+                        <span t-if="property.bathroom">
+                            <i class="fa fa-bath"/>
+                            <t t-esc="property.bathroom"/>
+                            SDB
+                        </span>
+
+                        <span t-if="property.total_area">
+                            <i class="fa fa-expand"/>
+                            <t t-esc="property.total_area or 0"/>
+                            m²
+                        </span>
+                    </div>
+
+                    <t t-set="subproject_unit_count"
+                       t-value="request.env['property.details'].sudo().search_count([('stage', '!=', 'draft'), ('subproject_id', '=', property.subproject_id.id)]) if property.subproject_id else 1"/>
+                    <t t-set="project_unit_count"
+                       t-value="request.env['property.details'].sudo().search_count([('stage', '!=', 'draft'), ('property_project_id', '=', property.property_project_id.id)]) if property.property_project_id else 1"/>
+
+                    <a t-if="property.type == 'land' and property.property_project_id"
+                       t-att-href="'/property/land-phase/project/%s/map' % property.property_project_id.id"
+                       class="btn btn-outline-primary w-100 mt-3">
+                        Voir le détail
+                    </a>
+
+                    <a t-elif="property.subproject_id and subproject_unit_count &gt; 1"
+                       t-att-href="'/property/subproject/%s/unit-map' % property.subproject_id.id"
+                       class="btn btn-outline-primary w-100 mt-3">
+                        Voir le détail
+                    </a>
+
+                    <a t-elif="property.property_project_id and project_unit_count &gt; 1"
+                       t-att-href="'/property/project/%s/unit-map' % property.property_project_id.id"
+                       class="btn btn-outline-primary w-100 mt-3">
+                        Voir le détail
+                    </a>
+
+                    <a t-elif="property.brocher_access_token"
+                       t-att-href="'/property-brochure/%s' % property.brocher_access_token"
+                       class="btn btn-outline-primary w-100 mt-3">
+                        Voir le détail
+                    </a>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="packimmo_home_recent_properties_section" name="PACKIMMO Home Recent Properties Section">
+        <t t-set="recent_properties"
+           t-value="request.env['property.details'].sudo().search([('stage', '!=', 'draft')], order='id desc', limit=3)"/>
+
+        <section t-if="recent_properties" class="packimmo-recent-properties-section py-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <p class="packimmo-section-kicker">SÉLECTION PACKIMMO</p>
+                    <h2 class="display-6 fw-bold mb-3">Nouveaux biens ajoutés récemment</h2>
+                    <p class="text-muted mb-0">Découvrez en avant-première nos dernières opportunités.</p>
+                </div>
+
+                <div class="row">
+                    <t t-foreach="recent_properties" t-as="property">
+                        <t t-call="rental_management.packimmo_recent_property_card"/>
+                    </t>
+                </div>
+
+                <div class="text-center mt-2">
+                    <a href="/properties-list" class="btn packimmo-catalog-btn px-4">
+                        Voir tout le catalogue
+                    </a>
+                </div>
+            </div>
+        </section>
+    </template>
+
+    <template id="packimmo_home_dynamic_key_figures" name="PACKIMMO Home Dynamic Key Figures">
+        <t t-set="Property" t-value="request.env['property.details'].sudo()"/>
+        <t t-set="rent_available_count"
+           t-value="Property.search_count([('stage', '=', 'available'), ('sale_lease', '=', 'for_tenancy')])"/>
+        <t t-set="sale_available_count"
+           t-value="Property.search_count([('stage', '=', 'available'), ('sale_lease', '=', 'for_sale')])"/>
+        <t t-set="available_total" t-value="rent_available_count + sale_available_count"/>
+        <t t-set="project_count" t-value="request.env['property.project'].sudo().search_count([])"/>
+
+        <div class="packimmo-home-key-figures-data d-none"
+             t-att-data-available-total="available_total"
+             t-att-data-rent-available-count="rent_available_count"
+             t-att-data-sale-available-count="sale_available_count"
+             t-att-data-project-count="project_count"/>
+
+        <script type="text/javascript">
+            (function () {
+                "use strict";
+
+                function normalize(text) {
+                    return (text || "").replace(/\s+/g, " ").trim();
+                }
+
+                function isNumberOnly(text) {
+                    return /^[0-9\s]+$/.test(normalize(text));
+                }
+
+                function findLabel(label) {
+                    var nodes = document.querySelectorAll("body *");
+                    for (var index = 0; index &lt; nodes.length; index += 1) {
+                        if (normalize(nodes[index].textContent) === label) {
+                            return nodes[index];
+                        }
+                    }
+                    return null;
+                }
+
+                function findCounterElement(labelElement) {
+                    var current = labelElement;
+                    for (var depth = 0; current &amp;&amp; depth &lt; 6; depth += 1) {
+                        if (current.previousElementSibling &amp;&amp; isNumberOnly(current.previousElementSibling.textContent)) {
+                            return current.previousElementSibling;
+                        }
+
+                        var candidates = current.querySelectorAll("*");
+                        for (var index = 0; index &lt; candidates.length; index += 1) {
+                            if (candidates[index] !== labelElement &amp;&amp; isNumberOnly(candidates[index].textContent)) {
+                                return candidates[index];
+                            }
+                        }
+
+                        current = current.parentElement;
+                    }
+                    return null;
+                }
+
+                function updateCounter(label, value) {
+                    var labelElement = findLabel(label);
+                    var counterElement = labelElement ? findCounterElement(labelElement) : null;
+                    if (!counterElement) {
+                        return;
+                    }
+
+                    counterElement.textContent = value;
+                    counterElement.setAttribute("data-to", value);
+                    counterElement.setAttribute("data-count-to", value);
+                    counterElement.setAttribute("data-value", value);
+                }
+
+                function updateKeyFigures() {
+                    if (document.body.classList.contains("editor_enable")) {
+                        return;
+                    }
+
+                    var data = document.querySelector(".packimmo-home-key-figures-data");
+                    if (!data) {
+                        return;
+                    }
+
+                    updateCounter("Biens disponibles", data.dataset.availableTotal || "0");
+                    updateCounter("Biens à louer", data.dataset.rentAvailableCount || "0");
+                    updateCounter("Biens à vendre", data.dataset.saleAvailableCount || "0");
+                    updateCounter("Projets immobiliers", data.dataset.projectCount || "0");
+                }
+
+                if (document.readyState === "loading") {
+                    document.addEventListener("DOMContentLoaded", updateKeyFigures);
+                } else {
+                    updateKeyFigures();
+                }
+            }());
+        </script>
+    </template>
+
+    <template id="packimmo_homepage_recent_properties"
+              inherit_id="website.homepage"
+              name="PACKIMMO Homepage Recent Properties">
+        <xpath expr="//div[@id='wrap']" position="inside">
+            <t t-call="rental_management.packimmo_home_dynamic_key_figures"/>
+            <t t-call="rental_management.packimmo_home_recent_properties_section"/>
+        </xpath>
+    </template>
+
+</odoo>

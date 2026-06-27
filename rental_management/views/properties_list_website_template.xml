@@ -167,6 +167,13 @@
                                         </t>
                                     </h5>
 
+                                    <t t-if="not property.subproject_id and property.property_seq">
+                                        <div class="pk-property-ref">
+                                            Réf :
+                                            <span t-esc="property.property_seq"/>
+                                        </div>
+                                    </t>
+
                                     <p class="text-muted small mb-2" t-if="(property.subproject_id and property.subproject_id.avail_description)
                                                 or
                                              (property.property_project_id and property.property_project_id.avail_description)">

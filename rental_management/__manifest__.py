@@ -81,6 +81,7 @@
         "views/templates/property_details_web_template.xml",
         "views/properties_list_website_template.xml",
         "views/projects_list_template.xml",
+        "views/packimmo_home_recent_properties.xml",
         "views/packimmo_mega_menu_templates.xml",
         # Inherit Views
         "views/maintenance_product_inherit.xml",
