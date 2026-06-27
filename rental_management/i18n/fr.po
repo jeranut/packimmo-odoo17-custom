@@ -626,7 +626,7 @@ msgid ""
 "                                                </strong>"
 msgstr ""
 "<strong>\n"
-"                                                    Taper\n"
+"                                                    Type\n"
 "                                                </strong>"
 
 #. module: rental_management
@@ -838,7 +838,7 @@ msgid ""
 "                                        </strong>"
 msgstr ""
 "<strong>\n"
-"                                            Taper\n"
+"                                            Type\n"
 "                                        </strong>"
 
 #. module: rental_management
@@ -1639,10 +1639,10 @@ msgstr ""
 "                    <thead class=\"thead-light\">\n"
 "                        <tr>\n"
 "                            <th scope=\"col\">N° de location</th>\n"
-"                            <th scope=\"col\">Taper</th>\n"
+"                            <th scope=\"col\">Type</th>\n"
 "                            <th scope=\"col\">Description</th>\n"
 "                            <th scope=\"col\">Date d'échéance</th>\n"
-"                            <th scope=\"col\">Montante</th>\n"
+"                            <th scope=\"col\">Montant</th>\n"
 "                            <th scope=\"col\">Réf facture.</th>\n"
 "                        </tr>\n"
 "                    </thead>\n"
@@ -1684,10 +1684,10 @@ msgstr ""
 "                    <thead class=\"thead-light\">\n"
 "                        <tr>\n"
 "                            <th scope=\"col\">N° de location</th>\n"
-"                            <th scope=\"col\">Taper</th>\n"
+"                            <th scope=\"col\">Type</th>\n"
 "                            <th scope=\"col\">Description</th>\n"
 "                            <th scope=\"col\">Date d'échéance</th>\n"
-"                            <th scope=\"col\">Montante</th>\n"
+"                            <th scope=\"col\">Montant</th>\n"
 "                            <th scope=\"col\">Facture Réf.</th>\n"
 "                        </tr>\n"
 "                    </thead>\n"
@@ -7756,12 +7756,12 @@ msgstr "Tours"
 #: model_terms:ir.ui.view,arch_db:rental_management.rental_user_maintenance_info
 #: model_terms:ir.ui.view,arch_db:rental_management.rental_user_rent_contract_details
 msgid "Type"
-msgstr "Taper"
+msgstr "Type"
 
 #. module: rental_management
 #: model:ir.model.fields,field_description:rental_management.field_tenancy_details__property_type
 msgid "Type "
-msgstr "Taper"
+msgstr "Type"
 
 #. module: rental_management
 #: model:ir.model,name:rental_management.model_certificate_type

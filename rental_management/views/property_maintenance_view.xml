@@ -23,7 +23,7 @@
                     <field name="invoice_state" invisible="1" />
                     <field name="bill_state" invisible="1" />
                     <button string="Create Invoice" name="action_crete_invoice" type="object" invisible="invoice_state or payment_type != 'invoice'"/>
-                    <button string="Create Bill" name="action_crete_bill" type="object" invisible="bill_state or payment_type != 'bill'"/>
+                    <button string="Ajouter un frais" name="action_crete_bill" type="object" invisible="bill_state or payment_type != 'bill'"/>
                 </xpath>
                 <xpath expr="//notebook" position="inside">
                     <page string="Included Products" name="included_products">

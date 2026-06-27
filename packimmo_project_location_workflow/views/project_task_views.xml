@@ -231,7 +231,7 @@
         <field name="mode">primary</field>
         <field name="arch" type="xml">
             <xpath expr="//kanban" position="attributes">
-                <attribute name="create">false</attribute>
+                <attribute name="create">true</attribute>
                 <attribute name="quick_create">false</attribute>
                 <attribute name="group_create">false</attribute>
             </xpath>

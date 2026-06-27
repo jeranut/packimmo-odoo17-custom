@@ -533,7 +533,7 @@ class ProjectTask(models.Model):
             "allowed_company_ids": company.ids,
             "default_company_id": company.id,
             "search_default_filter_location_project": 1,
-            "create": False,
+            "create": True,
             "quick_create": False,
         }
         if project:
@@ -572,7 +572,6 @@ class ProjectTask(models.Model):
             "domain": domain,
             "context": context,
             "flags": {
-                "no_create": True,
                 "no_quick_create": True,
                 "no_create_edit": True,
             },
@@ -592,7 +591,7 @@ class ProjectTask(models.Model):
             "allowed_company_ids": company.ids,
             "default_company_id": company.id,
             "search_default_filter_sale_project": 1,
-            "create": False,
+            "create": True,
             "quick_create": False,
         }
         if project:
@@ -631,7 +630,6 @@ class ProjectTask(models.Model):
             "domain": domain,
             "context": context,
             "flags": {
-                "no_create": True,
                 "no_quick_create": True,
                 "no_create_edit": True,
             },

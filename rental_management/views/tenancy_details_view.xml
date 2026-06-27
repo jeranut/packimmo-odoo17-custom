@@ -32,7 +32,7 @@
                             invisible="contract_type == 'new_contract' or not active_contract_state or close_contract_state" />
                         <button name="%(property_payment_wizard_action)d"
                             type='action'
-                            string="Create Bill"
+                            string="Ajouter un frais"
                             context="{'is_bill': True}"
                             icon="fa-money"
                             id="property_payment_bill"

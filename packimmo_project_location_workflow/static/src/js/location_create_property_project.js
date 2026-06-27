@@ -103,7 +103,7 @@ patch(FormController.prototype, {
             return;
         }
 
-        const action = await this.orm.call(
+        const action = await this.packimmoOrm.call(
             "property.project",
             "action_packimmo_after_workflow_create",
             [[record.resId]],

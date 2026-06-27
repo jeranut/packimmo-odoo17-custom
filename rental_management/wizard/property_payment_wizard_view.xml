@@ -32,7 +32,7 @@
                             <field name="amount" widget="monetary" required="1" />
                         </group>
                     </group>
-                    <group string="Vendor Details" invisible="not is_bill">
+                    <group string="Coordonnées du prestataire" invisible="not is_bill">
                         <group>
                             <field name="vendor_phone" widget="phone" />
                         </group>
@@ -44,7 +44,7 @@
                         <button string="Create Invoice" type="object"
                             class="btn btn-outline-success"
                             name="property_payment_action" invisible="not is_invoice" />
-                        <button string="Create Bill" type="object"
+                        <button string="Ajouter un frais" type="object"
                             class="btn btn-outline-success"
                             name="property_bill_action" invisible="not is_bill" />
                         <button string="Cancel" special="cancel" class="btn btn-outline-danger" />
