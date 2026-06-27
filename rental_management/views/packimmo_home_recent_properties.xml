@@ -42,17 +42,26 @@
                         <t t-elif="property.sale_lease == 'for_tenancy'">À louer</t>
                     </div>
 
-                    <div class="packimmo-property-price-widget">
-                        <t t-if="property.price and property.price &gt; 0">
-                            <t t-esc="'{:,.0f}'.format(property.price).replace(',', ' ')"/>
-                            <t t-if="property.currency_id">
-                                <t t-esc="property.currency_id.symbol"/>
-                            </t>
+                    <t t-set="subproject_unit_count"
+                       t-value="request.env['property.details'].sudo().search_count([('stage', '!=', 'draft'), ('subproject_id', '=', property.subproject_id.id)]) if property.subproject_id else 1"/>
+                    <t t-set="project_unit_count"
+                       t-value="request.env['property.details'].sudo().search_count([('stage', '!=', 'draft'), ('property_project_id', '=', property.property_project_id.id)]) if property.property_project_id else 1"/>
+                    <t t-set="hide_price"
+                       t-value="(property.subproject_id and subproject_unit_count &gt; 1)
+                                or
+                                (not property.subproject_id and property.property_project_id and project_unit_count &gt; 1)"/>
+
+                    <div class="packimmo-property-price-widget" t-if="not hide_price">
+                        <t t-if="property.website_price_on_request">
+                            Nous contacter
+                        </t>
+                        <t t-else="">
+                            <span t-field="property.website_display_price"
+                                  t-options='{"widget": "monetary", "display_currency": property.website_display_currency_id}'/>
                             <t t-if="property.sale_lease == 'for_tenancy'">
-                                / Mois
+                                /Mois
                             </t>
                         </t>
-                        <t t-else="">Nous contacter</t>
                     </div>
                 </div>
 
@@ -108,11 +117,6 @@
                             m²
                         </span>
                     </div>
-
-                    <t t-set="subproject_unit_count"
-                       t-value="request.env['property.details'].sudo().search_count([('stage', '!=', 'draft'), ('subproject_id', '=', property.subproject_id.id)]) if property.subproject_id else 1"/>
-                    <t t-set="project_unit_count"
-                       t-value="request.env['property.details'].sudo().search_count([('stage', '!=', 'draft'), ('property_project_id', '=', property.property_project_id.id)]) if property.property_project_id else 1"/>
 
                     <a t-if="property.type == 'land' and property.property_project_id"
                        t-att-href="'/property/land-phase/project/%s/map' % property.property_project_id.id"

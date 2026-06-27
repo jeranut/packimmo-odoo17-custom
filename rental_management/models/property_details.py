@@ -148,6 +148,28 @@ class PropertyDetails(models.Model):
 
     # Pricing
     price = fields.Monetary(string="Price")
+    website_price_on_request = fields.Boolean(string="Website Price On Request")
+    website_price_currency = fields.Selection(
+        [("ariary", "Ariary"), ("foreign", "Foreign Currency")],
+        string="Website Price Currency",
+        default="ariary",
+        required=True,
+    )
+    foreign_currency_id = fields.Many2one("res.currency", string="Foreign Currency")
+    foreign_price = fields.Monetary(
+        string="Foreign Price",
+        currency_field="foreign_currency_id",
+    )
+    website_display_currency_id = fields.Many2one(
+        "res.currency",
+        string="Website Display Currency",
+        compute="_compute_website_price",
+    )
+    website_display_price = fields.Monetary(
+        string="Website Display Price",
+        currency_field="website_display_currency_id",
+        compute="_compute_website_price",
+    )
     rent_unit = fields.Selection([('Day', "Day"),
                                   ('Month', "Month"),
                                   ('Year', "Year")],
@@ -566,6 +588,29 @@ class PropertyDetails(models.Model):
                 [('property_id', '=', rec.id)])
             rec.request_count = request_count
 
+    @api.depends(
+        'company_id.currency_id',
+        'foreign_currency_id',
+        'foreign_price',
+        'price',
+        'website_price_currency',
+        'website_price_on_request',
+    )
+    def _compute_website_price(self):
+        """Centralize the public website price and currency decision."""
+        mga_currency = self.env['res.currency'].search([('name', '=', 'MGA')], limit=1)
+        for rec in self:
+            ariary_currency = mga_currency or rec.company_id.currency_id
+            if rec.website_price_on_request:
+                rec.website_display_price = 0.0
+                rec.website_display_currency_id = ariary_currency
+            elif rec.website_price_currency == 'foreign':
+                rec.website_display_price = rec.foreign_price
+                rec.website_display_currency_id = rec.foreign_currency_id or ariary_currency
+            else:
+                rec.website_display_price = rec.price
+                rec.website_display_currency_id = ariary_currency
+
     # Count
     def _compute_count(self):
         """Compute sale & tenancy contract broker count"""
@@ -628,7 +673,7 @@ class PropertyDetails(models.Model):
             self.country_id = self.state_id.country_id
 
     @api.constrains('total_area', 'usable_area', 'total_floor', 'bed', 'bathroom', 'parking', 'unit_type',
-                    'price_per_area', 'price', 'per_area_maintenance', 'total_maintenance')
+                    'price_per_area', 'price', 'foreign_price', 'per_area_maintenance', 'total_maintenance')
     def _check_values_is_not_negative(self):
         """Raise Validation if value is negative"""
         for rec in self:
@@ -647,6 +692,8 @@ class PropertyDetails(models.Model):
 
             if rec.price_per_area and rec.price_per_area < 0:
                 raise ValidationError(_("Price / Area must be zero or greater"))
+            if rec.foreign_price and rec.foreign_price < 0:
+                raise ValidationError(_("Foreign price must be zero or greater"))
             if rec.price and rec.price < 0:
                 if rec.sale_lease == 'for_sale':
                     raise ValidationError(_("Sale price must be zero or greater"))

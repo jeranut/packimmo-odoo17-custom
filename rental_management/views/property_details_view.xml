@@ -358,6 +358,20 @@
                                             <field name="price" required="1" class="oe_inline"
                                                    readonly="stage not in ['draft','available']"/>
                                         </div>
+                                        <field name="website_price_on_request"
+                                               readonly="stage not in ['draft','available']"/>
+                                        <field name="website_price_currency" widget="radio"
+                                               options="{'horizontal':True}"
+                                               invisible="website_price_on_request"
+                                               readonly="stage not in ['draft','available']"/>
+                                        <field name="foreign_currency_id"
+                                               invisible="website_price_on_request or website_price_currency != 'foreign'"
+                                               readonly="stage not in ['draft','available']"/>
+                                        <field name="foreign_price"
+                                               invisible="website_price_on_request or website_price_currency != 'foreign'"
+                                               readonly="stage not in ['draft','available']"/>
+                                        <field name="website_display_currency_id" invisible="1"/>
+                                        <field name="website_display_price" invisible="1"/>
                                     </group>
                                     <group string="Maintenance Details">
                                         <field name="is_maintenance_service"/>
