@@ -8,6 +8,7 @@
     "depends": [
         "website",
         "rental_management",
+        "property_list_dynamic_slider",
     ],
     "data": [
         "security/ir.model.access.csv",

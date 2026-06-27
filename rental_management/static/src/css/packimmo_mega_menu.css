@@ -1,0 +1,143 @@
+.packimmo-qweb-mega-menu {
+    --packimmo-green: #16894b;
+    --packimmo-green-dark: #0f6f3c;
+    --packimmo-red: #bf2925;
+    --packimmo-orange: #ee941f;
+    --packimmo-text: #242428;
+    position: absolute !important;
+    top: 100% !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    z-index: 1080;
+    width: 100vw;
+    max-width: 100vw;
+    padding: 52px 0 82px;
+    margin-top: 0 !important;
+    background: #ffffff;
+    border: 0;
+    border-top: 1px solid #eeeeee;
+    border-bottom: 1px solid #dddddd;
+    border-radius: 0;
+    box-shadow: none;
+    opacity: 1;
+    transform: translateX(-50%) !important;
+    backdrop-filter: none;
+    isolation: isolate;
+}
+
+.packimmo-qweb-mega-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.2;
+    background-image: url("/rental_management/static/src/img/mega_menu_bg.png");
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: 100% auto;
+}
+
+.packimmo-qweb-mega-menu .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+@media (max-width: 991.98px) {
+    .packimmo-qweb-mega-menu {
+        padding: 42px 0 64px;
+    }
+
+    .packimmo-qweb-mega-menu::before {
+        opacity: 0.18;
+        background-size: 150% auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .packimmo-qweb-mega-menu {
+        padding: 34px 0 54px;
+    }
+
+    .packimmo-qweb-mega-menu::before {
+        opacity: 0.16;
+        background-size: 220% auto;
+    }
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-column {
+    height: 100%;
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-title {
+    display: block;
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    color: #111827;
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0;
+    border-bottom: 2px solid var(--packimmo-orange);
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-links {
+    margin: 0;
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-links li + li {
+    margin-top: 12px;
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-links a {
+    display: block;
+    color: #006b2e;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-links a:hover,
+.packimmo-qweb-mega-menu .packimmo-mega-links a:focus {
+    color: var(--packimmo-red);
+    text-decoration: none;
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-city-select {
+    width: 100%;
+    margin-top: 18px;
+    padding: 9px 12px;
+    color: #111827;
+    background-color: #fff;
+    border: 1px solid #d9e8df;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.packimmo-qweb-mega-menu .packimmo-mega-city-select:focus {
+    border-color: #006b2e;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 107, 46, 0.12);
+}
+
+.packimmo-qweb-mega-menu .row > div:nth-child(1) .packimmo-mega-title {
+    border-bottom-color: #d9e8df;
+}
+
+.packimmo-qweb-mega-menu .row > div:nth-child(2) .packimmo-mega-title {
+    border-bottom-color: #c62828;
+}
+
+.packimmo-qweb-mega-menu .row > div:nth-child(3) .packimmo-mega-title {
+    border-bottom-color: #006b2e;
+}
+
+.packimmo-qweb-mega-menu .row > div:nth-child(4) .packimmo-mega-title {
+    border-bottom-color: #111111;
+}

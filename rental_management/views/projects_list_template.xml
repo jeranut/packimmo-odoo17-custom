@@ -5,36 +5,106 @@
             <div class="container my-5">
 
                 <div class="text-center mb-5">
+                    <h1 t-if="sale_lease == 'for_tenancy'">
+                        Nos projets disponibles à louer
+                    </h1>
 
-    <h1 t-if="sale_lease == 'for_tenancy'">
-        Nos projets disponibles à louer
-    </h1>
+                    <h1 t-elif="sale_lease == 'for_sale'">
+                        Nos projets disponibles à vendre
+                    </h1>
 
-    <h1 t-elif="sale_lease == 'for_sale'">
-        Nos projets disponibles à vendre
-    </h1>
+                    <h1 t-else="">
+                        Nos projets disponibles
+                    </h1>
 
-    <h1 t-else="">
-        Nos projets disponibles
-    </h1>
+                    <p class="text-muted">
+                        <t t-if="sale_lease == 'for_tenancy'">
+                            Choisissez un projet pour consulter les unités disponibles à la location.
+                        </t>
 
-    <p class="text-muted">
-        <t t-if="sale_lease == 'for_tenancy'">
-            Choisissez un projet pour consulter les unités disponibles à la location.
-        </t>
+                        <t t-elif="sale_lease == 'for_sale'">
+                            Choisissez un projet pour consulter les unités disponibles à la vente.
+                        </t>
 
-        <t t-elif="sale_lease == 'for_sale'">
-            Choisissez un projet pour consulter les unités disponibles à la vente.
-        </t>
+                        <t t-else="">
+                            Choisissez un projet pour consulter les unités disponibles.
+                        </t>
+                    </p>
+                </div>
 
-        <t t-else="">
-            Choisissez un projet pour consulter les unités disponibles.
-        </t>
-    </p>
+                <form method="get" action="/projects-list" class="property-search-box property-search-dropdown-box pack-project-search shadow-sm">
+                    <div class="pack-project-search-grid">
 
-</div>
+                        <div class="pack-project-filter pack-project-sale-filter">
+                            <div class="pack-sale-switch">
+                                <input type="radio" id="pack_project_sale_all" name="sale_lease" value="" t-att-checked="'checked' if not sale_lease else None"/>
+                                <label for="pack_project_sale_all">Tous</label>
 
-                <div class="row">
+                                <input type="radio" id="pack_project_sale_for_sale" name="sale_lease" value="for_sale" t-att-checked="'checked' if sale_lease == 'for_sale' else None"/>
+                                <label for="pack_project_sale_for_sale">Vente</label>
+
+                                <input type="radio" id="pack_project_sale_for_tenancy" name="sale_lease" value="for_tenancy" t-att-checked="'checked' if sale_lease == 'for_tenancy' else None"/>
+                                <label for="pack_project_sale_for_tenancy">Location</label>
+                            </div>
+                        </div>
+
+                        <div class="pack-project-filter">
+                            <select name="project_kind" class="form-select property-input">
+                                <option value="" t-att-selected="'selected' if not project_kind else None">Type de projet</option>
+                                <option value="residence" t-att-selected="'selected' if project_kind == 'residence' else None">Résidence</option>
+                                <option value="appartement" t-att-selected="'selected' if project_kind == 'appartement' else None">Appartement</option>
+                                <option value="morcellement" t-att-selected="'selected' if project_kind == 'morcellement' else None">Morcellement</option>
+                                <option value="centre_commercial" t-att-selected="'selected' if project_kind == 'centre_commercial' else None">Complexe commercial</option>
+                            </select>
+                        </div>
+
+                        <div class="pack-project-filter">
+                            <select name="property_subtype_id" class="form-select property-input">
+                                <option value="">Nature du bien</option>
+                                <t t-foreach="property_subtypes" t-as="subtype">
+                                    <option t-att-value="subtype.id" t-att-selected="'selected' if str(subtype.id) == str(property_subtype_id) else None">
+                                        <t t-esc="subtype.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <div class="pack-project-filter">
+                            <select name="region_id" class="form-select property-input">
+                                <option value="">Région</option>
+                                <t t-foreach="regions" t-as="region">
+                                    <option t-att-value="region.id" t-att-selected="'selected' if str(region.id) == str(region_id) else None">
+                                        <t t-esc="region.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <div class="pack-project-filter">
+                            <select name="project_id" class="form-select property-input">
+                                <option value="">Projet</option>
+                                <t t-foreach="projects_filter" t-as="project_filter">
+                                    <option t-att-value="project_filter.id" t-att-selected="'selected' if str(project_filter.id) == str(project_id) else None">
+                                        <t t-esc="project_filter.name"/>
+                                    </option>
+                                </t>
+                            </select>
+                        </div>
+
+                        <div class="pack-project-actions">
+                            <button type="submit" class="btn property-btn w-100">
+                                Rechercher
+                            </button>
+
+                            <a href="/projects-list" class="btn btn-outline-danger w-100 property-reset-btn">
+                                Réinitialiser
+                            </a>
+                        </div>
+
+                    </div>
+                </form>
+
+                <div class="row mt-5">
                     <t t-if="projects">
                         <t t-foreach="projects" t-as="project">
                             <div class="col-lg-4 col-md-6 mb-4">
@@ -104,18 +174,26 @@
                 </div>
 
                 <t t-if="total_pages &gt; 1">
-                    <nav class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            <t t-foreach="range(1, total_pages + 1)" t-as="p">
-                                <li t-att-class="'page-item active' if p == page else 'page-item'">
-                                    <a class="page-link"
-                                       t-att-href="'/projects-list?page=%s%s' % (p, filter_url)">
-                                        <span t-esc="p"/>
-                                    </a>
-                                </li>
-                            </t>
-                        </ul>
-                    </nav>
+                    <div class="property-pagination mt-4">
+                        <a t-if="page &gt; 1"
+                           t-att-href="'/projects-list?page=%s%s' % (page - 1, filter_url or '')"
+                           class="page-link-custom">
+                            Précédent
+                        </a>
+
+                        <t t-foreach="range(1, total_pages + 1)" t-as="p">
+                            <a t-att-href="'/projects-list?page=%s%s' % (p, filter_url or '')"
+                               t-att-class="'page-link-custom active' if p == page else 'page-link-custom'">
+                                <t t-esc="p"/>
+                            </a>
+                        </t>
+
+                        <a t-if="page &lt; total_pages"
+                           t-att-href="'/projects-list?page=%s%s' % (page + 1, filter_url or '')"
+                           class="page-link-custom">
+                            Suivant
+                        </a>
+                    </div>
                 </t>
 
             </div>

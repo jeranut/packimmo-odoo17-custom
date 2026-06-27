@@ -61,6 +61,26 @@ class PropertyListDynamicSliderController(http.Controller):
             (10000, "10 000 m²"),
         ]
 
+    def _get_website_menu_values(self):
+        Subtype = request.env["property.sub.type"].sudo()
+        Region = request.env["property.region"].sudo()
+        Project = request.env["property.project"].sudo()
+
+        return {
+            "sale_url": "/properties-list?sale_lease=for_sale",
+            "rent_url": "/properties-list?sale_lease=for_tenancy",
+            "residence_url": "/projects-list?project_kind=residence",
+            "morcellement_url": "/projects-list?project_kind=morcellement",
+            "commercial_complex_url": "/projects-list?project_kind=centre_commercial",
+            "habiter_url": "/properties-list?property_type=residential",
+            "travailler_url": "/properties-list?property_type=commercial",
+            "selection_url": "/properties-list",
+            "sale_subtypes": Subtype.search([], order="name asc"),
+            "rent_subtypes": Subtype.search([], order="name asc"),
+            "regions": Region.search([], order="name asc"),
+            "projects": Project.search([("status", "!=", "draft")], order="name asc"),
+        }
+
     @http.route(
         ["/properties-list"], type="http", auth="public", website=True, priority=100
     )
@@ -71,11 +91,14 @@ class PropertyListDynamicSliderController(http.Controller):
         property_type="",
         property_subtype_id="",
         region_id="",
+        city_id="",
         project_id="",
         min_price="",
         max_price="",
         min_area="",
         max_area="",
+        category="",
+        favorite="",
         page=1,
         **kw
     ):
@@ -98,6 +121,18 @@ class PropertyListDynamicSliderController(http.Controller):
         selected_max_area = self._to_float(max_area)
 
         domain = [("stage", "!=", "draft")]
+
+        if category == "morcellement":
+            domain += [
+                ("type", "=", "land"),
+                ("property_subtype_id.category", "=", "morcellement"),
+            ]
+
+        elif category == "residence":
+            domain.append(("type", "=", "residential"))
+
+        elif category == "centre_commercial":
+            domain.append(("type", "=", "commercial"))
 
         # Nature du bien / Sous-type
         Subtype = request.env["property.sub.type"].sudo()
@@ -124,6 +159,9 @@ class PropertyListDynamicSliderController(http.Controller):
         if sale_lease:
             domain.append(("sale_lease", "=", sale_lease))
 
+        if favorite:
+            domain.append(("is_favorite", "=", True))
+
         if property_type:
             domain.append(("type", "=", property_type))
 
@@ -134,6 +172,10 @@ class PropertyListDynamicSliderController(http.Controller):
         region_int = self._to_int(region_id)
         if region_int:
             domain.append(("region_id", "=", region_int))
+
+        city_int = self._to_int(city_id)
+        if city_int:
+            domain.append(("city_id", "=", city_int))
 
         project_int = self._to_int(project_id)
         if project_int:
@@ -190,11 +232,14 @@ class PropertyListDynamicSliderController(http.Controller):
             "property_type": property_type or "",
             "property_subtype_id": property_subtype_id or "",
             "region_id": region_id or "",
+            "city_id": city_id or "",
             "project_id": project_id or "",
             "min_price": min_price or "",
             "max_price": max_price or "",
             "min_area": min_area or "",
             "max_area": max_area or "",
+            "category": category or "",
+            "favorite": favorite or "",
         }
 
         pager_query = url_encode(
@@ -214,11 +259,14 @@ class PropertyListDynamicSliderController(http.Controller):
                 "property_type": property_type,
                 "property_subtype_id": property_subtype_id,
                 "region_id": region_id,
+                "city_id": city_id,
                 "project_id": project_id,
                 "min_price": min_price,
                 "max_price": max_price,
                 "min_area": min_area,
                 "max_area": max_area,
+                "category": category,
+                "favorite": favorite,
                 "price_options": self._get_price_options(),
                 "area_options": self._get_area_options(),
                 "regions": regions,
@@ -230,5 +278,6 @@ class PropertyListDynamicSliderController(http.Controller):
                 "filter_url": "&" + pager_query if pager_query else "",
                 "project_property_count": project_property_count,
                 "project_sale_lease_status": project_sale_lease_status,
+                "packimmo_menu": self._get_website_menu_values(),
             },
         )

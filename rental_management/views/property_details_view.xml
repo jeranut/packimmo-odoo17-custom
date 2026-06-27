@@ -173,6 +173,9 @@
                                             type="object"/>
                                 </div>
                             </group>
+                            <group string="MISE EN AVANT WEBSITE">
+                                <field name="is_favorite" string="Marquer comme coup de cœur"/>
+                            </group>
                         </group>
                         <hr class="mb-3 mt-4"/>
                         <div class="row">

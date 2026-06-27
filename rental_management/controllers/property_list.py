@@ -5,6 +5,31 @@ from odoo.http import request
 
 
 class PropertyListController(http.Controller):
+    def _to_int(self, value):
+        try:
+            return int(value) if value not in (None, "") else False
+        except (ValueError, TypeError):
+            return False
+
+    def _get_website_menu_values(self):
+        Subtype = request.env["property.sub.type"].sudo()
+        Region = request.env["property.region"].sudo()
+        Project = request.env["property.project"].sudo()
+
+        return {
+            "sale_url": "/properties-list?sale_lease=for_sale",
+            "rent_url": "/properties-list?sale_lease=for_tenancy",
+            "residence_url": "/projects-list?project_kind=residence",
+            "morcellement_url": "/projects-list?project_kind=morcellement",
+            "commercial_complex_url": "/projects-list?project_kind=centre_commercial",
+            "habiter_url": "/properties-list?property_type=residential",
+            "travailler_url": "/properties-list?property_type=commercial",
+            "selection_url": "/properties-list",
+            "sale_subtypes": Subtype.search([], order="name asc"),
+            "rent_subtypes": Subtype.search([], order="name asc"),
+            "regions": Region.search([], order="name asc"),
+            "projects": Project.search([("status", "!=", "draft")], order="name asc"),
+        }
 
     @http.route(["/properties-list"], type="http", auth="public", website=True)
     def properties_list(
@@ -14,12 +39,14 @@ class PropertyListController(http.Controller):
         property_type="",
         property_subtype_id="",
         region_id="",
+        city_id="",
         project_id="",
         min_price="",
         max_price="",
         min_area="",
         max_area="",
         category="",
+        favorite="",
         page=1,
         **kw
     ):
@@ -77,6 +104,9 @@ class PropertyListController(http.Controller):
         if sale_lease:
             domain.append(("sale_lease", "=", sale_lease))
 
+        if favorite:
+            domain.append(("is_favorite", "=", True))
+
         if property_type:
             domain.append(("type", "=", property_type))
 
@@ -89,6 +119,12 @@ class PropertyListController(http.Controller):
         if region_id:
             try:
                 domain.append(("region_id", "=", int(region_id)))
+            except (ValueError, TypeError):
+                pass
+
+        if city_id:
+            try:
+                domain.append(("city_id", "=", int(city_id)))
             except (ValueError, TypeError):
                 pass
 
@@ -197,12 +233,14 @@ class PropertyListController(http.Controller):
                     "property_type": property_type,
                     "property_subtype_id": property_subtype_id,
                     "region_id": region_id,
+                    "city_id": city_id,
                     "project_id": project_id,
                     "min_price": min_price,
                     "max_price": max_price,
                     "min_area": min_area,
                     "max_area": max_area,
                     "category": category,
+                    "favorite": favorite,
                 }.items()
                 if v
             }
@@ -219,12 +257,14 @@ class PropertyListController(http.Controller):
                 "property_type": property_type or "",
                 "property_subtype_id": property_subtype_id or "",
                 "region_id": region_id or "",
+                "city_id": city_id or "",
                 "project_id": project_id or "",
                 "min_price": min_price or "",
                 "max_price": max_price or "",
                 "min_area": min_area or "",
                 "max_area": max_area or "",
                 "category": category or "",
+                "favorite": favorite or "",
                 "regions": regions,
                 "projects": projects,
                 "property_subtypes": property_subtypes,
@@ -233,12 +273,20 @@ class PropertyListController(http.Controller):
                 "project_property_count": project_property_count,
                 "project_sale_lease_status": project_sale_lease_status,
                 "filter_url": filter_url,
+                "packimmo_menu": self._get_website_menu_values(),
             },
         )
 
     @http.route(["/projects-list"], type="http", auth="public", website=True)
     def projects_list(
-        self, sale_lease="", property_subtype_id="", project_kind="", page=1, **kw
+        self,
+        sale_lease="",
+        property_subtype_id="",
+        project_kind="",
+        region_id="",
+        project_id="",
+        page=1,
+        **kw
     ):
         try:
             page = int(page or 1)
@@ -267,6 +315,14 @@ class PropertyListController(http.Controller):
             except (ValueError, TypeError):
                 pass
 
+        region_int = self._to_int(region_id)
+        if region_int:
+            property_domain.append(("region_id", "=", region_int))
+
+        project_int = self._to_int(project_id)
+        if project_int:
+            property_domain.append(("property_project_id", "=", project_int))
+
         if project_kind == "residence":
             property_domain.append(("type", "=", "residential"))
 
@@ -278,6 +334,9 @@ class PropertyListController(http.Controller):
                 ("type", "=", "land"),
                 ("property_subtype_id.category", "=", "morcellement"),
             ]
+
+        elif project_kind == "centre_commercial":
+            property_domain.append(("type", "=", "commercial"))
 
         Property = request.env["property.details"].sudo()
         matching_properties = Property.search(property_domain, order="id desc")
@@ -314,6 +373,11 @@ class PropertyListController(http.Controller):
             offset = (page - 1) * limit
 
         projects = subprojects[offset : offset + limit]
+        regions = request.env["property.region"].sudo().search([], order="name asc")
+        all_projects = request.env["property.project"].sudo().search([], order="name asc")
+        property_subtypes = (
+            request.env["property.sub.type"].sudo().search([], order="name asc")
+        )
 
         filter_url = urlencode(
             {
@@ -322,6 +386,8 @@ class PropertyListController(http.Controller):
                     "sale_lease": sale_lease,
                     "property_subtype_id": property_subtype_id,
                     "project_kind": project_kind,
+                    "region_id": region_id,
+                    "project_id": project_id,
                 }.items()
                 if v
             }
@@ -336,11 +402,17 @@ class PropertyListController(http.Controller):
                 "sale_lease": sale_lease or "",
                 "property_subtype_id": property_subtype_id or "",
                 "project_kind": project_kind or "",
+                "region_id": region_id or "",
+                "project_id": project_id or "",
+                "regions": regions,
+                "projects_filter": all_projects,
+                "property_subtypes": property_subtypes,
                 "page": page,
                 "total_pages": total_pages,
                 "project_property_count": project_property_count,
                 "project_sale_lease_status": project_sale_lease_status,
                 "filter_url": filter_url,
+                "packimmo_menu": self._get_website_menu_values(),
             },
         )
 

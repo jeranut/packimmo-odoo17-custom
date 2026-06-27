@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="packimmo_qweb_mega_menu_content" name="PACKIMMO QWeb Mega Menu Content">
+        <div class="container">
+            <div class="row g-4">
+                <t t-foreach="columns" t-as="column">
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="packimmo-mega-column">
+                            <h6 class="packimmo-mega-title">
+                                <t t-esc="column[0]"/>
+                            </h6>
+                            <t t-if="column[1] in ['__sale_cities__', '__rental_cities__']">
+                                <t t-set="city_sale_lease" t-value="'for_sale' if column[1] == '__sale_cities__' else 'for_tenancy'"/>
+                                <t t-set="city_properties"
+                                   t-value="request.env['property.details'].sudo().search([
+                                       ('sale_lease', '=', city_sale_lease),
+                                       ('stage', '!=', 'draft'),
+                                       ('city_id', '!=', False),
+                                   ], order='id desc')"/>
+                                <t t-set="all_sale_city_ids" t-value="city_properties.mapped('city_id') if city_sale_lease == 'for_sale' else request.env['property.res.city'].sudo().browse()"/>
+                                <t t-set="all_rental_city_ids" t-value="city_properties.mapped('city_id') if city_sale_lease == 'for_tenancy' else request.env['property.res.city'].sudo().browse()"/>
+                                <t t-set="sale_city_ids" t-value="all_sale_city_ids[:3]"/>
+                                <t t-set="rental_city_ids" t-value="all_rental_city_ids[:3]"/>
+                                <t t-set="city_ids" t-value="all_sale_city_ids if city_sale_lease == 'for_sale' else all_rental_city_ids"/>
+                                <t t-set="display_city_ids" t-value="sale_city_ids if city_sale_lease == 'for_sale' else rental_city_ids"/>
+
+                                <ul class="list-unstyled packimmo-mega-links">
+                                    <t t-foreach="display_city_ids" t-as="city">
+                                        <li>
+                                            <a class="packimmo-mega-link"
+                                               t-att-href="'/properties-list?sale_lease=%s&amp;city_id=%s' % (city_sale_lease, city.id)">
+                                                <t t-esc="city.name"/>
+                                            </a>
+                                        </li>
+                                    </t>
+                                </ul>
+
+                                <select class="packimmo-mega-city-select" t-att-data-sale-lease="city_sale_lease">
+                                    <option value="">Rechercher une ville...</option>
+                                    <t t-foreach="city_ids" t-as="city">
+                                        <option t-att-value="city.id">
+                                            <t t-esc="city.name"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </t>
+                            <t t-else="">
+                                <ul class="list-unstyled packimmo-mega-links">
+                                    <t t-foreach="column[1]" t-as="link">
+                                        <li>
+                                            <a class="packimmo-mega-link" t-att-href="link[1]">
+                                                <t t-esc="link[0]"/>
+                                            </a>
+                                        </li>
+                                    </t>
+                                </ul>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </template>
+
+    <template id="packimmo_qweb_mega_menus"
+              inherit_id="website.submenu"
+              name="PACKIMMO QWeb Mega Menus">
+        <xpath expr="//div[@t-if='submenu.is_mega_menu and not is_mobile']"
+               position="replace">
+            <div t-if="submenu.is_mega_menu and not is_mobile and submenu.name == 'Acheter'"
+                 t-attf-class="dropdown-menu o_mega_menu #{submenu.mega_menu_classes} packimmo-qweb-mega-menu"
+                 data-name="Mega Menu">
+                <t t-set="columns" t-value="[
+                    ('HABITER', [
+                        ('Appartements', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=1'),
+                        ('Villas', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=3'),
+                        ('Résidences', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=24'),
+                    ]),
+                    ('INVESTIR', [
+                        ('Morcellements', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=7'),
+                        ('Terrains', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=22'),
+                    ]),
+                    ('DÉVELOPPER', [
+                        ('Locaux commerciaux', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=11'),
+                        ('Centres commerciaux', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=23'),
+                        ('Entrepôts', '/properties-list?sale_lease=for_sale&amp;property_subtype_id=8'),
+                        ('Coups de cœur', '/properties-list?sale_lease=for_sale&amp;favorite=1'),
+                    ]),
+                    ('OÙ ACHETER ?', '__sale_cities__'),
+                ]"/>
+                <t t-call="rental_management.packimmo_qweb_mega_menu_content"/>
+            </div>
+
+            <div t-elif="submenu.is_mega_menu and not is_mobile and submenu.name == 'Louer'"
+                 t-attf-class="dropdown-menu o_mega_menu #{submenu.mega_menu_classes} packimmo-qweb-mega-menu"
+                 data-name="Mega Menu">
+                <t t-set="columns" t-value="[
+                    ('HABITER', [
+                        ('Appartements', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=1'),
+                        ('Villas', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=3'),
+                        ('Maisons', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=5'),
+                    ]),
+                    ('TRAVAILLER', [
+                        ('Bureaux', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=11'),
+                        ('Entrepôts', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=8'),
+                        ('Locaux commerciaux', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=11'),
+                        ('Complexe commercial', '/properties-list?sale_lease=for_tenancy&amp;property_subtype_id=23'),
+                    ]),
+                    ('OÙ LOUER ?', '__rental_cities__'),
+                    ('SÉLECTION PACKIMMO', [
+                        ('Coups de cœur', '/properties-list?sale_lease=for_tenancy&amp;favorite=1'),
+                        ('Toutes les locations', '/properties-list?sale_lease=for_tenancy'),
+                    ]),
+                ]"/>
+                <t t-call="rental_management.packimmo_qweb_mega_menu_content"/>
+            </div>
+
+            <div t-elif="submenu.is_mega_menu and not is_mobile"
+                 t-attf-class="dropdown-menu o_mega_menu #{submenu.mega_menu_classes}"
+                 data-name="Mega Menu"
+                 t-field="submenu.mega_menu_content"/>
+        </xpath>
+    </template>
+
+</odoo>

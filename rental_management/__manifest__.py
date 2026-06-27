@@ -81,6 +81,7 @@
         "views/templates/property_details_web_template.xml",
         "views/properties_list_website_template.xml",
         "views/projects_list_template.xml",
+        "views/packimmo_mega_menu_templates.xml",
         # Inherit Views
         "views/maintenance_product_inherit.xml",
         "views/property_maintenance_view.xml",
@@ -129,7 +130,9 @@
             "rental_management/static/src/css/extra.css",
             "rental_management/static/src/css/property_brochure_deatail.css",
             "rental_management/static/src/css/properties_list_techkhedut.css",
+            "rental_management/static/src/css/packimmo_mega_menu.css",
             "rental_management/static/src/js/properties_list.js",
+            "rental_management/static/src/js/packimmo_mega_menu.js",
         ],
     },
     "images": [

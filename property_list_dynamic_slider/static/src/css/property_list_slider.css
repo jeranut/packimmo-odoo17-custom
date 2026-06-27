@@ -141,6 +141,53 @@
     border-radius: 10px;
 }
 
+.pack-project-search {
+    max-width: 1180px;
+}
+
+.pack-project-search-grid {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.3fr) repeat(4, minmax(130px, 1fr)) minmax(220px, 1.05fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+.pack-project-filter,
+.pack-project-actions {
+    min-width: 0;
+}
+
+.pack-project-sale-filter .pack-sale-switch {
+    min-width: 200px;
+}
+
+.pack-project-sale-filter .pack-sale-switch label {
+    padding: 0 8px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.pack-project-actions {
+    display: grid;
+    grid-template-columns: minmax(112px, 1fr) minmax(118px, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 1199.98px) {
+    .pack-project-search-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pack-project-sale-filter,
+    .pack-project-actions {
+        grid-column: 1 / -1;
+    }
+
+    .pack-project-sale-filter .pack-sale-switch {
+        min-width: 0;
+    }
+}
+
 .property-reset-btn {
     min-height: 50px;
     display: flex;
@@ -345,6 +392,18 @@
 @media (max-width: 767.98px) {
     .property-search-dropdown-box {
         padding: 18px;
+    }
+
+    .pack-project-search-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pack-project-sale-filter .pack-sale-switch {
+        min-width: 0;
+    }
+
+    .pack-project-actions {
+        grid-template-columns: 1fr;
     }
 
     .pack-dropdown-menu {

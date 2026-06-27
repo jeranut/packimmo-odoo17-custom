@@ -49,4 +49,69 @@
 
     </template>
 
+    <template id="packimmo_projects_list_carousel"
+              inherit_id="rental_management.projects_list_template">
+        <xpath expr="//div[contains(@class, 'container') and contains(@class, 'my-5')]"
+               position="attributes">
+            <attribute name="class">container py-0 packimmo-properties-page</attribute>
+        </xpath>
+
+        <xpath expr="//div[contains(@class, 'text-center') and contains(@class, 'mb-5')]"
+               position="replace">
+
+            <section class="packimmo-hero-wrapper">
+
+                <div class="packimmo-carousel-bg">
+                    <t t-set="carousel_images"
+                       t-value="request.env['packimmo.search.carousel.image'].sudo().search([('active','=',True)], order='sequence asc')"/>
+
+                    <t t-foreach="carousel_images" t-as="img">
+                        <div class="packimmo-slide"
+                             t-attf-style="background-image:url('/web/image/packimmo.search.carousel.image/#{img.id}/image');"/>
+                    </t>
+
+                    <div class="packimmo-overlay"/>
+                </div>
+
+                <div class="packimmo-hero-content">
+                    <div class="text-center mb-5">
+                        <h1 t-if="sale_lease == 'for_tenancy'" class="display-5 fw-bold text-white">
+                            Nos projets disponibles à louer
+                        </h1>
+
+                        <h1 t-elif="sale_lease == 'for_sale'" class="display-5 fw-bold text-white">
+                            Nos projets disponibles à vendre
+                        </h1>
+
+                        <h1 t-else="" class="display-5 fw-bold text-white">
+                            Nos projets disponibles
+                        </h1>
+
+                        <p class="text-white">
+                            <t t-if="sale_lease == 'for_tenancy'">
+                                Choisissez un projet pour consulter les unités disponibles à la location.
+                            </t>
+
+                            <t t-elif="sale_lease == 'for_sale'">
+                                Choisissez un projet pour consulter les unités disponibles à la vente.
+                            </t>
+
+                            <t t-else="">
+                                Choisissez un projet pour consulter les unités disponibles.
+                            </t>
+                        </p>
+                    </div>
+                </div>
+
+            </section>
+
+        </xpath>
+
+        <xpath expr="//form[contains(@class, 'property-search-box')]"
+               position="attributes">
+            <attribute name="class">property-search-box property-search-dropdown-box shadow-sm packimmo-search-overlay</attribute>
+        </xpath>
+
+    </template>
+
 </odoo>

@@ -29,6 +29,10 @@ class PropertyDetails(models.Model):
     property_brochure_url = fields.Char('Brochure URL', compute="_compute_copy_property_brochure_url")
     image = fields.Binary(string='Image')
     unit_map_label = fields.Char(string="Réf Plan")
+    is_favorite = fields.Boolean(
+        string="Coup de cœur",
+        default=False,
+    )
     type = fields.Selection([('land', 'Land'),
                              ('residential', 'Residential'),
                              ('commercial', 'Commercial'),
