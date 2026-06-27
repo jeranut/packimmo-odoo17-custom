@@ -272,6 +272,7 @@
     display: flex;
     flex: 1;
     flex-direction: column;
+    min-width: 0;
     padding: 24px;
 }
 
@@ -291,6 +292,33 @@
     font-size: 23px;
     font-weight: 700;
     line-height: 1.2;
+}
+
+.pack-property-card .pk-property-ref {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 100%;
+    margin: -4px 0 12px;
+    min-width: 0;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+.pack-property-card .pk-property-ref .pk-property-ref-label {
+    flex: 0 0 auto;
+}
+
+.pack-property-card .pk-property-ref .pk-property-ref-value {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .pack-property-location {

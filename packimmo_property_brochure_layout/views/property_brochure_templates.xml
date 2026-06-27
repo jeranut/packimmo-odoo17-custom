@@ -3,6 +3,12 @@
     <template id="packimmo_property_brochure_details" name="PACKIMMO Property Brochure Details">
         <t t-call="website.layout">
             <div class="pk-brochure-page">
+                <t t-set="display_property_seq"
+                   t-value="property_id.property_seq.split(' Adresse :')[0].strip() if property_id.property_seq else ''"/>
+                <t t-set="property_seq_address"
+                   t-value="property_id.property_seq.split(' Adresse :', 1)[1].strip() if property_id.property_seq and ' Adresse :' in property_id.property_seq else ''"/>
+                <t t-set="display_property_address"
+                   t-value="' '.join([part for part in [property_id.street, property_id.street2] if part]) or property_seq_address"/>
                 <section class="pk-hero">
                     <t t-if="property_id.brochure_header_image">
                         <img t-att-src="'/web/image/property.details/%s/brochure_header_image' % property_id.id"
@@ -39,10 +45,14 @@
                         <div class="pk-unit-map-label" t-if="property_id.unit_map_label">
                             Lot: <span t-esc="property_id.unit_map_label"/>
                         </div>
-                        <div class="pk-location" t-if="property_id.city_id or property_id.city or property_id.region_id">
+                        <div class="pk-location" t-if="property_id.city_id or property_id.city or property_id.region_id or display_property_address">
                             <i class="fa fa-map-marker me-1"/>
                             <span t-if="property_id.city_id" t-field="property_id.city_id"/>
                             <span t-elif="property_id.city" t-field="property_id.city"/>
+                            <span t-if="display_property_address">
+                                <t t-if="property_id.city_id or property_id.city"> - </t>
+                                Adresse : <span t-esc="display_property_address"/>
+                            </span>
                             <span t-if="property_id.region_id">, <span t-field="property_id.region_id"/></span>
                         </div>
                        <div class="pk-hero-meta">
@@ -141,7 +151,7 @@
                                     <strong t-elif="property_id.sale_lease == 'for_tenancy'">À louer</strong>
                                     <strong t-else="" t-field="property_id.sale_lease"/>
                                 </div>
-                                <div class="pk-info" t-if="property_id.property_seq"><small>Référence</small><strong t-field="property_id.property_seq"/></div>
+                                <div class="pk-info" t-if="display_property_seq"><small>Référence</small><strong t-esc="display_property_seq"/></div>
                                 <div class="pk-info" t-if="property_id.total_area"><small>Surface habitable</small><strong><span t-field="property_id.total_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.usable_area"><small>Surface totale</small><strong><span t-field="property_id.usable_area"/> <span t-field="property_id.measure_unit"/></strong></div>
                                 <div class="pk-info" t-if="property_id.type != 'land' and property_id.facing"><small>Orientation</small><strong t-field="property_id.facing"/></div>

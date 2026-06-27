@@ -168,9 +168,10 @@
                                     </h5>
 
                                     <t t-if="not property.subproject_id and property.property_seq">
-                                        <div class="pk-property-ref">
-                                            Réf :
-                                            <span t-esc="property.property_seq"/>
+                                        <t t-set="display_property_seq" t-value="property.property_seq.split(' Adresse :')[0].strip()"/>
+                                        <div class="pk-property-ref" style="display:flex; align-items:baseline; gap:4px; max-width:100%; min-width:0; overflow:hidden; white-space:nowrap;">
+                                            <span class="pk-property-ref-label">Réf :</span>
+                                            <span class="pk-property-ref-value" style="display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" t-esc="display_property_seq"/>
                                         </div>
                                     </t>
 

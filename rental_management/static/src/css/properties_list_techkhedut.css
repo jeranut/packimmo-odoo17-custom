@@ -65,16 +65,30 @@
 }
 
 .pk-property-ref {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    max-width: 100%;
     color: #777;
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 10px;
+    min-width: 0;
+    overflow: hidden;
     line-height: 1.35;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
 }
 
-.pk-property-ref span {
+.pk-property-ref .pk-property-ref-label {
+    flex: 0 0 auto;
+}
+
+.pk-property-ref .pk-property-ref-value {
     display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .property-price {

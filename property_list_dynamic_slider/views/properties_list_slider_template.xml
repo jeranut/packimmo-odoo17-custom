@@ -265,6 +265,14 @@
                                 <t t-esc="display_title"/>
                             </h3>
 
+                            <t t-if="not property.subproject_id and property.property_seq">
+                                <t t-set="display_property_seq" t-value="property.property_seq.split(' Adresse :')[0].strip()"/>
+                                <div class="pk-property-ref" style="display:flex; align-items:baseline; gap:4px; max-width:100%; min-width:0; overflow:hidden; white-space:nowrap;">
+                                    <span class="pk-property-ref-label">Réf :</span>
+                                    <span class="pk-property-ref-value" style="display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" t-esc="display_property_seq"/>
+                                </div>
+                            </t>
+
                             <div t-if="property.city or property.city_id" class="pack-property-location">
                                 <i class="fa fa-map-marker" aria-hidden="true"/>
                                 <span t-esc="property.city or property.city_id.name"/>

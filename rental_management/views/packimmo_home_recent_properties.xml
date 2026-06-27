@@ -2,7 +2,7 @@
 <odoo>
 
     <template id="packimmo_recent_property_card" name="PACKIMMO Recent Property Card">
-        <div class="col-lg-4 col-md-6 mb-4">
+        <div class="col-lg-4 col-md-6 mb-4 pk-recent-property-col">
             <div class="property-card packimmo-recent-property-card">
 
                 <div class="property-image-wrapper">
@@ -56,7 +56,7 @@
                     </div>
                 </div>
 
-                <div class="property-content">
+                <div class="property-content pk-recent-property-body">
                     <p class="packimmo-property-subtype" t-if="property.property_subtype_id">
                         <t t-esc="property.property_subtype_id.name"/>
                     </p>
@@ -66,9 +66,10 @@
                     </h5>
 
                     <t t-if="not property.subproject_id and property.property_seq">
-                        <div class="pk-property-ref">
-                            Réf :
-                            <span t-esc="property.property_seq"/>
+                        <t t-set="display_property_seq" t-value="property.property_seq.split(' Adresse :')[0].strip()"/>
+                        <div class="pk-recent-property-ref" style="display:flex; align-items:baseline; gap:4px; max-width:100%; min-width:0; overflow:hidden; white-space:nowrap;">
+                            <span class="pk-property-ref-label">Réf :</span>
+                            <span class="pk-property-ref-value" style="display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" t-esc="display_property_seq"/>
                         </div>
                     </t>
 
@@ -115,25 +116,25 @@
 
                     <a t-if="property.type == 'land' and property.property_project_id"
                        t-att-href="'/property/land-phase/project/%s/map' % property.property_project_id.id"
-                       class="btn btn-outline-primary w-100 mt-3">
+                       class="btn btn-outline-primary w-100 mt-3 pk-recent-property-action">
                         Voir le détail
                     </a>
 
                     <a t-elif="property.subproject_id and subproject_unit_count &gt; 1"
                        t-att-href="'/property/subproject/%s/unit-map' % property.subproject_id.id"
-                       class="btn btn-outline-primary w-100 mt-3">
+                       class="btn btn-outline-primary w-100 mt-3 pk-recent-property-action">
                         Voir le détail
                     </a>
 
                     <a t-elif="property.property_project_id and project_unit_count &gt; 1"
                        t-att-href="'/property/project/%s/unit-map' % property.property_project_id.id"
-                       class="btn btn-outline-primary w-100 mt-3">
+                       class="btn btn-outline-primary w-100 mt-3 pk-recent-property-action">
                         Voir le détail
                     </a>
 
                     <a t-elif="property.brocher_access_token"
                        t-att-href="'/property-brochure/%s' % property.brocher_access_token"
-                       class="btn btn-outline-primary w-100 mt-3">
+                       class="btn btn-outline-primary w-100 mt-3 pk-recent-property-action">
                         Voir le détail
                     </a>
                 </div>
