@@ -1,0 +1,319 @@
+# -*- coding: utf-8 -*-
+import logging
+
+from odoo import api, fields, models
+from odoo.tools import SQL, sql
+
+
+_logger = logging.getLogger(__name__)
+
+
+class PackimmoMenuPermission(models.Model):
+    """Permission centralisée de visibilité des menus backend Packimmo.
+
+    Une règle active avec des groupes limite le menu à ces groupes. Une règle
+    active sans groupe conserve le comportement Odoo standard. Les règles ne
+    remplacent jamais les groupes natifs Odoo : elles s'appliquent après le
+    filtrage standard de `ir.ui.menu`.
+    """
+
+    _name = 'packimmo.menu.permission'
+    _description = 'Permission de menu Packimmo'
+    _order = 'menu_complete_name, menu_id'
+
+    menu_id = fields.Many2one(
+        'ir.ui.menu',
+        string='Menu',
+        required=True,
+        ondelete='cascade',
+        index=True,
+    )
+    menu_complete_name = fields.Char(
+        string='Chemin du menu',
+        related='menu_id.complete_name',
+        store=True,
+        readonly=True,
+    )
+    group_ids = fields.Many2many(
+        'res.groups',
+        string='Groupes autorisés',
+        domain="[('category_id.name', '=', 'Packimmo')]",
+    )
+    active = fields.Boolean(default=True)
+    generated = fields.Boolean(string='Générée automatiquement', default=False)
+    note = fields.Text()
+
+    _sql_constraints = [
+        (
+            'menu_unique',
+            'unique(menu_id)',
+            'Une règle Packimmo existe déjà pour ce menu.',
+        ),
+    ]
+
+    ROLE_GROUP_XMLIDS = {
+        'admin': 'packimmo_access_roles.group_packimmo_admin',
+        'manager': 'packimmo_access_roles.group_packimmo_manager',
+        'sale': 'packimmo_access_roles.group_packimmo_sale',
+        'location': 'packimmo_access_roles.group_packimmo_location',
+        'land': 'packimmo_access_roles.group_packimmo_land',
+        'drafter': 'packimmo_access_roles.group_packimmo_drafter',
+        'manager_operations': 'packimmo_access_roles.group_packimmo_manager_operations',
+        'accountant': 'packimmo_access_roles.group_packimmo_accountant',
+    }
+
+    TRACKED_MODULE_NAMES = {
+        'rental_management',
+        'property_land_phase_management',
+        'property_unit_mapping',
+        'property_location_esri',
+        'property_list_dynamic_slider',
+        'property_brochure_video',
+        'web_responsive',
+    }
+
+    def init(self):
+        """Génère les règles de menu lors d'une mise à jour du module.
+
+        Cette méthode est tolérante : pendant une installation fraîche, certains
+        XML IDs de groupes peuvent ne pas encore être chargés. Le hook post-init
+        relance alors la génération une fois les données disponibles.
+        """
+        try:
+            self.sudo().generate_menu_permissions()
+        except Exception:
+            _logger.exception('Unable to generate Packimmo menu permissions during model initialization.')
+
+    def _tracked_module_domain(self):
+        """Retourne le domaine ir.model.data des menus gérés par Packimmo."""
+        module_names = set(self.TRACKED_MODULE_NAMES)
+        module_names.update(
+            module.name
+            for module in self.env['ir.module.module'].sudo().search([('name', '=like', 'packimmo_%')])
+        )
+        return [
+            ('model', '=', 'ir.ui.menu'),
+            ('module', 'in', sorted(module_names)),
+        ]
+
+    def _get_menu_module(self, menu):
+        """Retourne le module XML principal d'un menu."""
+        data = self.env['ir.model.data'].sudo().search([
+            ('model', '=', 'ir.ui.menu'),
+            ('res_id', '=', menu.id),
+        ], limit=1)
+        return data.module if data else ''
+
+    def _get_menu_action_model(self, menu):
+        """Retourne le modèle métier lié à l'action du menu si disponible."""
+        action = menu.action
+        if not action:
+            return ''
+        if action._name == 'ir.actions.act_window':
+            return action.res_model or ''
+        if action._name == 'ir.actions.report':
+            return action.model or ''
+        if action._name == 'ir.actions.server':
+            return action.model_name or ''
+        return ''
+
+    def _role_codes_for_menu(self, menu):
+        """Déduit les rôles Packimmo autorisés depuis le menu, son module et son action.
+
+        Les Managers et Administrateurs ne sont pas inclus ici car le filtre les
+        autorise toujours. La règle se concentre donc sur les rôles métier.
+        """
+        module = self._get_menu_module(menu).lower()
+        action_model = self._get_menu_action_model(menu).lower()
+        text = ' '.join([
+            menu.complete_name or '',
+            menu.name or '',
+            module,
+            action_model,
+        ]).lower()
+
+        if any(word in text for word in ['configuration', 'settings', 'param', 'type', 'amenit', 'tag', 'specification', 'region', 'cities', 'city', 'duration', 'template', 'employee']):
+            return ['admin']
+        if any(word in text for word in ['morcel', 'phase', 'lot', 'unit', 'land', 'sub project', 'subproject']):
+            return ['land', 'drafter']
+        if any(word in text for word in ['selling', 'sale', 'vendor', 'prospect', 'lead']):
+            return ['sale']
+        if any(word in text for word in ['renting', 'rent', 'tenancy', 'tenant', 'location', 'lease']):
+            return ['location', 'manager_operations']
+        if 'mandate' in text or 'mandat' in text:
+            if 'sale' in text or 'vente' in text:
+                return ['sale']
+            if 'rent' in text or 'location' in text:
+                return ['location', 'manager_operations']
+            return ['sale', 'location', 'manager_operations', 'accountant']
+        if any(word in text for word in ['invoice', 'bill', 'payment', 'penalt', 'charge', 'commission', 'honor', 'bank', 'account']):
+            return ['accountant']
+        if any(word in text for word in ['map', 'annotation', 'plan', 'drawing', 'dessin', 'geometry', 'geo']):
+            return ['land', 'drafter']
+        if any(word in text for word in ['maintenance', 'syndic', 'meter', 'jirama', 'document']):
+            return ['location', 'manager_operations']
+        if any(word in text for word in ['dashboard', 'property', 'properties', 'broker', 'landlord', 'customer', 'report']):
+            return ['sale', 'location', 'manager_operations', 'accountant']
+        if module == 'web_responsive':
+            return ['admin']
+        if module.startswith('packimmo_') or module in self.TRACKED_MODULE_NAMES:
+            return ['manager_operations']
+        return []
+
+    def _groups_from_role_codes(self, role_codes):
+        """Convertit des codes métier en groupes Odoo existants."""
+        groups = self.env['res.groups'].sudo()
+        for role_code in role_codes:
+            group = self.env.ref(self.ROLE_GROUP_XMLIDS.get(role_code, ''), raise_if_not_found=False)
+            if group:
+                groups |= group
+        return groups
+
+    def generate_menu_permissions(self):
+        """Crée ou met à jour les règles de menu Packimmo détectées.
+
+        La génération s'appuie sur les XML IDs de menus des modules Packimmo et
+        modules immobiliers suivis. Elle est idempotente et ne crée pas de doublons.
+        """
+        data_rows = self.env['ir.model.data'].sudo().search(self._tracked_module_domain())
+        menus = self.env['ir.ui.menu'].sudo().browse(data_rows.mapped('res_id')).exists()
+        for menu in menus:
+            role_codes = self._role_codes_for_menu(menu)
+            groups = self._groups_from_role_codes(role_codes)
+            note = 'Générée automatiquement depuis le menu, son module et son action.'
+            values = {
+                'menu_id': menu.id,
+                'group_ids': [(6, 0, groups.ids)],
+                'generated': True,
+                'active': True,
+                'note': note,
+            }
+            rule = self.sudo().search([('menu_id', '=', menu.id)], limit=1)
+            if rule:
+                rule.write(values)
+            else:
+                self.sudo().create(values)
+        self.env.registry.clear_cache()
+        return True
+
+    def write(self, vals):
+        """Vide les caches de menus quand une règle change."""
+        result = super().write(vals)
+        self.env.registry.clear_cache()
+        return result
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Vide les caches de menus quand une règle est créée."""
+        records = super().create(vals_list)
+        self.env.registry.clear_cache()
+        return records
+
+    def unlink(self):
+        """Vide les caches de menus quand une règle est supprimée."""
+        result = super().unlink()
+        self.env.registry.clear_cache()
+        return result
+
+
+class IrUiMenu(models.Model):
+    """Ajoute le filtrage serveur Packimmo aux menus Odoo."""
+
+    _inherit = 'ir.ui.menu'
+
+    def _packimmo_menu_permission_tables_ready(self):
+        """Vérifie que les tables nécessaires existent avant le filtrage.
+
+        Pendant une mise à jour incomplète, Odoo peut appeler `load_menus` alors
+        que les tables custom ne sont pas encore prêtes. Dans ce cas on conserve
+        le comportement Odoo standard et on logge un avertissement.
+        """
+        Permission = self.env['packimmo.menu.permission']
+        group_field = Permission._fields.get('group_ids')
+        return bool(
+            sql.table_exists(self.env.cr, Permission._table)
+            and group_field
+            and sql.table_exists(self.env.cr, group_field.relation)
+            and sql.column_exists(self.env.cr, group_field.relation, group_field.column1)
+            and sql.column_exists(self.env.cr, group_field.relation, group_field.column2)
+        )
+
+    def _packimmo_allowed_menu_ids(self, menu_ids):
+        """Retourne les menus autorisés par les règles Packimmo.
+
+        Les menus sans règle ou avec règle sans groupe restent visibles selon le
+        comportement Odoo standard. Manager et Administrateur voient tout.
+        """
+        if not menu_ids:
+            return set()
+        denied_ids = self._packimmo_denied_menu_ids(menu_ids)
+        return set(menu_ids) - denied_ids
+
+    def _packimmo_denied_menu_ids(self, menu_ids=None):
+        """Retourne les menus refusés, descendants inclus, pour l'utilisateur courant."""
+        user = self.env.user
+        if user.has_group('packimmo_access_roles.group_packimmo_admin') or user.has_group('packimmo_access_roles.group_packimmo_manager'):
+            return set()
+        if not self._packimmo_menu_permission_tables_ready():
+            _logger.warning('Packimmo menu permission tables are not ready; using native Odoo menu visibility.')
+            return set()
+
+        Permission = self.env['packimmo.menu.permission']
+        group_field = Permission._fields['group_ids']
+        menu_clause = SQL('')
+        menu_params = {}
+        if menu_ids:
+            menu_clause = SQL('AND p.menu_id = ANY(%(menu_ids)s)', menu_ids=list(menu_ids))
+        self.env.cr.execute(SQL(
+            """
+            SELECT p.menu_id, rel.%(group_column)s
+              FROM %(permission_table)s p
+              LEFT JOIN %(relation_table)s rel ON rel.%(permission_column)s = p.id
+             WHERE p.active = true
+               %(menu_clause)s
+            """,
+            group_column=SQL.identifier(group_field.column2),
+            permission_table=SQL.identifier(Permission._table),
+            relation_table=SQL.identifier(group_field.relation),
+            permission_column=SQL.identifier(group_field.column1),
+            menu_clause=menu_clause,
+            **menu_params,
+        ))
+        restricted = {}
+        for menu_id, group_id in self.env.cr.fetchall():
+            if group_id:
+                restricted.setdefault(menu_id, set()).add(group_id)
+        user_group_ids = set(user.groups_id.ids)
+        denied_roots = [
+            menu_id
+            for menu_id, group_ids in restricted.items()
+            if group_ids and not (group_ids & user_group_ids)
+        ]
+        if not denied_roots:
+            return set()
+        descendants = self.sudo().with_context(**{'ir.ui.menu.full_list': True}).search([
+            ('id', 'child_of', denied_roots),
+        ])
+        denied = set(descendants.ids)
+        if menu_ids:
+            denied &= set(menu_ids)
+        return denied
+
+    @api.model
+    def _visible_menu_ids(self, debug=False):
+        """Applique le filtre Packimmo après le filtre natif Odoo."""
+        visible_ids = super()._visible_menu_ids(debug=debug)
+        try:
+            return self._packimmo_allowed_menu_ids(visible_ids)
+        except Exception:
+            _logger.exception('Packimmo menu filtering failed; falling back to native Odoo visibility.')
+            return visible_ids
+
+    def _load_menus_blacklist(self):
+        """Masque les menus Packimmo dans l'arbre chargé par le webclient."""
+        blacklist = set(super()._load_menus_blacklist())
+        try:
+            blacklist |= self._packimmo_denied_menu_ids()
+        except Exception:
+            _logger.exception('Packimmo menu blacklist failed; keeping native Odoo blacklist only.')
+        return list(blacklist)

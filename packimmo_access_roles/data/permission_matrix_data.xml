@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!--
+        La matrice packimmo.permission.matrix est générée automatiquement par
+        packimmo.repository.scanner lors de l'installation et de la mise à jour
+        du module. Ce fichier existe comme point d'extension stable pour les
+        futures données déclaratives qui ne peuvent pas être déduites du dépôt.
+    -->
+</odoo>

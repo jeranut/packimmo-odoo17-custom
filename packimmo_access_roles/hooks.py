@@ -10,30 +10,55 @@ PACKIMMO_MODEL_ACCESS = {
         'editor': ['sale', 'location', 'land', 'manager_operations', 'manager', 'admin'],
         'manager': ['manager', 'admin'],
     },
+    'res.partner': {
+        'reader': ['accountant', 'manager', 'admin'],
+        'editor': ['manager', 'admin'],
+        'manager': ['admin'],
+    },
     'project.task': {
         'reader': ['sale', 'location', 'land', 'drafter', 'manager_operations', 'manager', 'admin'],
         'editor': ['sale', 'location', 'land', 'drafter', 'manager_operations', 'manager', 'admin'],
         'manager': ['manager', 'admin'],
     },
     'property.mandate': {
-        'reader': ['sale', 'location', 'manager_operations', 'manager', 'admin'],
+        'reader': ['sale', 'location', 'manager_operations', 'accountant', 'manager', 'admin'],
         'editor': ['sale', 'location', 'manager_operations', 'manager', 'admin'],
         'manager': ['manager', 'admin'],
     },
     'tenancy.details': {
-        'reader': ['location', 'manager_operations', 'manager', 'admin'],
+        'reader': ['location', 'manager_operations', 'accountant', 'manager', 'admin'],
         'editor': ['location', 'manager_operations', 'manager', 'admin'],
         'manager': ['manager', 'admin'],
     },
+    'property.vendor': {
+        'reader': ['sale', 'manager_operations', 'accountant', 'manager', 'admin'],
+        'editor': ['sale', 'manager_operations', 'manager', 'admin'],
+        'manager': ['manager', 'admin'],
+    },
     'property.phase': {
-        'reader': ['land', 'drafter', 'manager_operations', 'manager', 'admin'],
+        'reader': ['land', 'drafter', 'manager_operations', 'accountant', 'manager', 'admin'],
         'editor': ['land', 'drafter', 'manager_operations', 'manager', 'admin'],
         'manager': ['land', 'manager', 'admin'],
     },
     'property.lot': {
-        'reader': ['land', 'drafter', 'manager_operations', 'manager', 'admin'],
+        'reader': ['land', 'drafter', 'manager_operations', 'accountant', 'manager', 'admin'],
         'editor': ['land', 'drafter', 'manager_operations', 'manager', 'admin'],
         'manager': ['land', 'manager', 'admin'],
+    },
+    'account.payment': {
+        'reader': ['accountant', 'manager', 'admin'],
+        'editor': ['accountant', 'manager', 'admin'],
+        'manager': ['manager', 'admin'],
+    },
+    'account.bank.statement': {
+        'reader': ['accountant', 'manager', 'admin'],
+        'editor': ['accountant', 'manager', 'admin'],
+        'manager': ['manager', 'admin'],
+    },
+    'account.move': {
+        'reader': ['accountant', 'manager', 'admin'],
+        'editor': ['accountant', 'manager', 'admin'],
+        'manager': ['manager', 'admin'],
     },
 }
 
@@ -43,6 +68,7 @@ ROLE_GROUP_XMLIDS = {
     'land': 'packimmo_access_roles.group_packimmo_land',
     'drafter': 'packimmo_access_roles.group_packimmo_drafter',
     'manager_operations': 'packimmo_access_roles.group_packimmo_manager_operations',
+    'accountant': 'packimmo_access_roles.group_packimmo_accountant',
     'manager': 'packimmo_access_roles.group_packimmo_manager',
     'admin': 'packimmo_access_roles.group_packimmo_admin',
 }
@@ -123,6 +149,71 @@ def _create_basic_acls(env):
                 _create_or_update_acl(env, model_rec, group_rec, 'manager_%s' % role_code, True, True, True, True)
 
 
+def _create_permission_matrix(env):
+    """Alimente la matrice Packimmo avec les permissions de base.
+
+    Les lignes sont créées ou mises à jour depuis la même configuration que les ACL
+    dynamiques. Les opérations métier supplémentaires suivent une logique simple :
+    les éditeurs peuvent exporter/imprimer, les managers peuvent valider/supprimer,
+    et le Comptable peut créer/imprimer/exporter les objets comptables sans modifier
+    les objets métier sensibles comme mandats, contrats, biens, plans, phases ou lots.
+    """
+    Matrix = env['packimmo.permission.matrix'].sudo()
+    accounting_models = {'account.payment', 'account.bank.statement', 'account.move'}
+    sensitive_models = {
+        'property.details',
+        'property.mandate',
+        'tenancy.details',
+        'property.vendor',
+        'property.phase',
+        'property.lot',
+        'property.project',
+    }
+    for model_name, config in PACKIMMO_MODEL_ACCESS.items():
+        if not _model(env, model_name):
+            continue
+        role_codes = set(config.get('reader', []) + config.get('editor', []) + config.get('manager', []))
+        for role_code in role_codes:
+            group_rec = _group(env, role_code)
+            if not group_rec:
+                continue
+            is_reader = role_code in config.get('reader', [])
+            is_editor = role_code in config.get('editor', [])
+            is_manager = role_code in config.get('manager', [])
+            is_accounting_editor = role_code == 'accountant' and model_name in accounting_models
+            is_sensitive_accountant = role_code == 'accountant' and model_name in sensitive_models
+            values = {
+                'model_name': model_name,
+                'group_id': group_rec.id,
+                'company_id': False,
+                'perm_read': bool(is_reader or is_editor or is_manager),
+                'perm_create': bool((is_editor or is_accounting_editor) and not is_sensitive_accountant),
+                'perm_write': bool((is_editor or is_accounting_editor) and not is_sensitive_accountant),
+                'perm_unlink': bool(is_manager and role_code != 'accountant'),
+                'perm_validate': bool(is_manager and role_code != 'accountant'),
+                'perm_export': bool(is_editor or is_manager or role_code == 'accountant'),
+                'perm_print': bool(is_reader or is_editor or is_manager or role_code == 'accountant'),
+                'active': True,
+            }
+            row = Matrix.search([
+                ('model_name', '=', model_name),
+                ('group_id', '=', group_rec.id),
+                ('company_id', '=', False),
+            ], limit=1)
+            if row:
+                row.write(values)
+            else:
+                Matrix.create(values)
+
+
+def _drop_legacy_permission_matrix_constraint(env):
+    """Supprime l'ancien unique(model_name, group_id) incompatible multi-société."""
+    env.cr.execute(
+        'ALTER TABLE packimmo_permission_matrix '
+        'DROP CONSTRAINT IF EXISTS packimmo_permission_matrix_model_group_unique'
+    )
+
+
 def _harden_access_roles_administration(env):
     """Réduit le risque que tous les utilisateurs internes administrent les rôles.
 
@@ -152,6 +243,57 @@ def _harden_access_roles_administration(env):
         _create_or_update_acl(env, model_rec, admin_group, 'admin_only', True, True, True, True)
 
 
+def _secure_known_packimmo_menus(env):
+    """Applique des groupes Packimmo aux menus optionnels connus.
+
+    Les modules historiques ne sont pas toujours installés ensemble. On récupère
+    donc chaque menu avec raise_if_not_found=False et on ignore les absents. Les
+    menus déjà protégés par rental_management restent inchangés ; cette méthode
+    cible surtout les menus Packimmo ajoutés sans groupe explicite.
+    """
+    menu_groups = {
+        'packimmo_syndic_management.menu_syndic_root': ['manager_operations', 'manager', 'admin'],
+        'packimmo_syndic_management.menu_syndic_management': ['manager_operations', 'manager', 'admin'],
+        'packimmo_syndic_management.menu_syndic_charge': ['manager_operations', 'accountant', 'manager', 'admin'],
+        'packimmo_map_annotations.packimmo_map_annotations_root': ['land', 'drafter', 'manager', 'admin'],
+        'packimmo_map_annotations.menu_packimmo_map_annotation': ['land', 'drafter', 'manager', 'admin'],
+        'packimmo_map_annotations.menu_packimmo_map_interest_zone': ['land', 'drafter', 'manager', 'admin'],
+    }
+    for menu_xmlid, role_codes in menu_groups.items():
+        menu = env.ref(menu_xmlid, raise_if_not_found=False)
+        if not menu:
+            continue
+        groups = [_group(env, role_code).id for role_code in role_codes if _group(env, role_code)]
+        if groups:
+            menu.sudo().write({'groups_id': [(6, 0, groups)]})
+
+
+def _migrate_web_responsive_shortcut_groups(env):
+    """Migre les anciennes relations de groupes des raccourcis Web Responsive.
+
+    La méthode du modèle connaît le nom de relation Many2many réellement généré
+    par Odoo. Le hook l'appelle après installation/mise à jour pour couvrir aussi
+    les bases qui avaient reçu une version intermédiaire du module.
+    """
+    if 'web.responsive.app.shortcut' in env:
+        env['web.responsive.app.shortcut'].sudo()._migrate_legacy_visible_group_relation()
+
+
+def _generate_repository_permission_matrix(env):
+    """Scanne le dépôt et génère la matrice de permissions PACKIMMO.
+
+    Le scanner détecte automatiquement les modules et modèles éligibles. Il évite
+    ainsi de maintenir une liste fixe lorsque de nouveaux addons Packimmo sont
+    ajoutés dans le dépôt.
+    """
+    env['packimmo.repository.scanner'].sudo().generate_permission_matrix()
+
+
+def _generate_menu_permissions(env):
+    """Génère les règles de visibilité des menus Packimmo."""
+    env['packimmo.menu.permission'].sudo().generate_menu_permissions()
+
+
 def post_init_hook(env_or_cr, registry=None):
     """Initialise les droits Packimmo après installation du module.
 
@@ -160,5 +302,11 @@ def post_init_hook(env_or_cr, registry=None):
     optionnels installés dans la base Packimmo.
     """
     env = _get_env(env_or_cr, registry)
+    _drop_legacy_permission_matrix_constraint(env)
     _create_basic_acls(env)
+    _create_permission_matrix(env)
+    _generate_repository_permission_matrix(env)
+    _generate_menu_permissions(env)
     _harden_access_roles_administration(env)
+    _secure_known_packimmo_menus(env)
+    _migrate_web_responsive_shortcut_groups(env)

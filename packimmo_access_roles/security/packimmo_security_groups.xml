@@ -49,10 +49,17 @@
         <field name="comment">Accès opérationnel à la gestion, au syndic, aux tâches, contrats et suivis administratifs.</field>
     </record>
 
+    <record id="group_packimmo_accountant" model="res.groups">
+        <field name="name">Packimmo Comptable</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_user'))]"/>
+        <field name="comment">Accès comptable Packimmo : lecture métier, paiements, encaissements, décaissements, rapprochements, reçus, honoraires et commissions.</field>
+    </record>
+
     <record id="group_packimmo_manager" model="res.groups">
         <field name="name">Packimmo Manager</field>
         <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
-        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_sale')), (4, ref('packimmo_access_roles.group_packimmo_location')), (4, ref('packimmo_access_roles.group_packimmo_land')), (4, ref('packimmo_access_roles.group_packimmo_drafter')), (4, ref('packimmo_access_roles.group_packimmo_manager_operations'))]"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_sale')), (4, ref('packimmo_access_roles.group_packimmo_location')), (4, ref('packimmo_access_roles.group_packimmo_land')), (4, ref('packimmo_access_roles.group_packimmo_drafter')), (4, ref('packimmo_access_roles.group_packimmo_manager_operations')), (4, ref('packimmo_access_roles.group_packimmo_accountant'))]"/>
         <field name="comment">Accès complet aux opérations Packimmo et aux validations métier.</field>
     </record>
 

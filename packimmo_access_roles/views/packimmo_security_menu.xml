@@ -14,6 +14,34 @@
               sequence="10"
               groups="packimmo_access_roles.group_packimmo_admin"/>
 
+    <menuitem id="menu_packimmo_security_profiles"
+              name="Profils de visibilité"
+              parent="packimmo_access_roles.menu_packimmo_security_root"
+              action="packimmo_access_roles.action_packimmo_access_profile"
+              sequence="15"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+
+    <menuitem id="menu_packimmo_security_objects"
+              name="Objets métier détectés"
+              parent="packimmo_access_roles.menu_packimmo_security_root"
+              action="packimmo_access_roles.action_packimmo_security_object"
+              sequence="16"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+
+    <menuitem id="menu_packimmo_security_permissions"
+              name="Matrice de permissions"
+              parent="packimmo_access_roles.menu_packimmo_security_root"
+              action="packimmo_access_roles.action_packimmo_permission_matrix"
+              sequence="18"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+
+    <menuitem id="menu_packimmo_security_menu_permissions"
+              name="Permissions des menus"
+              parent="packimmo_access_roles.menu_packimmo_security_root"
+              action="packimmo_access_roles.action_packimmo_menu_permission"
+              sequence="19"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+
     <menuitem id="menu_packimmo_security_groups"
               name="Groupes"
               parent="packimmo_access_roles.menu_packimmo_security_root"

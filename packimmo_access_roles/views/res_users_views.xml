@@ -11,6 +11,7 @@
                 Le champ login est beaucoup plus stable dans la vue formulaire utilisateur.
             -->
             <xpath expr="//field[@name='login']" position="after">
+                <field name="packimmo_access_profile_id" groups="packimmo_access_roles.group_packimmo_admin"/>
                 <field name="packimmo_role_summary" readonly="1"/>
             </xpath>
         </field>

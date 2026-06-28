@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rule_packimmo_access_profile_company" model="ir.rule">
+        <field name="name">Profils Packimmo par société</field>
+        <field name="model_id" ref="model_packimmo_access_profile"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('packimmo_access_roles.group_packimmo_manager'))]"/>
+    </record>
+
+    <record id="rule_packimmo_permission_matrix_company" model="ir.rule">
+        <field name="name">Permissions Packimmo par société</field>
+        <field name="model_id" ref="model_packimmo_permission_matrix"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('packimmo_access_roles.group_packimmo_manager'))]"/>
+    </record>
+
+    <record id="rule_packimmo_security_object_packimmo_manager" model="ir.rule">
+        <field name="name">Objets métier Packimmo pour managers</field>
+        <field name="model_id" ref="model_packimmo_security_object"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('packimmo_access_roles.group_packimmo_manager'))]"/>
+    </record>
+</odoo>

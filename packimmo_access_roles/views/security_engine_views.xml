@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_packimmo_access_profile_tree" model="ir.ui.view">
+        <field name="name">packimmo.access.profile.tree</field>
+        <field name="model">packimmo.access.profile</field>
+        <field name="arch" type="xml">
+            <tree default_order="sequence,name">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="scope"/>
+                <field name="show_archived"/>
+                <field name="show_drafts"/>
+                <field name="show_finished_contracts"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_access_profile_form" model="ir.ui.view">
+        <field name="name">packimmo.access.profile.form</field>
+        <field name="model">packimmo.access.profile</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="sequence"/>
+                        <field name="scope"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="Options de visibilité">
+                        <field name="show_archived"/>
+                        <field name="show_drafts"/>
+                        <field name="show_finished_contracts"/>
+                        <field name="show_sold_properties"/>
+                        <field name="show_rented_properties"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packimmo_access_profile" model="ir.actions.act_window">
+        <field name="name">Profils de visibilité</field>
+        <field name="res_model">packimmo.access.profile</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="view_packimmo_security_object_tree" model="ir.ui.view">
+        <field name="name">packimmo.security.object.tree</field>
+        <field name="model">packimmo.security.object</field>
+        <field name="arch" type="xml">
+            <tree default_order="module_name,model_name">
+                <field name="module_name"/>
+                <field name="model_name"/>
+                <field name="inherited_models"/>
+                <field name="has_python_model"/>
+                <field name="is_abstract"/>
+                <field name="view_count"/>
+                <field name="menu_count"/>
+                <field name="action_count"/>
+                <field name="button_count"/>
+                <field name="report_count"/>
+                <field name="controller_count"/>
+                <field name="dashboard_count"/>
+                <field name="website_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_security_object_form" model="ir.ui.view">
+        <field name="name">packimmo.security.object.form</field>
+        <field name="model">packimmo.security.object</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <sheet>
+                    <group>
+                        <field name="module_name"/>
+                        <field name="model_name"/>
+                        <field name="inherited_models"/>
+                        <field name="has_python_model"/>
+                        <field name="is_abstract"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="Éléments détectés">
+                        <field name="view_count"/>
+                        <field name="menu_count"/>
+                        <field name="action_count"/>
+                        <field name="button_count"/>
+                        <field name="report_count"/>
+                        <field name="controller_count"/>
+                        <field name="dashboard_count"/>
+                        <field name="website_count"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packimmo_security_object" model="ir.actions.act_window">
+        <field name="name">Objets métier détectés</field>
+        <field name="res_model">packimmo.security.object</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="view_packimmo_permission_matrix_tree" model="ir.ui.view">
+        <field name="name">packimmo.permission.matrix.tree</field>
+        <field name="model">packimmo.permission.matrix</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="module_name"/>
+                <field name="model_name"/>
+                <field name="group_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="generated"/>
+                <field name="perm_read"/>
+                <field name="perm_create"/>
+                <field name="perm_write"/>
+                <field name="perm_unlink"/>
+                <field name="perm_validate"/>
+                <field name="perm_export"/>
+                <field name="perm_print"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_permission_matrix_form" model="ir.ui.view">
+        <field name="name">packimmo.permission.matrix.form</field>
+        <field name="model">packimmo.permission.matrix</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="module_name"/>
+                        <field name="model_name"/>
+                        <field name="group_id"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="generated"/>
+                        <field name="active"/>
+                    </group>
+                    <group string="Permissions">
+                        <field name="perm_read"/>
+                        <field name="perm_create"/>
+                        <field name="perm_write"/>
+                        <field name="perm_unlink"/>
+                        <field name="perm_validate"/>
+                        <field name="perm_export"/>
+                        <field name="perm_print"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_packimmo_permission_matrix" model="ir.actions.act_window">
+        <field name="name">Matrice de permissions</field>
+        <field name="res_model">packimmo.permission.matrix</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="view_packimmo_menu_permission_tree" model="ir.ui.view">
+        <field name="name">packimmo.menu.permission.tree</field>
+        <field name="model">packimmo.menu.permission</field>
+        <field name="arch" type="xml">
+            <tree default_order="menu_complete_name">
+                <field name="menu_id"/>
+                <field name="menu_complete_name"/>
+                <field name="group_ids" widget="many2many_tags"/>
+                <field name="generated"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_menu_permission_form" model="ir.ui.view">
+        <field name="name">packimmo.menu.permission.form</field>
+        <field name="model">packimmo.menu.permission</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="menu_id"/>
+                        <field name="menu_complete_name"/>
+                        <field name="group_ids" widget="many2many_tags"/>
+                        <field name="generated"/>
+                        <field name="active"/>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_packimmo_menu_permission_search" model="ir.ui.view">
+        <field name="name">packimmo.menu.permission.search</field>
+        <field name="model">packimmo.menu.permission</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="menu_id"/>
+                <field name="group_ids"/>
+                <filter name="active" string="Menus actifs" domain="[('active', '=', True)]"/>
+                <filter name="without_rule_groups" string="Menus sans groupe" domain="[('group_ids', '=', False)]"/>
+                <filter name="configuration" string="Configurations" domain="[('menu_complete_name', 'ilike', 'Configuration')]"/>
+                <filter name="location" string="Location" domain="[('menu_complete_name', 'ilike', 'Rent')]"/>
+                <filter name="sale" string="Vente" domain="[('menu_complete_name', 'ilike', 'Sell')]"/>
+                <filter name="land" string="Morcellement" domain="[('menu_complete_name', 'ilike', 'Morcel')]"/>
+                <filter name="accounting" string="Comptabilité" domain="['|', ('menu_complete_name', 'ilike', 'Invoice'), ('menu_complete_name', 'ilike', 'Bill')]"/>
+                <group expand="0" string="Regrouper">
+                    <filter name="group_by_group" string="Par groupe" context="{'group_by': 'group_ids'}"/>
+                    <filter name="group_by_active" string="Actif" context="{'group_by': 'active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_packimmo_menu_permission" model="ir.actions.act_window">
+        <field name="name">Permissions des menus</field>
+        <field name="res_model">packimmo.menu.permission</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="packimmo_access_roles.view_packimmo_menu_permission_search"/>
+    </record>
+
+</odoo>

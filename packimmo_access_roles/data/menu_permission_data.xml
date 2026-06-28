@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!--
+        Les permissions de menus sont générées automatiquement par
+        packimmo.menu.permission lors de l'installation et de la mise à jour.
+        Ce fichier sert de point d'extension stable pour de futures règles
+        déclaratives spécifiques.
+    -->
+</odoo>

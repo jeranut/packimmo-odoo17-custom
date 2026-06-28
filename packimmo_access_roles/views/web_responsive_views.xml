@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_web_responsive_app_shortcut_tree_packimmo_groups" model="ir.ui.view">
+        <field name="name">web.responsive.app.shortcut.tree.packimmo.groups</field>
+        <field name="model">web.responsive.app.shortcut</field>
+        <field name="inherit_id" ref="web_responsive.web_responsive_app_shortcut_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='menu_id']" position="after">
+                <field name="visible_group_ids" widget="many2many_tags"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_web_responsive_app_shortcut_form_packimmo_groups" model="ir.ui.view">
+        <field name="name">web.responsive.app.shortcut.form.packimmo.groups</field>
+        <field name="model">web.responsive.app.shortcut</field>
+        <field name="inherit_id" ref="web_responsive.web_responsive_app_shortcut_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='active']" position="after">
+                <field name="visible_group_ids" widget="many2many_tags"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="profile_me" model="packimmo.access.profile">
+        <field name="name">Moi uniquement</field>
+        <field name="company_id" eval="False"/>
+        <field name="sequence">10</field>
+        <field name="scope">me</field>
+    </record>
+    <record id="profile_team" model="packimmo.access.profile">
+        <field name="name">Mon équipe</field>
+        <field name="company_id" eval="False"/>
+        <field name="sequence">20</field>
+        <field name="scope">team</field>
+    </record>
+    <record id="profile_agency" model="packimmo.access.profile">
+        <field name="name">Mon agence</field>
+        <field name="company_id" eval="False"/>
+        <field name="sequence">30</field>
+        <field name="scope">agency</field>
+    </record>
+    <record id="profile_company" model="packimmo.access.profile">
+        <field name="name">Toute la société</field>
+        <field name="company_id" eval="False"/>
+        <field name="sequence">40</field>
+        <field name="scope">company</field>
+    </record>
+    <record id="profile_all" model="packimmo.access.profile">
+        <field name="name">Tout</field>
+        <field name="company_id" eval="False"/>
+        <field name="sequence">50</field>
+        <field name="scope">all</field>
+        <field name="show_archived">1</field>
+        <field name="show_drafts">1</field>
+        <field name="show_finished_contracts">1</field>
+        <field name="show_sold_properties">1</field>
+        <field name="show_rented_properties">1</field>
+    </record>
+</odoo>
