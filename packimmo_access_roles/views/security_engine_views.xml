@@ -166,13 +166,22 @@
         <field name="name">packimmo.menu.permission.tree</field>
         <field name="model">packimmo.menu.permission</field>
         <field name="arch" type="xml">
-            <tree default_order="menu_complete_name">
+            <tree default_order="menu_complete_name" create="0">
+                <header>
+                    <button name="action_sync_menu_permissions"
+                            type="object"
+                            string="Synchroniser les menus Packimmo"
+                            class="btn-primary"
+                            display="always"
+                            groups="packimmo_access_roles.group_packimmo_manager,packimmo_access_roles.group_packimmo_admin"/>
+                </header>
+                <field name="menu_name"/>
                 <field name="menu_id"/>
+                <field name="menu_xml_id"/>
+                <field name="menu_action_model"/>
                 <field name="menu_complete_name"/>
                 <field name="group_ids" widget="many2many_tags"/>
-                <field name="generated"/>
                 <field name="active" widget="boolean_toggle"/>
-                <field name="note"/>
             </tree>
         </field>
     </record>
@@ -181,16 +190,35 @@
         <field name="name">packimmo.menu.permission.form</field>
         <field name="model">packimmo.menu.permission</field>
         <field name="arch" type="xml">
-            <form>
+            <form create="0">
+                <header>
+                    <button name="action_sync_menu_permissions"
+                            type="object"
+                            string="Synchroniser les menus Packimmo"
+                            class="btn-primary"
+                            display="always"
+                            groups="packimmo_access_roles.group_packimmo_manager,packimmo_access_roles.group_packimmo_admin"/>
+                </header>
                 <sheet>
-                    <group>
+                    <group string="Menu Odoo lié">
                         <field name="menu_id"/>
+                        <field name="menu_xml_id"/>
+                        <field name="menu_action_id"/>
+                        <field name="menu_action_model"/>
+                        <field name="menu_name"/>
                         <field name="menu_complete_name"/>
+                    </group>
+                    <group string="Permission Packimmo">
                         <field name="group_ids" widget="many2many_tags"/>
                         <field name="generated"/>
                         <field name="active"/>
+                        <field name="priority"/>
                     </group>
-                    <group>
+                    <group string="Redirection future">
+                        <field name="override_action_id"/>
+                        <field name="override_domain"/>
+                    </group>
+                    <group string="Note">
                         <field name="note"/>
                     </group>
                 </sheet>
@@ -204,6 +232,9 @@
         <field name="arch" type="xml">
             <search>
                 <field name="menu_id"/>
+                <field name="menu_xml_id"/>
+                <field name="menu_action_id"/>
+                <field name="menu_action_model"/>
                 <field name="group_ids"/>
                 <filter name="active" string="Menus actifs" domain="[('active', '=', True)]"/>
                 <filter name="without_rule_groups" string="Menus sans groupe" domain="[('group_ids', '=', False)]"/>
@@ -225,6 +256,16 @@
         <field name="res_model">packimmo.menu.permission</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="packimmo_access_roles.view_packimmo_menu_permission_search"/>
+    </record>
+
+    <record id="action_server_sync_packimmo_menu_permissions" model="ir.actions.server">
+        <field name="name">Synchroniser les menus Packimmo</field>
+        <field name="model_id" ref="model_packimmo_menu_permission"/>
+        <field name="binding_model_id" ref="model_packimmo_menu_permission"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="groups_id" eval="[(4, ref('packimmo_access_roles.group_packimmo_manager')), (4, ref('packimmo_access_roles.group_packimmo_admin'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = env["packimmo.menu.permission"].action_sync_menu_permissions()</field>
     </record>
 
 </odoo>

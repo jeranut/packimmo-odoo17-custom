@@ -27,14 +27,20 @@ patch(WebClient.prototype, {
 
 patch(NavBar.prototype, {
     get appsMenuEntries() {
-        const apps = this.menuService.getApps().map((app) => ({
-            ...app,
-            appMenuKey: `app-${app.id}`,
-        }));
+        const blockedMenuIds = new Set(session.apps_menu.blocked_menu_ids || []);
+        const blockedShortcutIds = new Set(session.apps_menu.blocked_shortcut_ids || []);
+        const apps = this.menuService
+            .getApps()
+            .filter((app) => !blockedMenuIds.has(app.id))
+            .map((app) => ({
+                ...app,
+                appMenuKey: `app-${app.id}`,
+            }));
         const shortcuts = (session.apps_menu.shortcuts || [])
+            .filter((shortcut) => !blockedShortcutIds.has(shortcut.id))
             .map((shortcut) => {
                 const menu = this.menuService.getMenu(shortcut.menu_id);
-                if (!menu || !menu.actionID) {
+                if (!menu || !menu.actionID || blockedMenuIds.has(menu.id) || blockedMenuIds.has(menu.appID)) {
                     return false;
                 }
                 return {

@@ -84,6 +84,10 @@ Menu : `Paramètres > Sécurité Packimmo > Permissions des menus`.
 
 La matrice de permissions protège les objets métier, mais elle ne masque pas à elle seule les entrées du menu Odoo. Le modèle `packimmo.menu.permission` ajoute cette couche de visibilité backend.
 
+Chaque ligne est liée à un vrai menu technique Odoo via `Menu technique`. L'écran affiche aussi l'`XML ID du menu`, l'`Action du menu` et le `Modèle cible`. Il ne faut donc pas identifier un menu uniquement par son libellé traduit ou son chemin affiché : le filtrage serveur utilise l'ID technique `ir.ui.menu`.
+
+Le bouton `Synchroniser les menus Packimmo` est disponible dans la liste et le formulaire pour les groupes Packimmo Manager et Packimmo Administrateur. Il scanne tous les menus `ir.ui.menu`, crée les permissions manquantes, recalcule les métadonnées techniques et conserve les groupes déjà modifiés manuellement. La création manuelle de permissions est désactivée pour éviter les doublons et les règles non reliées à un menu technique.
+
 Fonctionnement :
 
 - sans règle ou avec une règle sans groupe, le comportement Odoo standard s'applique ;
@@ -96,6 +100,8 @@ Fonctionnement :
 Pour tester le rôle Location, connecter un utilisateur qui possède uniquement `Packimmo Location` et les groupes internes nécessaires à l'application Propriétés. Le menu `Configurations`, `Selling`, les mandats de vente, contrats de vente, morcellements, dessin avancé et comptabilité ne doivent pas apparaître. Les menus de location, contrats de location, maintenance, courtiers et rapports utiles doivent rester visibles.
 
 Pour ajouter un nouveau menu Packimmo, aucune modification de code n'est nécessaire dans le cas général : au prochain `-u packimmo_access_roles`, le générateur analyse le menu, son module, son action et son modèle pour créer ou mettre à jour la règle. L'administrateur peut ensuite ajuster la règle manuellement dans `Permissions des menus`.
+
+La synchronisation automatique ne crée pas deux permissions pour le même `Menu technique`. Si une permission existe déjà, elle conserve les groupes, l'état actif et les notes saisis manuellement, puis recalcule les métadonnées techniques du menu.
 
 ## API Python
 
@@ -145,6 +151,27 @@ La logique inspecte les champs disponibles (`company_id`, `user_id`, `responsibl
 Les raccourcis `web.responsive.app.shortcut` reçoivent un champ `Visible pour les groupes`.
 
 Si le champ est vide, le raccourci suit seulement la visibilité du menu. S'il contient des groupes, l'utilisateur doit appartenir à au moins l'un d'eux.
+
+Menu : `Paramètres > Technical > User Interface > Application Shortcuts` ou `Raccourcis personnalisés` selon la langue de l'interface.
+
+Dans PACKIMMO, cette action ouvre une vue unifiée `packimmo.navigation.item`. Elle contient :
+
+- les menus d'application Odoo affichés dans la grille Web Responsive ;
+- les raccourcis personnalisés Web Responsive historiques ;
+- le champ `Visible pour les groupes` pour limiter chaque entrée à un ou plusieurs rôles Packimmo ;
+- les filtres par type, état, absence de groupe et rôle Packimmo ;
+- le bouton `Synchroniser les menus Web Responsive` pour importer les nouveaux menus et raccourcis.
+
+Pour cacher un menu ou un raccourci à un utilisateur précis, affecter d'abord le bon groupe Packimmo sur sa fiche utilisateur, puis renseigner `Visible pour les groupes` sur l'élément de navigation. Exemple : si `Ventes` contient seulement `Packimmo Vente`, un utilisateur qui possède uniquement `Packimmo Location` ne voit plus l'icône `Ventes` dans Web Responsive.
+
+Le champ vide signifie : ne pas ajouter de restriction Packimmo supplémentaire. Pour masquer une entrée à tous les rôles métier, désactiver l'élément avec `Actif`.
+
+Le filtrage est appliqué à deux niveaux :
+
+- côté serveur, dans le JSON des menus chargé par `/web/webclient/load_menus` ;
+- côté frontend, dans la grille Web Responsive, avec les IDs bloqués envoyés dans `session.apps_menu`.
+
+Après une modification des groupes sur un élément de navigation, le cache des menus Odoo est invalidé automatiquement. L'utilisateur doit toutefois rafraîchir le navigateur, ou se déconnecter/reconnecter si la session était déjà ouverte. Après une modification du code JavaScript Web Responsive, mettre à jour les modules concernés et vider les anciens assets du navigateur si l'ancienne grille reste affichée.
 
 ## Rental Management et tableaux de bord
 

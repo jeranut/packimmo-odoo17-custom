@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_packimmo_location_tasks" model="ir.actions.act_window">
+        <field name="name">Tâches du projet LOCATION</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="domain">[('project_id.name', '=', 'LOCATION')]</field>
+        <field name="context">{'search_default_filter_location_project': 1, 'quick_create': False}</field>
+        <field name="search_view_id" ref="project.view_task_search_form"/>
+    </record>
+
+    <record id="action_packimmo_vente_tasks" model="ir.actions.act_window">
+        <field name="name">Tâches du projet VENTE</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="domain">[('project_id.name', '=', 'VENTE')]</field>
+        <field name="context">{'search_default_filter_sale_project': 1, 'quick_create': False}</field>
+        <field name="search_view_id" ref="project.view_task_search_form"/>
+    </record>
+
+    <record id="action_packimmo_morcellement_tasks" model="ir.actions.act_window">
+        <field name="name">Tâches du projet MORCELLEMENT</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
+        <field name="domain">[('project_id.name', '=', 'MORCELLEMENT')]</field>
+        <field name="context">{'search_default_filter_morcellement_project': 1, 'quick_create': False, 'create': False}</field>
+        <field name="search_view_id" ref="project.view_task_search_form"/>
+    </record>
+
+    <record id="action_server_packimmo_project_entry" model="ir.actions.server">
+        <field name="name">Projet Packimmo selon rôle</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="state">code</field>
+        <field name="code">action = env["project.task"].action_open_packimmo_project_entry()</field>
+    </record>
+
+    <record id="project.menu_main_pm" model="ir.ui.menu">
+        <field name="action" ref="packimmo_project_location_workflow.action_server_packimmo_project_entry"/>
+    </record>
+
+</odoo>

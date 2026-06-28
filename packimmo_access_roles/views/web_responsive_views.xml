@@ -21,4 +21,102 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_packimmo_navigation_item_tree" model="ir.ui.view">
+        <field name="name">packimmo.navigation.item.tree</field>
+        <field name="model">packimmo.navigation.item</field>
+        <field name="arch" type="xml">
+            <tree default_order="sequence,item_type,name">
+                <header>
+                    <button name="action_sync_web_responsive_navigation"
+                            type="object"
+                            string="Synchroniser les menus Web Responsive"
+                            class="btn-primary"
+                            groups="packimmo_access_roles.group_packimmo_manager,packimmo_access_roles.group_packimmo_admin"/>
+                </header>
+                <field name="sequence" widget="handle"/>
+                <field name="item_type"/>
+                <field name="icon" widget="image" options="{'size': [32, 32]}"/>
+                <field name="name"/>
+                <field name="menu_id"/>
+                <field name="complete_name"/>
+                <field name="visible_group_ids" widget="many2many_tags"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_packimmo_navigation_item_form" model="ir.ui.view">
+        <field name="name">packimmo.navigation.item.form</field>
+        <field name="model">packimmo.navigation.item</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_sync_web_responsive_navigation"
+                            type="object"
+                            string="Synchroniser les menus Web Responsive"
+                            class="btn-primary"
+                            groups="packimmo_access_roles.group_packimmo_manager,packimmo_access_roles.group_packimmo_admin"/>
+                </header>
+                <sheet>
+                    <field name="icon" widget="image" class="oe_avatar"/>
+                    <group>
+                        <field name="item_type"/>
+                        <field name="name"/>
+                        <field name="menu_id"/>
+                        <field name="shortcut_id" readonly="1"/>
+                        <field name="complete_name"/>
+                        <field name="sequence"/>
+                        <field name="visible_group_ids" widget="many2many_tags"/>
+                        <field name="active"/>
+                        <field name="generated"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_packimmo_navigation_item_search" model="ir.ui.view">
+        <field name="name">packimmo.navigation.item.search</field>
+        <field name="model">packimmo.navigation.item</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="menu_id"/>
+                <field name="visible_group_ids"/>
+                <filter name="menus" string="Menus Odoo" domain="[('item_type', '=', 'menu')]"/>
+                <filter name="shortcuts" string="Raccourcis personnalisés" domain="[('item_type', '=', 'shortcut')]"/>
+                <filter name="without_group" string="Sans groupe" domain="[('visible_group_ids', '=', False)]"/>
+                <filter name="active" string="Actifs" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Inactifs" domain="[('active', '=', False)]"/>
+                <filter name="location" string="Location" domain="[('visible_group_ids.name', 'ilike', 'Location')]"/>
+                <filter name="sale" string="Vente" domain="[('visible_group_ids.name', 'ilike', 'Vente')]"/>
+                <filter name="land" string="Morcellement" domain="[('visible_group_ids.name', 'ilike', 'Morcellement')]"/>
+                <filter name="drafter" string="Dessinateur" domain="[('visible_group_ids.name', 'ilike', 'Dessinateur')]"/>
+                <filter name="operations" string="Gestionnaire" domain="[('visible_group_ids.name', 'ilike', 'Gestionnaire')]"/>
+                <filter name="accountant" string="Comptable" domain="[('visible_group_ids.name', 'ilike', 'Comptable')]"/>
+                <filter name="manager" string="Manager" domain="[('visible_group_ids.name', 'ilike', 'Manager')]"/>
+                <filter name="admin" string="Administrateur" domain="[('visible_group_ids.name', 'ilike', 'Administrateur')]"/>
+                <group expand="0" string="Regrouper">
+                    <filter name="group_type" string="Type" context="{'group_by': 'item_type'}"/>
+                    <filter name="group_active" string="Actif" context="{'group_by': 'active'}"/>
+                    <filter name="group_groups" string="Groupes" context="{'group_by': 'visible_group_ids'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_packimmo_navigation_item" model="ir.actions.act_window">
+        <field name="name">Raccourcis personnalisés</field>
+        <field name="res_model">packimmo.navigation.item</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="packimmo_access_roles.view_packimmo_navigation_item_search"/>
+    </record>
+
+    <record id="web_responsive.web_responsive_app_shortcut_action" model="ir.actions.act_window">
+        <field name="name">Raccourcis personnalisés</field>
+        <field name="res_model">packimmo.navigation.item</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="packimmo_access_roles.view_packimmo_navigation_item_search"/>
+    </record>
 </odoo>

@@ -13,4 +13,16 @@
         <field name="domain_force">['|', ('property_id', '=', False), '|', ('property_id.company_id', '=', False), ('property_id.company_id', 'in', company_ids)]</field>
     </record>
 
+    <record id="rule_packimmo_project_role_project_visibility" model="ir.rule">
+        <field name="name">Projets Packimmo selon rôle métier</field>
+        <field name="model_id" ref="project.model_project_project"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('packimmo_access_roles.group_packimmo_manager') or user.has_group('packimmo_access_roles.group_packimmo_admin') or not (user.has_group('packimmo_access_roles.group_packimmo_location') or user.has_group('packimmo_access_roles.group_packimmo_sale') or user.has_group('packimmo_access_roles.group_packimmo_land') or user.has_group('packimmo_access_roles.group_packimmo_drafter'))) else ['|', '|', '&amp;', ('name', '=', 'LOCATION'), ('id', '!=', 0) if user.has_group('packimmo_access_roles.group_packimmo_location') else ('id', '=', 0), '&amp;', ('name', '=', 'VENTE'), ('id', '!=', 0) if user.has_group('packimmo_access_roles.group_packimmo_sale') else ('id', '=', 0), '&amp;', ('name', '=', 'MORCELLEMENT'), ('id', '!=', 0) if (user.has_group('packimmo_access_roles.group_packimmo_land') or user.has_group('packimmo_access_roles.group_packimmo_drafter')) else ('id', '=', 0)]</field>
+    </record>
+
+    <record id="rule_packimmo_project_role_task_visibility" model="ir.rule">
+        <field name="name">Tâches Packimmo selon rôle métier</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.has_group('packimmo_access_roles.group_packimmo_manager') or user.has_group('packimmo_access_roles.group_packimmo_admin') or not (user.has_group('packimmo_access_roles.group_packimmo_location') or user.has_group('packimmo_access_roles.group_packimmo_sale') or user.has_group('packimmo_access_roles.group_packimmo_land') or user.has_group('packimmo_access_roles.group_packimmo_drafter'))) else ['|', '|', '&amp;', ('project_id.name', '=', 'LOCATION'), ('id', '!=', 0) if user.has_group('packimmo_access_roles.group_packimmo_location') else ('id', '=', 0), '&amp;', ('project_id.name', '=', 'VENTE'), ('id', '!=', 0) if user.has_group('packimmo_access_roles.group_packimmo_sale') else ('id', '=', 0), '&amp;', ('project_id.name', '=', 'MORCELLEMENT'), ('id', '!=', 0) if (user.has_group('packimmo_access_roles.group_packimmo_land') or user.has_group('packimmo_access_roles.group_packimmo_drafter')) else ('id', '=', 0)]</field>
+    </record>
+
 </odoo>

@@ -2,6 +2,7 @@
 import logging
 
 from odoo import api, fields, models
+from odoo.http import request
 from odoo.tools import SQL, sql
 
 
@@ -23,14 +24,38 @@ class PackimmoMenuPermission(models.Model):
 
     menu_id = fields.Many2one(
         'ir.ui.menu',
-        string='Menu',
+        string='Menu technique',
         required=True,
+        readonly=True,
         ondelete='cascade',
         index=True,
+    )
+    menu_name = fields.Char(
+        string='Menu',
+        related='menu_id.name',
+        readonly=True,
     )
     menu_complete_name = fields.Char(
         string='Chemin du menu',
         related='menu_id.complete_name',
+        store=True,
+        readonly=True,
+    )
+    menu_xml_id = fields.Char(
+        string='XML ID du menu',
+        compute='_compute_menu_metadata',
+        store=True,
+        readonly=True,
+    )
+    menu_action_id = fields.Char(
+        string='Action du menu',
+        compute='_compute_menu_metadata',
+        store=True,
+        readonly=True,
+    )
+    menu_action_model = fields.Char(
+        string='Modèle cible',
+        compute='_compute_menu_metadata',
         store=True,
         readonly=True,
     )
@@ -39,6 +64,12 @@ class PackimmoMenuPermission(models.Model):
         string='Groupes autorisés',
         domain="[('category_id.name', '=', 'Packimmo')]",
     )
+    override_action_id = fields.Many2one(
+        'ir.actions.actions',
+        string='Action personnalisée',
+    )
+    override_domain = fields.Char(string='Domaine personnalisé')
+    priority = fields.Integer(string='Priorité', default=10)
     active = fields.Boolean(default=True)
     generated = fields.Boolean(string='Générée automatiquement', default=False)
     note = fields.Text()
@@ -70,7 +101,25 @@ class PackimmoMenuPermission(models.Model):
         'property_list_dynamic_slider',
         'property_brochure_video',
         'web_responsive',
+        'project',
     }
+
+    @api.depends('menu_id', 'menu_id.action')
+    def _compute_menu_metadata(self):
+        """Expose les identifiants techniques stables du menu lié."""
+        for permission in self:
+            menu = permission.menu_id
+            action = menu.action if menu else False
+            permission.menu_xml_id = self._get_record_xmlid(menu)
+            permission.menu_action_id = self._get_record_xmlid(action)
+            permission.menu_action_model = self._get_menu_action_model(menu) if menu else ''
+
+    def _get_record_xmlid(self, record):
+        """Retourne le XML ID complet d'un record Odoo, si disponible."""
+        if not record:
+            return ''
+        xmlids = record.get_external_id()
+        return xmlids.get(record.id, '')
 
     def init(self):
         """Génère les règles de menu lors d'une mise à jour du module.
@@ -169,32 +218,59 @@ class PackimmoMenuPermission(models.Model):
                 groups |= group
         return groups
 
-    def generate_menu_permissions(self):
-        """Crée ou met à jour les règles de menu Packimmo détectées.
-
-        La génération s'appuie sur les XML IDs de menus des modules Packimmo et
-        modules immobiliers suivis. Elle est idempotente et ne crée pas de doublons.
-        """
-        data_rows = self.env['ir.model.data'].sudo().search(self._tracked_module_domain())
-        menus = self.env['ir.ui.menu'].sudo().browse(data_rows.mapped('res_id')).exists()
-        for menu in menus:
-            role_codes = self._role_codes_for_menu(menu)
-            groups = self._groups_from_role_codes(role_codes)
-            note = 'Générée automatiquement depuis le menu, son module et son action.'
-            values = {
+    def _sync_menu_permission_for_menu(self, menu):
+        """Crée ou actualise une permission sans écraser les groupes manuels."""
+        role_codes = self._role_codes_for_menu(menu)
+        groups = self._groups_from_role_codes(role_codes)
+        note = 'Générée automatiquement depuis le menu, son module et son action.'
+        rule = self.sudo().search([('menu_id', '=', menu.id)], limit=1)
+        if rule:
+            values = {'generated': True}
+            if not rule.note:
+                values['note'] = note
+            rule.write(values)
+        else:
+            rule = self.sudo().create({
                 'menu_id': menu.id,
                 'group_ids': [(6, 0, groups.ids)],
                 'generated': True,
                 'active': True,
                 'note': note,
-            }
-            rule = self.sudo().search([('menu_id', '=', menu.id)], limit=1)
-            if rule:
-                rule.write(values)
-            else:
-                self.sudo().create(values)
+            })
+        rule._compute_menu_metadata()
+        return rule
+
+    def _get_tracked_menus_for_generation(self):
+        """Retourne les menus des modules Packimmo suivis par les hooks."""
+        data_rows = self.env['ir.model.data'].sudo().search(self._tracked_module_domain())
+        return self.env['ir.ui.menu'].sudo().browse(data_rows.mapped('res_id')).exists()
+
+    def generate_menu_permissions(self):
+        """Crée ou met à jour les règles des menus Packimmo suivis."""
+        menus = self._get_tracked_menus_for_generation()
+        for menu in menus:
+            self._sync_menu_permission_for_menu(menu)
         self.env.registry.clear_cache()
         return True
+
+    def action_sync_menu_permissions(self):
+        """Synchronise toutes les permissions de menus Odoo depuis `ir.ui.menu`."""
+        menus = self.env['ir.ui.menu'].sudo().with_context(
+            **{'ir.ui.menu.full_list': True, 'active_test': False}
+        ).search([])
+        for menu in menus:
+            self._sync_menu_permission_for_menu(menu)
+        self.env.registry.clear_cache()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Permissions des menus synchronisées',
+                'message': '%s menus Odoo ont été analysés.' % len(menus),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
 
     def write(self, vals):
         """Vide les caches de menus quand une règle change."""
@@ -220,6 +296,40 @@ class IrUiMenu(models.Model):
     """Ajoute le filtrage serveur Packimmo aux menus Odoo."""
 
     _inherit = 'ir.ui.menu'
+
+    def _packimmo_should_bypass_menu_filtering(self):
+        """Ne filtre jamais les menus chargés hors backend Odoo.
+
+        `website.layout` appelle `load_menus_root()` avec `force_action=True`.
+        Le module website relit alors `load_web_menus()` pour compléter les
+        actions des menus racine. Filtrer ce payload peut supprimer des enfants
+        que le layout s'attend encore à trouver et provoquer un KeyError.
+        """
+        context = self.env.context
+        if context.get('force_action'):
+            return True
+        if any(context.get(key) for key in ('website_id', 'website_preview', 'website_sale_current_pl', 'portal')):
+            return True
+
+        try:
+            httprequest = request.httprequest
+            request_user = request.env.user
+        except RuntimeError:
+            return False
+        except Exception:
+            _logger.exception('Packimmo could not inspect HTTP request; keeping backend menu filtering enabled.')
+            return False
+
+        path = getattr(httprequest, 'path', '') or ''
+        if path and not path.startswith('/web'):
+            return True
+        try:
+            if request_user._is_public() or request_user.has_group('base.group_portal'):
+                return True
+        except Exception:
+            _logger.exception('Packimmo could not inspect request user; bypassing custom menu filtering.')
+            return True
+        return False
 
     def _packimmo_menu_permission_tables_ready(self):
         """Vérifie que les tables nécessaires existent avant le filtrage.
@@ -303,6 +413,8 @@ class IrUiMenu(models.Model):
     def _visible_menu_ids(self, debug=False):
         """Applique le filtre Packimmo après le filtre natif Odoo."""
         visible_ids = super()._visible_menu_ids(debug=debug)
+        if self._packimmo_should_bypass_menu_filtering():
+            return visible_ids
         try:
             return self._packimmo_allowed_menu_ids(visible_ids)
         except Exception:
@@ -312,6 +424,8 @@ class IrUiMenu(models.Model):
     def _load_menus_blacklist(self):
         """Masque les menus Packimmo dans l'arbre chargé par le webclient."""
         blacklist = set(super()._load_menus_blacklist())
+        if self._packimmo_should_bypass_menu_filtering():
+            return list(blacklist)
         try:
             blacklist |= self._packimmo_denied_menu_ids()
         except Exception:

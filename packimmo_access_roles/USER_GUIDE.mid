@@ -3,3 +3,5 @@
 Ce fichier miroir existe pour conserver la compatibilité avec la demande de livraison `USER_GUIDE.mid`.
 
 Le guide complet est maintenu dans `USER_GUIDE.md` à la racine du module. Il décrit l'architecture du moteur, les groupes, le rôle Comptable, le fonctionnement multi-société, la cartographie automatique du dépôt, les profils de visibilité, la matrice de permissions générée automatiquement, la gestion automatique des menus, l'API Python, l'intégration Web Responsive, l'intégration Rental Management, les exemples XML/Python/Record Rules et la procédure de migration.
+
+Note menu : l'écran `Permissions des menus` propose le bouton `Synchroniser les menus Packimmo` pour les Managers et Administrateurs Packimmo. La synchronisation scanne les menus Odoo techniques, crée les permissions manquantes et conserve les groupes modifiés manuellement.

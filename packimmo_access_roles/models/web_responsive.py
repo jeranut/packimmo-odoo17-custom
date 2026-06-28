@@ -145,13 +145,30 @@ class IrHttp(models.AbstractModel):
 
     _inherit = 'ir.http'
 
+    def _get_packimmo_apps_menu_visibility(self):
+        """Retourne les IDs autorisés/bloqués pour la grille Web Responsive."""
+        try:
+            with self.env.cr.savepoint():
+                return self.env['packimmo.navigation.item'].sudo()._navigation_visibility_state_for_user(self.env.user)
+        except Exception:
+            _logger.exception(
+                "Packimmo could not compute Web Responsive navigation state; "
+                "session_info keeps the native apps menu data."
+            )
+            return {
+                'allowed_menu_ids': [],
+                'blocked_menu_ids': [],
+                'allowed_shortcut_ids': [],
+                'blocked_shortcut_ids': [],
+            }
+
     def _get_apps_menu_shortcuts(self):
         """Retourne uniquement les raccourcis autorisés pour l'utilisateur courant.
 
         La méthode appelle d'abord le comportement natif de Web Responsive. Le
-        filtrage Packimmo est ensuite exécuté dans un savepoint : si la table
-        Many2many manque pendant une migration ou si le schéma est incomplet, le
-        frontend reçoit les raccourcis natifs et le backend continue de démarrer.
+        filtrage Packimmo est ensuite exécuté dans un savepoint : d'abord via la
+        compatibilité historique `visible_group_ids`, puis via l'écran unifié
+        `packimmo.navigation.item`.
         """
         shortcuts = super()._get_apps_menu_shortcuts()
         shortcut_ids = [shortcut.get('id') for shortcut in shortcuts if shortcut.get('id')]
@@ -166,6 +183,10 @@ class IrHttp(models.AbstractModel):
                     ._filter_visible_for_user(self.env.user)
                     .ids
                 )
+                allowed_ids &= self.env['packimmo.navigation.item'].sudo()._allowed_shortcut_ids_for_user(
+                    list(allowed_ids),
+                    user=self.env.user,
+                )
         except Exception:
             _logger.exception(
                 "Packimmo could not filter Web Responsive shortcuts; "
@@ -173,3 +194,11 @@ class IrHttp(models.AbstractModel):
             )
             return shortcuts
         return [shortcut for shortcut in shortcuts if shortcut.get('id') in allowed_ids]
+
+    def session_info(self):
+        """Ajoute l'état de visibilité Packimmo à la session Web Responsive."""
+        session = super().session_info()
+        apps_menu = dict(session.get('apps_menu') or {})
+        apps_menu.update(self._get_packimmo_apps_menu_visibility())
+        session['apps_menu'] = apps_menu
+        return session

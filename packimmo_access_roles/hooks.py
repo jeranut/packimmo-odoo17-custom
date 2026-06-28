@@ -294,6 +294,11 @@ def _generate_menu_permissions(env):
     env['packimmo.menu.permission'].sudo().generate_menu_permissions()
 
 
+def _sync_web_responsive_navigation(env):
+    """Synchronise l'écran unifié des éléments Web Responsive."""
+    env['packimmo.navigation.item'].sudo().action_sync_web_responsive_navigation()
+
+
 def post_init_hook(env_or_cr, registry=None):
     """Initialise les droits Packimmo après installation du module.
 
@@ -307,6 +312,7 @@ def post_init_hook(env_or_cr, registry=None):
     _create_permission_matrix(env)
     _generate_repository_permission_matrix(env)
     _generate_menu_permissions(env)
+    _sync_web_responsive_navigation(env)
     _harden_access_roles_administration(env)
     _secure_known_packimmo_menus(env)
     _migrate_web_responsive_shortcut_groups(env)

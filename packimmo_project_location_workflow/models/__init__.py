@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import property_details
+from . import project_task_role_redirect
 from . import property_project
 from . import project_task_type
 from . import project_workflow_config
