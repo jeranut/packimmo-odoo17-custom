@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Catégorie visible dans la fiche utilisateur et dans les rôles access_roles. -->
+    <record id="module_category_packimmo_roles" model="ir.module.category">
+        <field name="name">Packimmo</field>
+        <field name="description">Rôles métier Packimmo : vente, location, morcellement, dessin, gestion et management.</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- Groupe lecture commune : base technique pour tous les utilisateurs Packimmo. -->
+    <record id="group_packimmo_user" model="res.groups">
+        <field name="name">Utilisateur Packimmo</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="comment">Accès de base aux fonctions Packimmo.</field>
+    </record>
+
+    <record id="group_packimmo_sale" model="res.groups">
+        <field name="name">Packimmo Vente</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_user'))]"/>
+        <field name="comment">Accès aux biens à vendre, prospects, mandats de vente et actions commerciales.</field>
+    </record>
+
+    <record id="group_packimmo_location" model="res.groups">
+        <field name="name">Packimmo Location</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_user'))]"/>
+        <field name="comment">Accès aux biens à louer, locataires, contrats, visites et dossiers de location.</field>
+    </record>
+
+    <record id="group_packimmo_land" model="res.groups">
+        <field name="name">Packimmo Morcellement</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_user'))]"/>
+        <field name="comment">Accès aux phases, lots, terrains, cartes et suivi des morcellements.</field>
+    </record>
+
+    <record id="group_packimmo_drafter" model="res.groups">
+        <field name="name">Packimmo Dessinateur</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_user'))]"/>
+        <field name="comment">Accès aux outils de dessin, plans, phases, lots et annotations sans droits de validation finale.</field>
+    </record>
+
+    <record id="group_packimmo_manager_operations" model="res.groups">
+        <field name="name">Packimmo Gestionnaire</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_user'))]"/>
+        <field name="comment">Accès opérationnel à la gestion, au syndic, aux tâches, contrats et suivis administratifs.</field>
+    </record>
+
+    <record id="group_packimmo_manager" model="res.groups">
+        <field name="name">Packimmo Manager</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_sale')), (4, ref('packimmo_access_roles.group_packimmo_location')), (4, ref('packimmo_access_roles.group_packimmo_land')), (4, ref('packimmo_access_roles.group_packimmo_drafter')), (4, ref('packimmo_access_roles.group_packimmo_manager_operations'))]"/>
+        <field name="comment">Accès complet aux opérations Packimmo et aux validations métier.</field>
+    </record>
+
+    <record id="group_packimmo_admin" model="res.groups">
+        <field name="name">Packimmo Administrateur</field>
+        <field name="category_id" ref="packimmo_access_roles.module_category_packimmo_roles"/>
+        <field name="implied_ids" eval="[(4, ref('packimmo_access_roles.group_packimmo_manager')), (4, ref('base.group_system'))]"/>
+        <field name="comment">Administration complète Packimmo, y compris configuration des rôles et restrictions.</field>
+    </record>
+</odoo>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_packimmo_access_roles" model="ir.ui.view">
+        <field name="name">res.users.form.packimmo.access.roles</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <!--
+                On évite d'utiliser groups_id comme point d'ancrage, car ce champ est généré
+                différemment selon les modules installés et les catégories de groupes Odoo.
+                Le champ login est beaucoup plus stable dans la vue formulaire utilisateur.
+            -->
+            <xpath expr="//field[@name='login']" position="after">
+                <field name="packimmo_role_summary" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

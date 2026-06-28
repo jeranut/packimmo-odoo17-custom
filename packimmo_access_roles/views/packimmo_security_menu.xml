@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu technique simple pour retrouver rapidement la configuration des utilisateurs Packimmo. -->
+    <menuitem id="menu_packimmo_security_root"
+              name="Sécurité Packimmo"
+              parent="base.menu_administration"
+              sequence="95"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+
+    <menuitem id="menu_packimmo_security_users"
+              name="Utilisateurs"
+              parent="packimmo_access_roles.menu_packimmo_security_root"
+              action="base.action_res_users"
+              sequence="10"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+
+    <menuitem id="menu_packimmo_security_groups"
+              name="Groupes"
+              parent="packimmo_access_roles.menu_packimmo_security_root"
+              action="base.action_res_groups"
+              sequence="20"
+              groups="packimmo_access_roles.group_packimmo_admin"/>
+</odoo>
