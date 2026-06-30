@@ -24,11 +24,23 @@ KNOWLEDGE_FALLBACK_MESSAGE = (
 )
 
 
+def clean_html_entities(value):
+    return html.unescape(str(value or ""))
+
+
+def html_text(value):
+    return Markup(html.escape(clean_html_entities(value), quote=False))
+
+
+def html_attr(value):
+    return Markup(html.escape(clean_html_entities(value), quote=True))
+
+
 def normalize_text(value):
     if value is None:
         return ""
     if isinstance(value, str):
-        return value.strip()
+        return clean_html_entities(value).strip()
     if isinstance(value, dict):
         for key in ("fr", "text"):
             if key in value:
@@ -107,6 +119,20 @@ class PackimmoKnowledgeArticle(models.Model):
     _name = "packimmo.knowledge.article"
     _description = "Article MIA"
     _order = "workflow_id, priority desc, sequence, title, id"
+    _html_entity_text_fields = {
+        "external_id",
+        "title",
+        "question",
+        "answer",
+        "guide_anchor",
+        "source_reference",
+        "menu_path",
+        "target_model",
+        "prerequisites",
+        "steps",
+        "tips",
+        "errors",
+    }
 
     DIFFICULTY_SELECTION = [
         ("beginner", "Débutant"),
@@ -193,6 +219,23 @@ class PackimmoKnowledgeArticle(models.Model):
             "L'identifiant article existe déjà dans ce workflow.",
         ),
     ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        vals_list = [self._decode_html_entity_vals(vals) for vals in vals_list]
+        return super().create(vals_list)
+
+    def write(self, vals):
+        return super().write(self._decode_html_entity_vals(vals))
+
+    @api.model
+    def _decode_html_entity_vals(self, vals):
+        clean_vals = dict(vals)
+        for field_name in self._html_entity_text_fields:
+            value = clean_vals.get(field_name)
+            if isinstance(value, str):
+                clean_vals[field_name] = clean_html_entities(value)
+        return clean_vals
 
     @api.constrains("category_id", "workflow_id")
     def _check_category_workflow(self):
@@ -371,17 +414,16 @@ class PackimmoKnowledgeArticle(models.Model):
                 'style="max-width: 100%%; height: auto; border-radius: 6px;"/>'
             ) % image.id
             if image.caption:
-                content += Markup('<p><em>%s</em></p>') % html.escape(image.caption)
+                content += Markup('<p><em>%s</em></p>') % html_text(image.caption)
             content += Markup("</div>")
 
         videos = self.video_ids.filtered("active").sorted("sequence")
         if videos:
             content += Markup("<p><strong>Vidéos YouTube</strong></p><ul>")
             for video in videos:
-                label = html.escape(video.title or video.youtube_url)
                 content += Markup('<li><a href="%s" target="_blank">%s</a></li>') % (
-                    html.escape(video.youtube_url or ""),
-                    label,
+                    html_attr(video.youtube_url),
+                    html_text(video.title or video.youtube_url),
                 )
             content += Markup("</ul>")
 
@@ -389,20 +431,18 @@ class PackimmoKnowledgeArticle(models.Model):
         if documents:
             content += Markup("<p><strong>Documents PDF</strong></p><ul>")
             for document in documents:
-                label = html.escape(document.name or document.filename or _("Document PDF"))
                 content += Markup(
                     '<li><a href="/web/content/packimmo.knowledge.document/%s/file?download=1" target="_blank">%s</a></li>'
-                ) % (document.id, label)
+                ) % (document.id, html_text(document.name or document.filename or _("Document PDF")))
             content += Markup("</ul>")
 
         links = self.link_ids.filtered("active").sorted("sequence")
         if links:
             content += Markup("<p><strong>Liens utiles</strong></p><ul>")
             for link in links:
-                label = html.escape(link.title or link.url)
                 content += Markup('<li><a href="%s" target="_blank">%s</a></li>') % (
-                    html.escape(link.url or ""),
-                    label,
+                    html_attr(link.url),
+                    html_text(link.title or link.url),
                 )
             content += Markup("</ul>")
 
@@ -412,8 +452,8 @@ class PackimmoKnowledgeArticle(models.Model):
         ]:
             if value:
                 content += Markup("<p><strong>%s</strong> : %s</p>") % (
-                    html.escape(label),
-                    html.escape(value),
+                    html_text(label),
+                    html_text(value),
                 )
 
         for label, value in [
@@ -423,22 +463,23 @@ class PackimmoKnowledgeArticle(models.Model):
             (_("Erreurs fréquentes"), self.errors),
         ]:
             if value:
+                formatted_value = html_text(value).replace("\n", Markup("<br/>"))
                 content += Markup("<p><strong>%s</strong></p><p>%s</p>") % (
-                    html.escape(label),
-                    html.escape(value).replace("\n", "<br/>"),
+                    html_text(label),
+                    formatted_value,
                 )
 
         related = self.related_question_ids.filtered("active")[:5]
         if related:
             content += Markup("<p><strong>Voir aussi</strong></p><ul>")
             for article in related:
-                content += Markup("<li>%s</li>") % html.escape(article.question or article.title)
+                content += Markup("<li>%s</li>") % html_text(article.question or article.title)
             content += Markup("</ul>")
 
         if self.guide_anchor:
             content += Markup(
                 '<p><a href="#%s">Voir le guide associé</a></p>'
-            ) % html.escape(self.guide_anchor)
+            ) % html_attr(self.guide_anchor)
         return content
 
 
@@ -462,6 +503,22 @@ class PackimmoKnowledgeQuestion(models.Model):
             "Cette formulation existe déjà pour cet article.",
         ),
     ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        vals_list = [self._decode_html_entity_vals(vals) for vals in vals_list]
+        return super().create(vals_list)
+
+    def write(self, vals):
+        return super().write(self._decode_html_entity_vals(vals))
+
+    @api.model
+    def _decode_html_entity_vals(self, vals):
+        clean_vals = dict(vals)
+        value = clean_vals.get("name")
+        if isinstance(value, str):
+            clean_vals["name"] = clean_html_entities(value)
+        return clean_vals
 
 
 class PackimmoKnowledgeKeyword(models.Model):

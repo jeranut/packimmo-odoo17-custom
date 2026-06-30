@@ -18,6 +18,10 @@ FALLBACK_MESSAGE = (
 )
 
 
+def _html_text(value):
+    return Markup(html.escape(html.unescape(str(value or "")), quote=False))
+
+
 class PackimmoOdooBotAnswer(models.Model):
     _name = "packimmo.odoobot.answer"
     _description = "Réponse MIIA — Mon Intelligence Immobilière Assistée"
@@ -715,7 +719,7 @@ class PackimmoOdooBotAnswer(models.Model):
         content = Markup("<p><strong>💡 Questions suggérées</strong></p><ul>")
         for article in articles:
             question = article.question or article.title
-            content += Markup("<li>%s</li>") % html.escape(question)
+            content += Markup("<li>%s</li>") % _html_text(question)
         content += Markup("</ul>")
         return content
 
@@ -746,12 +750,11 @@ class PackimmoOdooBotAnswer(models.Model):
         channel = channel or self._get_user_mia_channels(user)[:1]
         if not channel:
             return False
-        name = html.escape(user.name or "")
         body = Markup(
             "<p>Bonjour %s</p>"
             "<p>Je suis MIA.</p>"
             "<p>Je peux vous accompagner dans votre workflow.</p>"
-        ) % name
+        ) % _html_text(user.name or "")
         channel.with_context(packimmo_miia_no_reply=True).message_post(
             body=body,
             author_id=bot_user.partner_id.id,

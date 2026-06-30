@@ -288,6 +288,40 @@ links:
         self.assertEqual(article.category_id.name, "Gestion des biens")
         self.assertEqual(article.link_ids.url, "/web#menu_id=1")
 
+    def test_02f_import_decodes_html_entities_in_text_values(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            workflow_dir = os.path.join(tmp_dir, "location")
+            os.makedirs(workflow_dir, exist_ok=True)
+            with open(os.path.join(workflow_dir, "dataset.yaml"), "w", encoding="utf-8") as stream:
+                stream.write(
+                    """
+workflow: location
+name: Location
+articles:
+  - id: location-entities-001
+    title: Qu&#x27;est-ce que le workflow Location ?
+    suggested: true
+    priority: 100
+    question: Qu&#x27;est-ce que le workflow Location ?
+    answer: <p>Réponse avec é è à ù ê ô ç œ &#x27; &quot;</p>
+    questions:
+      - Qu&#x27;est-ce que le workflow Location ?
+      - C&#x27;est quoi un mandat ?
+"""
+                )
+            with patch.object(type(self.sync), "_get_knowledge_root", return_value=tmp_dir):
+                stats = self.sync.sync_datasets()
+
+        self.assertEqual(stats["errors"], 0)
+        article = self.Article.search([("external_id", "=", "location-entities-001")], limit=1)
+        self.assertTrue(article)
+        self.assertEqual(article.title, "Qu'est-ce que le workflow Location ?")
+        self.assertEqual(article.question, "Qu'est-ce que le workflow Location ?")
+        self.assertIn("C'est quoi un mandat ?", article.question_variant_ids.mapped("name"))
+        self.assertIn("é è à ù ê ô ç œ", article.answer)
+        self.assertNotIn("&#x27;", article.answer)
+        self.assertNotIn("&quot;", article.answer)
+
     def test_03_suggested_questions_for_user(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             self._write_multiple_questions_dataset(tmp_dir)
@@ -300,6 +334,71 @@ links:
         self.assertLessEqual(len(questions), 15)
         self.assertTrue(all(article.suggested for article in questions))
         self.assertEqual(questions[:1].external_id, "location-multi-001")
+
+    def test_03b_suggested_questions_keep_utf8_without_html_entities(self):
+        workflow = self.Workflow.create({
+            "name": "Location",
+            "code": "location-html",
+        })
+        questions = [
+            "Qu'est-ce que le workflow Location ?",
+            "C'est quoi un mandat ?",
+            "Comment créer un contrat de location ?",
+        ]
+        stored_questions_input = [
+            "Qu&#x27;est-ce que le workflow Location ?",
+            "C&#x27;est quoi un mandat ?",
+            "Comment créer un contrat de location ?",
+        ]
+        for index, question in enumerate(stored_questions_input):
+            self.Article.create({
+                "workflow_id": workflow.id,
+                "external_id": "location-html-%s" % index,
+                "title": question,
+                "question": question,
+                "answer": "<p>Réponse avec é è à ù ê ô ç œ ' \"</p>",
+                "suggested": True,
+                "priority": 100 - index,
+            })
+
+        stored_questions = self.Article.search(
+            [("workflow_id", "=", workflow.id)],
+            order="priority desc, id",
+            limit=3,
+        ).mapped("question")
+        self.assertEqual(stored_questions, questions)
+
+        body = str(self.env["packimmo.odoobot.answer"].sudo()._render_suggested_questions_message(
+            self.env.user,
+            limit=3,
+        ))
+
+        for question in questions:
+            self.assertIn(question, body)
+        for entity in ("&#x27;", "&#39;", "&apos;", "&quot;", "&#34;"):
+            self.assertNotIn(entity, body)
+        self.assertIn("é", body)
+        self.assertIn("ç", body)
+
+        assistant = self.env["packimmo.odoobot.answer"].sudo()
+        assistant._ensure_packimmo_odoobot_setup()
+        bot_user = self.env.ref("packimmo_odoobot_assistant.user_packimmo_odoobot")
+        channel_info = self.env["discuss.channel"].with_user(self.env.user).with_context(
+            packimmo_miia_no_reply=True,
+        ).channel_get([bot_user.partner_id.id], pin=True)
+        mia_channel = self.env["discuss.channel"].browse(channel_info["id"])
+        self.assertTrue(assistant._post_mia_suggestions(self.env.user, channel=mia_channel, limit=3))
+
+        message = self.env["mail.message"].search([
+            ("model", "=", "discuss.channel"),
+            ("res_id", "=", mia_channel.id),
+            ("body", "ilike", "Questions suggérées"),
+        ], order="id desc", limit=1)
+        self.assertTrue(message)
+        for question in questions:
+            self.assertIn(question, message.body)
+        for entity in ("&#x27;", "&#39;", "&apos;", "&quot;", "&#34;"):
+            self.assertNotIn(entity, message.body)
 
     def test_04_unanswered_question_recorded_without_dataset(self):
         self.env["ir.config_parameter"].sudo().set_param("packimmo_odoobot_assistant.mia_dataset_path", "")
