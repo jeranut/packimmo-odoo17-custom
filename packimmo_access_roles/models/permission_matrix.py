@@ -1,11 +1,5 @@
-# -*- coding: utf-8 -*-
-import logging
-
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
-
-
-_logger = logging.getLogger(__name__)
 
 
 class PackimmoPermissionMatrix(models.Model):
@@ -72,19 +66,14 @@ class PackimmoPermissionMatrix(models.Model):
         """Prépare la matrice lors d'une installation ou d'une mise à jour.
 
         Odoo appelle `init()` lorsque le module crée ou met à jour les tables.
-        On en profite pour retirer l'ancienne contrainte mono-société et lancer
-        la génération automatique si le registre contient déjà le scanner.
+        On se limite ici aux opérations de schéma. La génération de données est
+        exécutée par le hook post-init ou par action manuelle afin d'éviter des
+        écritures massives pendant le chargement concurrent du registre.
         """
         self.env.cr.execute(
             'ALTER TABLE packimmo_permission_matrix '
             'DROP CONSTRAINT IF EXISTS packimmo_permission_matrix_model_group_unique'
         )
-        try:
-            self.env['packimmo.repository.scanner'].sudo().generate_permission_matrix()
-        except Exception:
-            _logger.exception(
-                'Unable to generate Packimmo permission matrix during model initialization.'
-            )
 
     @api.constrains('model_name', 'group_id', 'company_id')
     def _check_logical_unique_permission(self):

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Catégorie visible dans la fiche utilisateur et dans les rôles access_roles. -->
+    <!-- Catégorie visible dans la fiche utilisateur pour les rôles Packimmo. -->
     <record id="module_category_packimmo_roles" model="ir.module.category">
         <field name="name">Packimmo</field>
         <field name="description">Rôles métier Packimmo : vente, location, morcellement, dessin, gestion et management.</field>

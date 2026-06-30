@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="packimmo.legacy.roles.cleanup" name="cleanup_legacy_records"/>
+</odoo>

@@ -29,6 +29,23 @@ patch(NavBar.prototype, {
     get appsMenuEntries() {
         const blockedMenuIds = new Set(session.apps_menu.blocked_menu_ids || []);
         const blockedShortcutIds = new Set(session.apps_menu.blocked_shortcut_ids || []);
+        const menuDebugRows = this.menuService.getApps().map((app) => ({
+            id: app.id,
+            xmlid: app.xmlid,
+            name: app.name,
+        }));
+        const shortcutDebugRows = (session.apps_menu.shortcuts || []).map((shortcut) => {
+            const targetMenu = this.menuService.getMenu(shortcut.menu_id);
+            return {
+                id: shortcut.id,
+                target_menu_id: shortcut.menu_id,
+                target_app_id: targetMenu && targetMenu.appID,
+                type: "shortcut",
+                name: shortcut.name,
+            };
+        });
+        console.info("Menus Odoo :", menuDebugRows);
+        console.info("Raccourcis Web Responsive avant fusion :", shortcutDebugRows);
         const apps = this.menuService
             .getApps()
             .filter((app) => !blockedMenuIds.has(app.id))
@@ -36,6 +53,7 @@ patch(NavBar.prototype, {
                 ...app,
                 appMenuKey: `app-${app.id}`,
             }));
+        const finalMenuIds = new Set(apps.map((app) => app.id));
         const shortcuts = (session.apps_menu.shortcuts || [])
             .filter((shortcut) => !blockedShortcutIds.has(shortcut.id))
             .map((shortcut) => {
@@ -43,6 +61,10 @@ patch(NavBar.prototype, {
                 if (!menu || !menu.actionID || blockedMenuIds.has(menu.id) || blockedMenuIds.has(menu.appID)) {
                     return false;
                 }
+                if (finalMenuIds.has(menu.id)) {
+                    return false;
+                }
+                finalMenuIds.add(menu.id);
                 return {
                     ...menu,
                     appMenuKey: `shortcut-${shortcut.id}`,
@@ -51,7 +73,18 @@ patch(NavBar.prototype, {
                 };
             })
             .filter(Boolean);
-        return [...apps, ...shortcuts];
+        const finalEntries = [...apps, ...shortcuts];
+        console.info(
+            "Applications finales :",
+            finalEntries.map((app) => ({
+                id: app.id,
+                appID: app.appID,
+                xmlid: app.xmlid,
+                key: app.appMenuKey,
+                name: app.name,
+            }))
+        );
+        return finalEntries;
     },
 });
 

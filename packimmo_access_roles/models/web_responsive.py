@@ -145,6 +145,55 @@ class IrHttp(models.AbstractModel):
 
     _inherit = 'ir.http'
 
+    def _packimmo_log_apps_menu_sources(self, shortcuts=None):
+        """Logs temporaires pour diagnostiquer la fusion Web Responsive."""
+        try:
+            Menu = self.env['ir.ui.menu'].sudo().with_context(**{'ir.ui.menu.full_list': True})
+            visible_menu_ids = self.env['ir.ui.menu']._visible_menu_ids()
+            root_menus = Menu.browse(list(visible_menu_ids)).exists().filtered(lambda menu: not menu.parent_id)
+            xmlids = root_menus.get_external_id()
+            _logger.info(
+                "Menus Odoo : %s",
+                [
+                    {
+                        'id': menu.id,
+                        'xmlid': xmlids.get(menu.id),
+                        'name': menu.name,
+                    }
+                    for menu in root_menus.sorted(lambda menu: (menu.sequence, menu.id))
+                ],
+            )
+
+            navigation_items = self.env['packimmo.navigation.item'].sudo().search([])
+            _logger.info(
+                "Navigation Items : %s",
+                [
+                    {
+                        'id': item.id,
+                        'target_menu_id': item.menu_id.id or False,
+                        'type': item.item_type,
+                        'name': item.name,
+                    }
+                    for item in navigation_items
+                ],
+            )
+
+            if shortcuts is not None:
+                _logger.info(
+                    "Raccourcis Web Responsive avant fusion : %s",
+                    [
+                        {
+                            'id': shortcut.get('id'),
+                            'target_menu_id': shortcut.get('menu_id'),
+                            'type': 'shortcut',
+                            'name': shortcut.get('name'),
+                        }
+                        for shortcut in shortcuts
+                    ],
+                )
+        except Exception:
+            _logger.exception("Packimmo could not log Web Responsive app menu sources.")
+
     def _get_packimmo_apps_menu_visibility(self):
         """Retourne les IDs autorisés/bloqués pour la grille Web Responsive."""
         try:
@@ -171,6 +220,7 @@ class IrHttp(models.AbstractModel):
         `packimmo.navigation.item`.
         """
         shortcuts = super()._get_apps_menu_shortcuts()
+        self._packimmo_log_apps_menu_sources(shortcuts=shortcuts)
         shortcut_ids = [shortcut.get('id') for shortcut in shortcuts if shortcut.get('id')]
         if not shortcut_ids:
             return shortcuts

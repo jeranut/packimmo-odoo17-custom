@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Supprime le CTA Website du header desktop actif sans toucher aux vues natives Odoo. -->
+    <template id="packimmo_default_header_remove_call_to_action"
+              inherit_id="website.template_header_default"
+              name="PACKIMMO Default Header Without Contact CTA"
+              priority="90">
+        <xpath expr="//t[@t-call='website.placeholder_header_call_to_action']" position="replace"/>
+    </template>
+
+    <!-- Remplace le libellé public de connexion par une icône discrète. -->
+    <template id="packimmo_header_login_icon"
+              inherit_id="portal.user_sign_in"
+              name="PACKIMMO Header Login Icon"
+              priority="90">
+        <xpath expr="//a" position="replace">
+            <a t-attf-href="/web/login?redirect={{request.httprequest.path}}"
+               t-attf-class="#{_link_class} packimmo-header-login-icon"
+               aria-label="Se connecter"
+               title="Se connecter">
+                <i class="fa fa-sign-in" aria-hidden="true"/>
+                <span t-if="request.session.profile_session" class="text-danger fa fa-circle"/>
+            </a>
+        </xpath>
+    </template>
+
+    <!-- Sur mobile, garde l'icône login directement dans le header. -->
+    <template id="packimmo_mobile_header_login_icon"
+              inherit_id="website.template_header_mobile"
+              name="PACKIMMO Mobile Header Login Icon"
+              priority="90">
+        <xpath expr="//ul[hasclass('o_header_mobile_buttons_wrap')]/li[last()]" position="after">
+            <t t-call="portal.placeholder_user_sign_in">
+                <t t-set="_item_class" t-valuef="packimmo-mobile-login-item"/>
+                <t t-set="_link_class" t-valuef="nav-link packimmo-header-login-icon"/>
+            </t>
+        </xpath>
+        <xpath expr="//div[hasclass('offcanvas-body')]/ul[last()]/t[@t-call='portal.placeholder_user_sign_in']" position="replace"/>
+        <xpath expr="//div[hasclass('offcanvas-body')]/ul[last()]/t[@t-call='website.header_call_to_action_large']" position="replace"/>
+    </template>
+
+    <!-- Remplace le copyright natif pour supprimer la promotion Odoo du footer Website. -->
+    <template id="packimmo_website_footer_copyright" inherit_id="website.layout" name="PACKIMMO Website Footer Copyright" priority="80">
+        <xpath expr="//div[hasclass('o_footer_copyright')]" position="replace">
+            <div t-if="not no_copyright" class="o_footer_copyright o_colored_level o_cc packimmo-footer-copyright" data-name="Copyright">
+                <div class="container">
+                    <div class="packimmo-footer-copyright__inner">
+                        <div class="packimmo-footer-copyright__brand">
+                            <span>Copyright &amp;copy;</span>
+                            <span t-field="res_company.name" itemprop="name">PACKIMMO S.A.</span>
+                        </div>
+                        <div class="packimmo-footer-copyright__meta">
+                            <span>Tous droits réservés.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Garde-fou pour le layout login natif si Website ne remplace pas encore le footer. -->
+    <template id="packimmo_web_login_remove_odoo_credit" inherit_id="web.login_layout" name="PACKIMMO Login Without Odoo Credit" priority="10">
+        <xpath expr="//a[contains(@href, 'odoo.com')]" position="replace"/>
+    </template>
+</odoo>

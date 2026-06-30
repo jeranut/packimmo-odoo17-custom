@@ -20,39 +20,30 @@
 #
 #############################################################################
 {
-    'name': 'Access Roles',
+    'name': 'Access Roles (Legacy Disabled)',
     'version': '17.0.1.0.0',
     'category':'Security',
     'sequence': 1,
-    'summary': 'Access Roles for users',
-    'description': """Access Roles for users""",
+    'summary': 'Legacy access_roles disabled for PACKIMMO',
+    'description': """
+Legacy module kept as an empty compatibility shell.
+
+PACKIMMO uses its own security engine. The old legacy role engine is
+intentionally not loaded.
+""",
     'author': 'Cybrosys Techno Solutions',
     'company': 'Cybrosys Techno Solutions',
     'maintainer': 'Cybrosys Techno Solutions',
     'website': 'https://www.cybrosys.com',
-    'depends': ['base', 'mail', 'web'],
+    'depends': ['base'],
     'data': [
-            'security/access_roles_security.xml',
-            'security/ir.model.access.csv',
-            'views/access_role_views.xml',
-            'views/role_management_views.xml',
-            'views/res_users_views.xml',
-            'views/domain_model_views.xml',
-            'views/access_role_menus.xml'
+        'data/legacy_cleanup.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'access_roles/static/src/js/chatter.js',
-            'access_roles/static/src/js/debug.js',
-            'access_roles/static/src/js/views/list_controller.js',
-            'access_roles/static/src/js/views/form_controller.js',
-            'access_roles/static/src/js/x2many.js',
-            'access_roles/static/src/js/form_cog_menu.js',
-        ],
-    },
+    'pre_init_hook': 'pre_init_hook',
+    'assets': {},
     'images': ['static/description/banner.jpg'],
     'license': 'AGPL-3',
     'installable': True,
     'auto_install': False,
-    'application': True,
+    'application': False,
 }

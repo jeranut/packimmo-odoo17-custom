@@ -122,16 +122,14 @@ class PackimmoMenuPermission(models.Model):
         return xmlids.get(record.id, '')
 
     def init(self):
-        """Génère les règles de menu lors d'une mise à jour du module.
+        """Initialisation légère du modèle.
 
-        Cette méthode est tolérante : pendant une installation fraîche, certains
-        XML IDs de groupes peuvent ne pas encore être chargés. Le hook post-init
-        relance alors la génération une fois les données disponibles.
+        Les règles de menus sont des données applicatives. Elles ne doivent pas
+        être générées depuis `init()`, car cette méthode s'exécute pendant le
+        chargement du registre et peut être appelée par plusieurs processus en
+        parallèle sur un VPS.
         """
-        try:
-            self.sudo().generate_menu_permissions()
-        except Exception:
-            _logger.exception('Unable to generate Packimmo menu permissions during model initialization.')
+        return None
 
     def _tracked_module_domain(self):
         """Retourne le domaine ir.model.data des menus gérés par Packimmo."""
@@ -228,9 +226,15 @@ class PackimmoMenuPermission(models.Model):
             values = {'generated': True}
             if not rule.note:
                 values['note'] = note
-            rule.write(values)
+            changed_values = {
+                field_name: value
+                for field_name, value in values.items()
+                if rule[field_name] != value
+            }
+            if changed_values:
+                rule.with_context(skip_packimmo_menu_cache_clear=True).write(changed_values)
         else:
-            rule = self.sudo().create({
+            rule = self.sudo().with_context(skip_packimmo_menu_cache_clear=True).create({
                 'menu_id': menu.id,
                 'group_ids': [(6, 0, groups.ids)],
                 'generated': True,
@@ -275,14 +279,16 @@ class PackimmoMenuPermission(models.Model):
     def write(self, vals):
         """Vide les caches de menus quand une règle change."""
         result = super().write(vals)
-        self.env.registry.clear_cache()
+        if not self.env.context.get('skip_packimmo_menu_cache_clear'):
+            self.env.registry.clear_cache()
         return result
 
     @api.model_create_multi
     def create(self, vals_list):
         """Vide les caches de menus quand une règle est créée."""
         records = super().create(vals_list)
-        self.env.registry.clear_cache()
+        if not self.env.context.get('skip_packimmo_menu_cache_clear'):
+            self.env.registry.clear_cache()
         return records
 
     def unlink(self):

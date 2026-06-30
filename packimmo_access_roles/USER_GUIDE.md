@@ -2,7 +2,7 @@
 
 ## Objectif
 
-`packimmo_access_roles` est le point central de sécurité Packimmo pour Odoo 17 Community. Il complète `access_roles` avec des groupes métier, des profils de visibilité, une matrice de permissions et une API Python réutilisable par `rental_management`, les mandats, les contrats, les cartes, les tableaux de bord et les futurs modules Packimmo.
+`packimmo_access_roles` est le point central de sécurité Packimmo pour Odoo 17 Community. Il remplace l'ancien mécanisme `access_roles` / `access.role` avec des groupes métier, des profils de visibilité, une matrice de permissions et une API Python réutilisable par `rental_management`, les mandats, les contrats, les cartes, les tableaux de bord et les futurs modules Packimmo.
 
 Le moteur s'applique au backend. Il ne doit pas filtrer le Website public : les visiteurs continuent à voir les biens, projets, phases, lots, cartes et brochures publiés selon les contrôleurs website existants.
 

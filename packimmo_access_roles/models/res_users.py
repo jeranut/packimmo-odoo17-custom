@@ -7,7 +7,7 @@ class ResUsers(models.Model):
 
     Ces champs ne remplacent pas les groupes de sécurité Odoo. Ils servent surtout à afficher,
     dans la fiche utilisateur, un résumé clair des accès métier Packimmo attribués à la personne.
-    Les droits réels restent pilotés par res.groups, ir.model.access, ir.rule et access_roles.
+    Les droits réels restent pilotés par res.groups, ir.model.access, ir.rule et packimmo_access_roles.
     """
 
     _inherit = 'res.users'

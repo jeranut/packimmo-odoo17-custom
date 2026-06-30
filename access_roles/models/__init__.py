@@ -19,16 +19,9 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 #
 #############################################################################
-from . import access_role
-from . import button_registry
-from . import domain_model
-from . import field_access
-from . import filter_registry
-from . import groupby_registry
-from . import ir_ui_menu
-from . import ir_ui_view
-from . import ir_rule
-from . import res_users
-from . import res_groups
-from . import role_management
-from . import tab_registry
+# Legacy access_roles models are intentionally not loaded.
+#
+# PACKIMMO now uses its own security engine. Loading the historical role stack
+# reintroduces writes on `res.users.groups_id`, dynamic view rewrites and
+# frontend RPC calls that are not part of the current architecture.
+from . import legacy_cleanup

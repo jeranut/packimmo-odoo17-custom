@@ -74,15 +74,19 @@ class PackimmoNavigationItem(models.Model):
                 item.icon = False
 
     def init(self):
-        """Synchronise prudemment les items pendant les mises à jour."""
+        """Initialisation de schéma uniquement.
+
+        La synchronisation des items Web Responsive écrit potentiellement sur
+        beaucoup de lignes. Elle est donc réservée au hook post-init et au bouton
+        manuel, pas au chargement du registre.
+        """
         try:
             self.env.cr.execute(SQL(
                 'ALTER TABLE %(table)s DROP CONSTRAINT IF EXISTS packimmo_navigation_item_menu_unique',
                 table=SQL.identifier(self._table),
             ))
-            self.sudo().action_sync_web_responsive_navigation()
         except Exception:
-            _logger.exception('Unable to synchronize Web Responsive navigation items during initialization.')
+            _logger.exception('Unable to prepare Packimmo navigation item schema during initialization.')
 
     def _get_packimmo_group_ids_for_menu(self, menu):
         """Réutilise les groupes de `packimmo.menu.permission` pour un menu."""
@@ -146,6 +150,17 @@ class PackimmoNavigationItem(models.Model):
             return group_ids
         return self._group_ids_from_role_codes(self._role_codes_for_navigation_menu(menu))
 
+    def _get_changed_values(self, record, values):
+        """Retourne uniquement les valeurs réellement différentes."""
+        changed_values = {}
+        for field_name, value in values.items():
+            current_value = record[field_name]
+            if field_name in ('menu_id', 'shortcut_id'):
+                current_value = current_value.id or False
+            if current_value != value:
+                changed_values[field_name] = value
+        return changed_values
+
     def _sync_menu_item(self, menu):
         """Crée ou met à jour l'item correspondant à un menu Odoo."""
         group_ids = self._get_default_group_ids_for_menu(menu)
@@ -160,7 +175,9 @@ class PackimmoNavigationItem(models.Model):
         }
         item = self.sudo().search([('menu_id', '=', menu.id), ('item_type', '=', 'menu')], limit=1)
         if item:
-            item.write(values)
+            changed_values = self._get_changed_values(item, values)
+            if changed_values:
+                item.write(changed_values)
             if item.generated and not item.visible_group_ids and group_ids:
                 item.visible_group_ids = [(6, 0, group_ids)]
         else:
@@ -184,7 +201,9 @@ class PackimmoNavigationItem(models.Model):
         }
         item = self.sudo().search([('shortcut_id', '=', shortcut.id), ('item_type', '=', 'shortcut')], limit=1)
         if item:
-            item.write(values)
+            changed_values = self._get_changed_values(item, values)
+            if changed_values:
+                item.write(changed_values)
             if item.generated and not item.visible_group_ids and groups:
                 item.visible_group_ids = [(6, 0, groups)]
         else:

@@ -260,7 +260,13 @@ class PackimmoRepositoryScanner(models.AbstractModel):
             ], limit=1)
             values['active'] = True
             if record:
-                record.write(values)
+                changed_values = {
+                    field_name: value
+                    for field_name, value in values.items()
+                    if record[field_name] != value
+                }
+                if changed_values:
+                    record.write(changed_values)
             else:
                 SecurityObject.create(values)
         for record in SecurityObject.search([]):
@@ -343,7 +349,17 @@ class PackimmoRepositoryScanner(models.AbstractModel):
                     ('company_id', '=', False),
                 ], limit=1)
                 if row:
-                    row.write(values)
+                    changed_values = {
+                        field_name: value
+                        for field_name, value in values.items()
+                        if (
+                            row[field_name].id
+                            if field_name in ('group_id', 'company_id')
+                            else row[field_name]
+                        ) != value
+                    }
+                    if changed_values:
+                        row.write(changed_values)
                 else:
                     Matrix.create(values)
         return True

@@ -74,6 +74,14 @@ ROLE_GROUP_XMLIDS = {
 }
 
 
+def _current_value(record, field_name):
+    """Retourne une valeur comparable pour éviter les write() inutiles."""
+    value = record[field_name]
+    if field_name in ('model_id', 'group_id', 'company_id'):
+        return value.id or False
+    return value
+
+
 def _get_env(env_or_cr, registry=None):
     """Retourne un environnement Odoo valide pour supporter plusieurs signatures de hook.
 
@@ -115,7 +123,13 @@ def _create_or_update_acl(env, model_rec, group_rec, key, perm_read, perm_write,
     }
     acl = Access.search([('name', '=', name), ('model_id', '=', model_rec.id), ('group_id', '=', group_rec.id)], limit=1)
     if acl:
-        acl.write(values)
+        changed_values = {
+            field_name: value
+            for field_name, value in values.items()
+            if _current_value(acl, field_name) != value
+        }
+        if changed_values:
+            acl.write(changed_values)
     else:
         Access.create(values)
 
@@ -201,7 +215,13 @@ def _create_permission_matrix(env):
                 ('company_id', '=', False),
             ], limit=1)
             if row:
-                row.write(values)
+                changed_values = {
+                    field_name: value
+                    for field_name, value in values.items()
+                    if _current_value(row, field_name) != value
+                }
+                if changed_values:
+                    row.write(changed_values)
             else:
                 Matrix.create(values)
 
@@ -212,35 +232,6 @@ def _drop_legacy_permission_matrix_constraint(env):
         'ALTER TABLE packimmo_permission_matrix '
         'DROP CONSTRAINT IF EXISTS packimmo_permission_matrix_model_group_unique'
     )
-
-
-def _harden_access_roles_administration(env):
-    """Réduit le risque que tous les utilisateurs internes administrent les rôles.
-
-    Certains modules de rôles donnent parfois des droits trop larges à base.group_user.
-    Cette méthode désactive les ACL trop ouvertes sur les modèles access.role et role.management,
-    puis crée des ACL réservées au groupe Administrateur Packimmo.
-    """
-    admin_group = env.ref('packimmo_access_roles.group_packimmo_admin', raise_if_not_found=False)
-    base_user = env.ref('base.group_user', raise_if_not_found=False)
-    if not admin_group:
-        return
-
-    for model_name in ['access.role', 'role.management']:
-        model_rec = _model(env, model_name)
-        if not model_rec:
-            continue
-        if base_user:
-            broad_acls = env['ir.model.access'].sudo().search([
-                ('model_id', '=', model_rec.id),
-                ('group_id', '=', base_user.id),
-            ])
-            for acl in broad_acls:
-                if 'active' in acl._fields:
-                    acl.active = False
-                else:
-                    acl.unlink()
-        _create_or_update_acl(env, model_rec, admin_group, 'admin_only', True, True, True, True)
 
 
 def _secure_known_packimmo_menus(env):
@@ -265,7 +256,9 @@ def _secure_known_packimmo_menus(env):
             continue
         groups = [_group(env, role_code).id for role_code in role_codes if _group(env, role_code)]
         if groups:
-            menu.sudo().write({'groups_id': [(6, 0, groups)]})
+            menu = menu.sudo()
+            if set(menu.groups_id.ids) != set(groups):
+                menu.write({'groups_id': [(6, 0, groups)]})
 
 
 def _migrate_web_responsive_shortcut_groups(env):
@@ -303,7 +296,7 @@ def post_init_hook(env_or_cr, registry=None):
     """Initialise les droits Packimmo après installation du module.
 
     Cette fonction est appelée automatiquement par Odoo. Elle crée les ACL dynamiques et sécurise
-    l'administration de access_roles sans obliger le module à connaître à l'avance tous les modèles
+    l'administration Packimmo sans obliger le module à connaître à l'avance tous les modèles
     optionnels installés dans la base Packimmo.
     """
     env = _get_env(env_or_cr, registry)
@@ -313,6 +306,5 @@ def post_init_hook(env_or_cr, registry=None):
     _generate_repository_permission_matrix(env)
     _generate_menu_permissions(env)
     _sync_web_responsive_navigation(env)
-    _harden_access_roles_administration(env)
     _secure_known_packimmo_menus(env)
     _migrate_web_responsive_shortcut_groups(env)

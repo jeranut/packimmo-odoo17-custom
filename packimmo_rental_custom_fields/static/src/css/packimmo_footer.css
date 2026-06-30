@@ -1,0 +1,137 @@
+/* Layout public Packimmo: supprime le cadre blanc sous le footer. */
+html,
+body {
+    min-height: 100%;
+}
+
+body:not(.editor_enable) {
+    margin: 0;
+    padding: 0;
+}
+
+body:not(.editor_enable) #wrapwrap {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-bottom: 0 !important;
+}
+
+body:not(.editor_enable) #wrapwrap > main {
+    flex: 1 0 auto;
+}
+
+body:not(.editor_enable) #wrapwrap > footer,
+body:not(.editor_enable) #wrapwrap > .o_footer {
+    flex-shrink: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.packimmo-header-login-icon {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 2.65rem;
+    min-width: 2.65rem;
+    height: 2.65rem;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50%;
+    background: transparent !important;
+    color: inherit;
+    line-height: 1;
+}
+
+.packimmo-header-login-icon:hover,
+.packimmo-header-login-icon:focus {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: inherit;
+    text-decoration: none;
+}
+
+.packimmo-header-login-icon .fa {
+    font-size: 1.3rem;
+}
+
+.packimmo-mobile-login-item {
+    display: flex;
+    align-items: center;
+}
+
+.o_footer .packimmo-footer-copyright {
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.o_footer .packimmo-footer-copyright .container {
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+}
+
+.o_footer .packimmo-footer-copyright__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.25rem;
+}
+
+.o_footer .packimmo-footer-copyright__brand,
+.o_footer .packimmo-footer-copyright__meta {
+    min-width: 0;
+    line-height: 1.4;
+}
+
+.o_footer .packimmo-footer-copyright__brand {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.o_footer .packimmo-footer-copyright__meta {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Les icônes sociales restent dans leur colonne et ne chevauchent pas le copyright. */
+.o_footer #footer .s_social_media,
+.o_footer #footer .s_social_media ul,
+.o_footer #footer .s_social_media .s_social_media_icons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.o_footer #footer .row {
+    row-gap: 1.5rem;
+}
+
+@media (max-width: 767.98px) {
+    .o_footer .packimmo-footer-copyright__inner {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 0.35rem;
+    }
+
+    .o_footer .packimmo-footer-copyright__brand {
+        justify-content: center;
+    }
+
+    .o_footer .packimmo-footer-copyright__meta {
+        text-align: center;
+        white-space: normal;
+    }
+
+    .o_footer #footer .row > [class*="col"] {
+        text-align: center;
+    }
+
+    .o_footer #footer .s_social_media,
+    .o_footer #footer .s_social_media ul,
+    .o_footer #footer .s_social_media .s_social_media_icons {
+        justify-content: center;
+    }
+}

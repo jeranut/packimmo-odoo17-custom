@@ -7,8 +7,8 @@
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="MIIA" string="MIIA" name="packimmo_miia">
-                    <block title="Configuration MIIA" id="packimmo_miia_settings">
+                <app data-string="MIA" string="MIA" name="packimmo_miia">
+                    <block title="Configuration MIA" id="packimmo_miia_settings">
                         <setting string="Réponses MIIA" help="Configurez les réponses, mots-clés et photos d'illustration utilisées par MIIA dans Discuss.">
                             <button
                                 name="action_open_packimmo_miia_answers"
@@ -17,6 +17,31 @@
                                 icon="oi-arrow-right"
                                 class="oe_link"
                             />
+                        </setting>
+                        <setting string="Knowledge Base MIA" help="Synchronisez les datasets métier validés depuis un dossier externe configurable.">
+                            <field name="mia_dataset_path" placeholder="/opt/packimmo-mia-datasets"/>
+                            <button
+                                name="action_create_mia_dataset_tree"
+                                type="object"
+                                string="Créer l’arborescence datasets"
+                                icon="oi-folder"
+                                class="oe_link"
+                            />
+                            <button
+                                name="action_open_packimmo_mia_sync"
+                                type="object"
+                                string="Synchroniser les datasets"
+                                icon="oi-arrow-right"
+                                class="oe_link"
+                            />
+                        </setting>
+                        <setting string="Recherche MIA">
+                            <field name="mia_min_score"/>
+                        </setting>
+                        <setting string="Historique MIA">
+                            <field name="mia_auto_clear_history"/>
+                            <field name="mia_clear_on_chat_close"/>
+                            <field name="mia_history_retention_days"/>
                         </setting>
                     </block>
                 </app>

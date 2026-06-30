@@ -8,7 +8,7 @@
 Packimmo Access Roles
 =====================
 
-Ce module ajoute une couche de sécurité métier Packimmo au-dessus du module access_roles.
+Ce module ajoute une couche de sécurité métier Packimmo indépendante du module historique access_roles.
 Il crée les groupes nécessaires pour organiser les utilisateurs de rental_management selon les rôles :
 Vente, Location, Morcellement, Dessinateur, Gestionnaire, Manager et Administrateur.
     """,
@@ -18,7 +18,6 @@ Vente, Location, Morcellement, Dessinateur, Gestionnaire, Manager et Administrat
     'depends': [
         'base',
         'project',
-        'access_roles',
         'rental_management',
         'web_responsive',
     ],

@@ -2,6 +2,7 @@
 import re
 import uuid
 
+import html
 from markupsafe import Markup
 
 from odoo import api, fields, models
@@ -67,7 +68,6 @@ class PackimmoOdooBotAnswer(models.Model):
         bot_user = self._ensure_bot_user(groups["user"])
         self._ensure_discuss_chats(bot_user)
         self._ensure_views_actions_menus(groups["user"])
-        self._ensure_default_answers()
         return True
 
     @api.model
@@ -484,7 +484,7 @@ class PackimmoOdooBotAnswer(models.Model):
             MODULE_NAME,
             "menu_packimmo_odoobot_root",
             "ir.ui.menu",
-            {"name": "MIIA", "sequence": 20},
+            {"name": "MIA", "sequence": 20},
         )
         config_menu = self._ensure_xml_record(
             MODULE_NAME,
@@ -667,6 +667,100 @@ class PackimmoOdooBotAnswer(models.Model):
         )
 
     @api.model
+    def _get_packimmo_odoobot_user(self):
+        bot_user = self.env.ref(
+            "%s.user_packimmo_odoobot" % MODULE_NAME,
+            raise_if_not_found=False,
+        )
+        if not bot_user or not bot_user.partner_id:
+            self._ensure_packimmo_odoobot_setup()
+            bot_user = self.env.ref(
+                "%s.user_packimmo_odoobot" % MODULE_NAME,
+                raise_if_not_found=False,
+            )
+        return bot_user
+
+    @api.model
+    def _get_user_mia_channels(self, user):
+        bot_user = self._get_packimmo_odoobot_user()
+        if not bot_user or not bot_user.partner_id or not user or not user.partner_id:
+            return self.env["discuss.channel"].sudo().browse()
+        return self.env["discuss.channel"].sudo().search([
+            ("channel_type", "=", "chat"),
+            ("channel_member_ids.partner_id", "=", bot_user.partner_id.id),
+            ("channel_member_ids.partner_id", "=", user.partner_id.id),
+        ])
+
+    @api.model
+    def _clear_user_mia_conversation(self, user):
+        channels = self._get_user_mia_channels(user)
+        if not channels:
+            return False
+        messages = self.env["mail.message"].sudo().search([
+            ("model", "=", "discuss.channel"),
+            ("res_id", "in", channels.ids),
+        ])
+        if messages:
+            messages.unlink()
+        return True
+
+    @api.model
+    def _render_suggested_questions_message(self, user, limit=15):
+        articles = self.env["packimmo.knowledge.article"].sudo()._get_suggested_questions_for_user(
+            user,
+            limit=limit,
+        )
+        if not articles:
+            return Markup("")
+        content = Markup("<p><strong>💡 Questions suggérées</strong></p><ul>")
+        for article in articles:
+            question = article.question or article.title
+            content += Markup("<li>%s</li>") % html.escape(question)
+        content += Markup("</ul>")
+        return content
+
+    @api.model
+    def _post_mia_suggestions(self, user, channel=None, limit=15):
+        bot_user = self._get_packimmo_odoobot_user()
+        if not bot_user or not bot_user.partner_id:
+            return False
+        channel = channel or self._get_user_mia_channels(user)[:1]
+        if not channel:
+            return False
+        body = self._render_suggested_questions_message(user, limit=limit)
+        if not body:
+            return False
+        channel.with_context(packimmo_miia_no_reply=True).message_post(
+            body=body,
+            author_id=bot_user.partner_id.id,
+            message_type="comment",
+            subtype_xmlid="mail.mt_comment",
+        )
+        return True
+
+    @api.model
+    def _post_mia_welcome(self, user, channel=None):
+        bot_user = self._get_packimmo_odoobot_user()
+        if not bot_user or not bot_user.partner_id:
+            return False
+        channel = channel or self._get_user_mia_channels(user)[:1]
+        if not channel:
+            return False
+        name = html.escape(user.name or "")
+        body = Markup(
+            "<p>Bonjour %s</p>"
+            "<p>Je suis MIA.</p>"
+            "<p>Je peux vous accompagner dans votre workflow.</p>"
+        ) % name
+        channel.with_context(packimmo_miia_no_reply=True).message_post(
+            body=body,
+            author_id=bot_user.partner_id.id,
+            message_type="comment",
+            subtype_xmlid="mail.mt_comment",
+        )
+        return True
+
+    @api.model
     def _get_user_profiles(self, user=None):
         user = user or self.env.user
         managed_profiles = [
@@ -731,8 +825,18 @@ class PackimmoOdooBotAnswer(models.Model):
 
     @api.model
     def render_reply(self, question, user=None):
+        knowledge_article, knowledge_score = self.env[
+            "packimmo.knowledge.article"
+        ].sudo().find_best_article(question, user=user)
+        if knowledge_article:
+            return knowledge_article._render_mia_reply()
         answer = self._find_best_answer(question, user=user)
         if not answer:
+            self.env["packimmo.knowledge.unanswered.question"].sudo().record_unanswered(
+                question,
+                user=user,
+                best_score=knowledge_score,
+            )
             return Markup(FALLBACK_MESSAGE)
         reply = Markup(answer.answer or "")
         if answer.illustration_image:
