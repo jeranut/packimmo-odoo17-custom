@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="document_file_view_form_packimmo_google_drive" model="ir.ui.view">
+        <field name="name">document.file.form.packimmo.google.drive</field>
+        <field name="model">document.file</field>
+        <field name="inherit_id" ref="enhanced_document_management.document_file_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="before">
+                <header>
+                    <button name="action_sync_google_drive" type="object" string="Synchroniser" class="btn-primary"/>
+                    <button name="action_retry_google_drive" type="object" string="Réessayer" invisible="google_drive_sync_state != 'error'"/>
+                    <button name="action_open_google_drive" type="object" string="Ouvrir dans Drive" invisible="not google_drive_url"/>
+                    <button name="action_open_google_drive_folder" type="object" string="Voir le dossier" invisible="not google_drive_folder_id"/>
+                    <button name="action_copy_google_drive_link" type="object" string="Copier le lien" invisible="not google_drive_url"/>
+                    <button name="action_google_drive_history" type="object" string="Historique"/>
+                    <button name="action_reclassify_google_drive" type="object" string="Reclassement"/>
+                    <field name="google_drive_sync_state" widget="statusbar" statusbar_visible="not_synced,synced,error"/>
+                </header>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="PACKIMMO Google Drive">
+                    <group>
+                        <field name="packimmo_document_flow"/>
+                        <field name="packimmo_document_type"/>
+                        <field name="packimmo_document_date"/>
+                        <field name="google_drive_share_type"/>
+                        <field name="google_drive_sync_state" readonly="1"/>
+                        <field name="google_drive_last_sync" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="google_drive_url" widget="url" readonly="1"/>
+                        <field name="google_drive_path" readonly="1"/>
+                        <field name="google_drive_file_id" readonly="1"/>
+                        <field name="google_drive_folder_id" readonly="1"/>
+                        <field name="google_drive_checksum" readonly="1"/>
+                        <field name="google_drive_version" readonly="1"/>
+                        <field name="google_drive_duplicate_of_id" readonly="1"/>
+                        <field name="google_drive_error" readonly="1"/>
+                    </group>
+                    <group string="OCR" colspan="4">
+                        <field name="google_drive_ocr_text" nolabel="1" placeholder="Texte OCR futur"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="document_file_view_tree_packimmo_google_drive" model="ir.ui.view">
+        <field name="name">document.file.tree.packimmo.google.drive</field>
+        <field name="model">document.file</field>
+        <field name="inherit_id" ref="enhanced_document_management.document_file_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='date']" position="after">
+                <field name="packimmo_document_flow"/>
+                <field name="packimmo_document_type"/>
+                <field name="google_drive_sync_state" widget="badge"/>
+                <field name="google_drive_version"/>
+                <field name="google_drive_url" widget="url"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="document_file_view_search_packimmo_google_drive" model="ir.ui.view">
+        <field name="name">document.file.search.packimmo.google.drive</field>
+        <field name="model">document.file</field>
+        <field name="inherit_id" ref="enhanced_document_management.document_file_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search/field[@name='workspace_id']" position="after">
+                <field name="packimmo_document_flow"/>
+                <field name="packimmo_document_type"/>
+                <field name="google_drive_sync_state"/>
+                <field name="user_id"/>
+                <field name="partner_id"/>
+                <field name="document_tag_id"/>
+                <field name="google_drive_ocr_text"/>
+            </xpath>
+            <xpath expr="//search/filter[@name='filter_pdf']" position="before">
+                <filter string="Synchronisé Drive" name="drive_synced" domain="[('google_drive_sync_state', '=', 'synced')]"/>
+                <filter string="Erreur Drive" name="drive_error" domain="[('google_drive_sync_state', '=', 'error')]"/>
+                <filter string="Non synchronisé Drive" name="drive_not_synced" domain="[('google_drive_sync_state', '=', 'not_synced')]"/>
+            </xpath>
+            <xpath expr="//group" position="inside">
+                <filter name="group_drive_workflow" string="Workflow" context="{'group_by':'packimmo_document_flow'}"/>
+                <filter name="group_drive_type" string="Type document" context="{'group_by':'packimmo_document_type'}"/>
+                <filter name="group_drive_state" string="État Drive" context="{'group_by':'google_drive_sync_state'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

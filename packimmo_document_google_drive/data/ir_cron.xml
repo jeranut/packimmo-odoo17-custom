@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_packimmo_google_drive_retry" model="ir.cron">
+        <field name="name">PACKIMMO Google Drive - synchronisation horaire</field>
+        <field name="model_id" ref="enhanced_document_management.model_document_file"/>
+        <field name="state">code</field>
+        <field name="code">model.env['packimmo.google.drive.service'].cron_sync_pending()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="numbercall">-1</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

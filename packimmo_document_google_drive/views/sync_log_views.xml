@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="packimmo_google_drive_sync_log_view_tree" model="ir.ui.view">
+        <field name="name">packimmo.google.drive.sync.log.tree</field>
+        <field name="model">packimmo.google.drive.sync.log</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0">
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="document_model"/>
+                <field name="document_res_id"/>
+                <field name="state" widget="badge"/>
+                <field name="google_drive_url" widget="url"/>
+                <field name="message"/>
+            </tree>
+        </field>
+    </record>
+    <record id="packimmo_google_drive_sync_log_action" model="ir.actions.act_window">
+        <field name="name">Journal Google Drive</field>
+        <field name="res_model">packimmo.google.drive.sync.log</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record id="packimmo_google_drive_config_action" model="ir.actions.act_window">
+        <field name="name">Google Drive</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'packimmo_google_drive'}</field>
+    </record>
+    <menuitem id="packimmo_google_drive_menu_root" name="DRIVE_MIIA" parent="base.menu_administration" sequence="90" groups="base.group_system"/>
+    <menuitem id="packimmo_google_drive_menu_config" name="Google Drive" parent="packimmo_google_drive_menu_root" action="packimmo_google_drive_config_action" sequence="10" groups="base.group_system"/>
+    <menuitem id="packimmo_google_drive_menu_logs" name="Journal de synchronisation" parent="packimmo_google_drive_menu_root" action="packimmo_google_drive_sync_log_action" sequence="20" groups="base.group_system"/>
+</odoo>

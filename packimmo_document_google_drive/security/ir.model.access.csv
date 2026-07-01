@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_packimmo_google_drive_sync_log_user,packimmo.google.drive.sync.log.user,model_packimmo_google_drive_sync_log,base.group_user,1,0,0,0
+access_packimmo_google_drive_sync_log_admin,packimmo.google.drive.sync.log.admin,model_packimmo_google_drive_sync_log,base.group_system,1,1,1,1

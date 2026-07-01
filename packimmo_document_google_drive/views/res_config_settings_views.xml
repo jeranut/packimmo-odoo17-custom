@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_packimmo_google_drive" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.packimmo.google.drive</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="DRIVE_MIIA Google Drive" string="DRIVE_MIIA Google Drive" name="packimmo_google_drive">
+                    <block title="Paramètres DRIVE_MIIA Google Drive">
+                        <setting string="Activer Google Drive" help="Synchronise automatiquement les documents DRIVE_MIIA vers Google Drive.">
+                            <field name="packimmo_google_drive_enabled"/>
+                        </setting>
+                        <setting string="Compte Google Drive" help="Informations du compte Google utilisé pour la GED DRIVE_MIIA.">
+                            <field name="packimmo_google_drive_account_name" placeholder="DRIVE_MIIA Documents"/>
+                            <field name="packimmo_google_drive_account_email" placeholder="service-account@project.iam.gserviceaccount.com"/>
+                        </setting>
+                        <setting string="Dossier racine Drive" help="Dossier Google Drive racine partagé avec DRIVE_MIIA.">
+                            <field name="packimmo_google_drive_root_folder_url" widget="url" placeholder="https://drive.google.com/drive/folders/..."/>
+                            <field name="packimmo_google_drive_root_folder_id" placeholder="Exemple : 1AbC..."/>
+                        </setting>
+                        <setting string="PDF générés" help="Synchroniser aussi les factures, contrats, mandats et rapports générés en pièces jointes.">
+                            <field name="packimmo_google_drive_sync_attachments"/>
+                        </setting>
+                        <setting string="Partage externe" help="Désactivé par défaut pour respecter les ACL Odoo et éviter l'exposition publique involontaire.">
+                            <field name="packimmo_google_drive_allow_external_share"/>
+                        </setting>
+                    </block>
+                    <block title="Authentification">
+                        <setting string="Mode d'authentification" help="Service Account recommandé pour un usage serveur. OAuth est prévu pour un compte utilisateur Google.">
+                            <field name="packimmo_google_drive_auth_method" widget="radio"/>
+                        </setting>
+                        <setting string="Service Account" help="Collez le contenu JSON complet du compte de service Google Cloud.">
+                            <field name="packimmo_google_drive_service_account_file_json" password="True" placeholder="Contenu du fichier JSON"/>
+                            <field name="packimmo_google_drive_service_account_json" password="True" placeholder="JSON sécurisé"/>
+                        </setting>
+                        <setting string="OAuth" help="Client ID, Client Secret et Refresh Token avec accès Google Drive.">
+                            <field name="packimmo_google_drive_oauth_client_id" password="True"/>
+                            <field name="packimmo_google_drive_oauth_client_secret" password="True"/>
+                            <field name="packimmo_google_drive_oauth_refresh_token" password="True"/>
+                        </setting>
+                    </block>
+                    <block title="Actions">
+                        <setting string="Diagnostic Google Drive" help="Tester la connexion, vérifier les permissions et récupérer les informations du compte.">
+                            <button name="action_packimmo_test_connection" type="object" string="Tester la connexion" class="btn-primary"/>
+                            <button name="action_packimmo_check_permissions" type="object" string="Vérifier les permissions" class="btn-secondary"/>
+                            <button name="action_packimmo_account_info" type="object" string="Informations du compte" class="btn-secondary"/>
+                        </setting>
+                        <setting string="Maintenance GED" help="Créer l'arborescence et relancer les documents en attente ou en erreur.">
+                            <button name="action_packimmo_create_structure" type="object" string="Créer l'arborescence" class="btn-secondary"/>
+                            <button name="action_packimmo_sync_all" type="object" string="Synchroniser tout" class="btn-secondary"/>
+                            <button name="action_packimmo_resync" type="object" string="Resynchroniser" class="btn-secondary"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
