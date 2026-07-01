@@ -10,6 +10,7 @@ class PackimmoGoogleDriveSyncLog(models.Model):
     name = fields.Char(required=True)
     document_model = fields.Char(string='Modèle')
     document_res_id = fields.Integer(string='ID ressource')
+    company_id = fields.Many2one('res.company', default=lambda self: self.env.company, index=True)
     google_drive_file_id = fields.Char(string='Google Drive File ID')
     google_drive_url = fields.Char(string='Lien Google Drive')
     state = fields.Selection([

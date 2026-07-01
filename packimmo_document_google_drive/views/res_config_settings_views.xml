@@ -25,6 +25,11 @@
                         <setting string="Partage externe" help="Désactivé par défaut pour respecter les ACL Odoo et éviter l'exposition publique involontaire.">
                             <field name="packimmo_google_drive_allow_external_share"/>
                         </setting>
+                        <setting string="Traitement par lots" help="Nombre maximum d'entrées de file traitees par execution du cron et nombre maximum de tentatives en erreur temporaire.">
+                            <field name="packimmo_google_drive_batch_limit"/>
+                            <field name="packimmo_google_drive_max_retry_count"/>
+                            <field name="packimmo_google_drive_import_limit"/>
+                        </setting>
                     </block>
                     <block title="Authentification">
                         <setting string="Mode d'authentification" help="Service Account recommandé pour un usage serveur. OAuth est prévu pour un compte utilisateur Google.">
@@ -47,8 +52,11 @@
                             <button name="action_packimmo_account_info" type="object" string="Informations du compte" class="btn-secondary"/>
                         </setting>
                         <setting string="Maintenance GED" help="Créer l'arborescence et relancer les documents en attente ou en erreur.">
+                            <button name="action_packimmo_repair_ged_structure" type="object" string="Créer / Réparer l'arborescence GED" class="btn-primary"/>
+                            <button name="action_packimmo_import_attachments" type="object" string="Importer les pièces jointes PACKIMMO dans la GED" class="btn-primary"/>
+                            <button name="action_packimmo_reclassify_documents" type="object" string="Reclasser automatiquement" class="btn-secondary"/>
                             <button name="action_packimmo_create_structure" type="object" string="Créer l'arborescence" class="btn-secondary"/>
-                            <button name="action_packimmo_sync_all" type="object" string="Synchroniser tout" class="btn-secondary"/>
+                            <button name="action_packimmo_sync_all" type="object" string="Synchroniser avec Google Drive" class="btn-secondary"/>
                             <button name="action_packimmo_resync" type="object" string="Resynchroniser" class="btn-secondary"/>
                         </setting>
                     </block>

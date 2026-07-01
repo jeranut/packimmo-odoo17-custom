@@ -23,6 +23,10 @@
                         <field name="packimmo_document_flow"/>
                         <field name="packimmo_document_type"/>
                         <field name="packimmo_document_date"/>
+                        <field name="packimmo_property_id"/>
+                        <field name="packimmo_partner_id"/>
+                        <field name="folder_id"/>
+                        <field name="packimmo_relative_path" readonly="1"/>
                         <field name="google_drive_share_type"/>
                         <field name="google_drive_sync_state" readonly="1"/>
                         <field name="google_drive_last_sync" readonly="1"/>
@@ -36,6 +40,8 @@
                         <field name="google_drive_version" readonly="1"/>
                         <field name="google_drive_duplicate_of_id" readonly="1"/>
                         <field name="google_drive_error" readonly="1"/>
+                        <field name="packimmo_source_model" readonly="1"/>
+                        <field name="packimmo_source_res_id" readonly="1"/>
                     </group>
                     <group string="OCR" colspan="4">
                         <field name="google_drive_ocr_text" nolabel="1" placeholder="Texte OCR futur"/>
@@ -53,6 +59,9 @@
             <xpath expr="//tree/field[@name='date']" position="after">
                 <field name="packimmo_document_flow"/>
                 <field name="packimmo_document_type"/>
+                <field name="packimmo_property_id"/>
+                <field name="packimmo_partner_id"/>
+                <field name="folder_id"/>
                 <field name="google_drive_sync_state" widget="badge"/>
                 <field name="google_drive_version"/>
                 <field name="google_drive_url" widget="url"/>
@@ -68,6 +77,9 @@
             <xpath expr="//search/field[@name='workspace_id']" position="after">
                 <field name="packimmo_document_flow"/>
                 <field name="packimmo_document_type"/>
+                <field name="packimmo_property_id"/>
+                <field name="packimmo_partner_id"/>
+                <field name="folder_id"/>
                 <field name="google_drive_sync_state"/>
                 <field name="user_id"/>
                 <field name="partner_id"/>
@@ -82,7 +94,13 @@
             <xpath expr="//group" position="inside">
                 <filter name="group_drive_workflow" string="Workflow" context="{'group_by':'packimmo_document_flow'}"/>
                 <filter name="group_drive_type" string="Type document" context="{'group_by':'packimmo_document_type'}"/>
+                <filter name="group_drive_folder" string="Dossier GED" context="{'group_by':'folder_id'}"/>
+                <filter name="group_drive_property" string="Bien immobilier" context="{'group_by':'packimmo_property_id'}"/>
                 <filter name="group_drive_state" string="État Drive" context="{'group_by':'google_drive_sync_state'}"/>
+            </xpath>
+            <xpath expr="//searchpanel/field[@name='workspace_id']" position="after">
+                <field name="folder_id" icon="fa-folder-open" hierarchize="1" expand="1" enable_counters="1" select="one"/>
+                <field name="document_tag_id" icon="fa-tags" expand="1" enable_counters="1" select="multi"/>
             </xpath>
         </field>
     </record>

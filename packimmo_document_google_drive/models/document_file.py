@@ -71,12 +71,22 @@ class DocumentFile(models.Model):
         ('external', 'Externe'),
     ], string='Partage Drive', default='private')
     google_drive_ocr_text = fields.Text(string='Texte OCR')
+    company_id = fields.Many2one('res.company', string='Société', related='workspace_id.company_id', store=True, readonly=True, index=True)
+    folder_id = fields.Many2one('document.folder', string='Dossier GED', copy=False, index=True)
+    packimmo_source_model = fields.Char(string='Modèle source PACKIMMO', copy=False, index=True)
+    packimmo_source_res_id = fields.Integer(string='ID source PACKIMMO', copy=False, index=True)
+    packimmo_property_id = fields.Many2one('property.details', string='Bien immobilier', copy=False, index=True)
+    packimmo_partner_id = fields.Many2one('res.partner', string='Contact PACKIMMO', copy=False, index=True)
+    packimmo_relative_path = fields.Char(string='Chemin GED PACKIMMO', copy=False, readonly=True)
 
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        for record in records:
-            record._sync_to_google_drive_safe()
+        try:
+            with self.env.cr.savepoint():
+                records._enqueue_google_drive_sync(operation='upload', priority=10)
+        except Exception:
+            _logger.exception('Unable to enqueue Google Drive sync after document.file create')
         return records
 
     def write(self, vals):
@@ -86,22 +96,91 @@ class DocumentFile(models.Model):
             'packimmo_document_type', 'packimmo_document_date', 'date',
         }
         if sync_fields.intersection(vals.keys()):
-            for record in self:
-                record._sync_to_google_drive_safe()
+            try:
+                with self.env.cr.savepoint():
+                    self._enqueue_google_drive_sync(operation='update', priority=10)
+            except Exception:
+                _logger.exception('Unable to enqueue Google Drive sync after document.file write')
         return res
 
     def action_sync_google_drive(self):
-        for record in self:
-            record._sync_to_google_drive_safe(force=True)
+        self._enqueue_google_drive_sync(operation='upload', priority=20)
         return True
 
     def action_retry_google_drive(self):
         return self.action_sync_google_drive()
 
     def action_reclassify_google_drive(self):
-        for record in self:
-            record._sync_to_google_drive_safe(force=True)
+        self.action_packimmo_reclassify()
         return True
+
+    def action_packimmo_reclassify(self):
+        service = self.env['packimmo.document.classification.service'].sudo()
+        for record in self.sudo():
+            record._apply_packimmo_classification(service=service)
+        self._enqueue_google_drive_sync(operation='move', priority=20)
+        return True
+
+    @api.model
+    def action_import_packimmo_attachments(self, limit=200):
+        return self.env['ir.attachment'].sudo().cron_import_packimmo_attachments(limit=limit)
+
+    def _enqueue_google_drive_sync(self, operation='upload', priority=10):
+        for record in self.sudo():
+            try:
+                with self.env.cr.savepoint():
+                    company = record.company_id or self.env.company
+                    service = self.env['packimmo.google.drive.service'].sudo().with_company(company)
+                    if not service.is_enabled():
+                        continue
+                    filename, content_b64, mimetype = record._get_drive_payload()
+                    if not content_b64:
+                        continue
+                    queue = self.env['packimmo.google.drive.sync.queue'].sudo().with_company(company)
+                    queue.enqueue_document(record, operation=operation, priority=priority)
+            except Exception:
+                _logger.exception('Unable to enqueue Google Drive sync for document.file %s', record.id)
+        return True
+
+    def _apply_packimmo_classification(self, service=False):
+        self.ensure_one()
+        service = service or self.env['packimmo.document.classification.service'].sudo()
+        source_record = self._packimmo_source_record()
+        info = service.classify_record(
+            source_record,
+            filename=self.name,
+            fallback_date=self.date or self.create_date,
+        )
+        company = self.env['res.company'].sudo().browse(info['company_id'])
+        workspace = service.ensure_workspace(info['workflow_label'], company=company)
+        tag = service.ensure_tag(info['document_type_label'])
+        folder = service.ensure_folder_path(info['path_parts'], workspace=workspace, company=company)
+        self.write({
+            'workspace_id': workspace.id,
+            'folder_id': folder.id,
+            'document_tag_id': tag.id,
+            'packimmo_document_flow': info['workflow'],
+            'packimmo_document_type': info['document_type'],
+            'packimmo_document_date': info['classification_date'],
+            'packimmo_source_model': info['source_model'] or self.packimmo_source_model,
+            'packimmo_source_res_id': info['source_res_id'] or self.packimmo_source_res_id,
+            'packimmo_property_id': info['property_id'],
+            'packimmo_partner_id': info['partner_id'],
+            'packimmo_relative_path': info['relative_path'],
+        })
+        return info
+
+    def _packimmo_source_record(self):
+        self.ensure_one()
+        model = self.packimmo_source_model or (self.attachment_id.res_model if self.attachment_id else False)
+        res_id = self.packimmo_source_res_id or (self.attachment_id.res_id if self.attachment_id else False)
+        if not model or not res_id:
+            return False
+        try:
+            record = self.env[model].sudo().browse(res_id)
+        except KeyError:
+            return False
+        return record if record.exists() else False
 
     def action_open_google_drive(self):
         self.ensure_one()
@@ -144,12 +223,12 @@ class DocumentFile(models.Model):
         }
 
     def _sync_to_google_drive_safe(self, force=False):
-        service = self.env['packimmo.google.drive.service'].sudo()
-        if not service.is_enabled():
-            return False
         for record in self.sudo():
+            service = self.env['packimmo.google.drive.service'].sudo().with_company(record.company_id or self.env.company)
+            if not service.is_enabled():
+                continue
             try:
-                record._sync_to_google_drive(force=force)
+                record.with_company(record.company_id or self.env.company)._sync_to_google_drive(force=force)
             except Exception as exc:
                 record.write({
                     'google_drive_sync_state': 'error',
@@ -159,6 +238,7 @@ class DocumentFile(models.Model):
                     'name': record.display_name,
                     'document_model': record._name,
                     'document_res_id': record.id,
+                    'company_id': record.company_id.id if record.company_id else self.env.company.id,
                     'state': 'error',
                     'message': str(exc),
                 })
@@ -171,13 +251,53 @@ class DocumentFile(models.Model):
         if not content_b64:
             return False
         checksum = self._get_checksum(content_b64)
-        if not force and checksum == self.google_drive_checksum and self.google_drive_sync_state == 'synced':
+        if checksum == self.google_drive_checksum and self.google_drive_sync_state == 'synced' and self.google_drive_file_id:
+            self.env['packimmo.google.drive.sync.log'].sudo().create({
+                'name': self.display_name,
+                'document_model': self._name,
+                'document_res_id': self.id,
+                'company_id': self.company_id.id if self.company_id else self.env.company.id,
+                'google_drive_file_id': self.google_drive_file_id,
+                'google_drive_url': self.google_drive_url,
+                'state': 'success',
+                'message': 'Fichier deja synchronise - upload ignore',
+            })
             return True
         duplicate = self.search([
             ('id', '!=', self.id),
+            ('company_id', '=', self.company_id.id if self.company_id else self.env.company.id),
             ('google_drive_checksum', '=', checksum),
             ('google_drive_file_id', '!=', False),
         ], limit=1)
+        if duplicate and duplicate.google_drive_url:
+            folder_path = self._get_drive_folder_path()
+            self.write({
+                'google_drive_file_id': duplicate.google_drive_file_id,
+                'google_drive_folder_id': duplicate.google_drive_folder_id,
+                'google_drive_url': duplicate.google_drive_url,
+                'google_drive_path': duplicate.google_drive_path or '/'.join(folder_path + [filename]),
+                'google_drive_checksum': checksum,
+                'google_drive_version': duplicate.google_drive_version or 1,
+                'google_drive_duplicate_of_id': duplicate.id,
+                'google_drive_sync_state': 'synced',
+                'google_drive_last_sync': fields.Datetime.now(),
+                'google_drive_error': False,
+            })
+            message = 'Doublon detecte / fichier deja synchronise - lien Drive reutilise'
+            self.env['packimmo.google.drive.sync.log'].sudo().create({
+                'name': self.display_name,
+                'document_model': self._name,
+                'document_res_id': self.id,
+                'company_id': self.company_id.id if self.company_id else self.env.company.id,
+                'google_drive_file_id': duplicate.google_drive_file_id,
+                'google_drive_url': duplicate.google_drive_url,
+                'state': 'success',
+                'message': message,
+            })
+            if hasattr(self, 'message_post'):
+                self.message_post(body=message)
+            _logger.info('Google Drive duplicate detected for document.file %s, reused file %s', self.id, duplicate.google_drive_file_id)
+            return True
         result = self.env['packimmo.google.drive.service'].sudo().upload_or_update(
             filename=filename,
             content_b64=content_b64,
@@ -202,6 +322,7 @@ class DocumentFile(models.Model):
             'name': self.display_name,
             'document_model': self._name,
             'document_res_id': self.id,
+            'company_id': self.company_id.id if self.company_id else self.env.company.id,
             'google_drive_file_id': result.get('file_id'),
             'google_drive_url': result.get('web_url'),
             'state': 'success',
@@ -226,12 +347,22 @@ class DocumentFile(models.Model):
 
     def _get_drive_folder_path(self):
         self.ensure_one()
-        flow = self.packimmo_document_flow or self._guess_packimmo_flow()
-        dtype = self.packimmo_document_type or self._guess_packimmo_type()
-        business_date = self._get_packimmo_business_date()
-        label_flow = dict(self._fields['packimmo_document_flow'].selection).get(flow, 'Archives')
-        label_type = dict(self._fields['packimmo_document_type'].selection).get(dtype, 'Divers')
-        return ['PACKIMMO', label_flow, str(business_date.year), self._month_label(business_date.month), label_type]
+        service = self.env['packimmo.document.classification.service'].sudo()
+        if self.packimmo_document_flow and self.packimmo_document_type:
+            business_date = self._get_packimmo_business_date()
+            return [
+                'PACKIMMO',
+                service.WORKFLOWS.get(self.packimmo_document_flow, 'Archives'),
+                str(business_date.year),
+                service.month_label(business_date.month),
+                service.DOCUMENT_TYPES.get(self.packimmo_document_type, 'Divers'),
+            ]
+        info = service.classify_record(
+            self._packimmo_source_record(),
+            filename=self.name or self.display_name,
+            fallback_date=self.packimmo_document_date or self.date or self.create_date,
+        )
+        return info['path_parts']
 
     def _get_packimmo_business_date(self):
         self.ensure_one()

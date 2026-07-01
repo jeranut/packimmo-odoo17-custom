@@ -153,5 +153,44 @@ class PropertyDetails(models.Model):
                         "Veuillez créer un mandat actif pour valider la disponibilité du bien."
                     )
                 )
+            mandate._check_signed_mandate_before_availability()
 
         return super().action_in_available()
+
+    def write(self, vals):
+        if vals.get("stage") == "available":
+            self._check_active_mandate_signed_before_available()
+        if "state" in self._fields and vals.get("state") == "available":
+            self._check_active_mandate_signed_before_available()
+        return super().write(vals)
+
+    def _check_active_mandate_signed_before_available(self):
+        Mandate = self.env["property.mandate"].sudo()
+        for rec in self:
+            is_land_morcellement = (
+                rec.type == "land"
+                and rec.property_subtype_id
+                and rec.property_subtype_id.category == "morcellement"
+            )
+            if is_land_morcellement:
+                continue
+            if (
+                rec.landlord_id
+                and rec.company_id
+                and rec.landlord_id.id == rec.company_id.partner_id.id
+            ):
+                continue
+            mandates = Mandate.search(
+                [
+                    ("property_ids", "in", rec.id),
+                    ("state", "=", "active"),
+                ]
+            )
+            if not mandates:
+                raise UserError(
+                    _(
+                        "Veuillez créer un mandat actif pour valider la disponibilité du bien."
+                    )
+                )
+            mandates._check_signed_mandate_before_availability()
+        return True

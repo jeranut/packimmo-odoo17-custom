@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="packimmo_google_drive_sync_queue_view_tree" model="ir.ui.view">
+        <field name="name">packimmo.google.drive.sync.queue.tree</field>
+        <field name="model">packimmo.google.drive.sync.queue</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="state == 'failed'" decoration-muted="state in ('done', 'skipped')">
+                <field name="document_id"/>
+                <field name="attachment_id"/>
+                <field name="operation"/>
+                <field name="state"/>
+                <field name="priority"/>
+                <field name="retry_count"/>
+                <field name="next_retry_date"/>
+                <field name="last_error"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="packimmo_google_drive_sync_queue_action" model="ir.actions.act_window">
+        <field name="name">File de synchronisation Drive</field>
+        <field name="res_model">packimmo.google.drive.sync.queue</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="packimmo_google_drive_menu_queue" name="File de synchronisation" parent="packimmo_google_drive_menu_root" action="packimmo_google_drive_sync_queue_action" sequence="25" groups="base.group_system"/>
+</odoo>

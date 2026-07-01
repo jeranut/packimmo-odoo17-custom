@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import base64
+import hashlib
 from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from num2words import num2words
 
 
@@ -244,6 +245,34 @@ class PropertyMandate(models.Model):
         "mandate_id",
         "attachment_id",
         string="Pièces justificatives",
+    )
+    signed_mandate_document_id = fields.Many2one(
+        "document.file",
+        string="Document GED mandat signé",
+        copy=False,
+        readonly=True,
+        tracking=True,
+    )
+    signed_mandate_attachment_id = fields.Many2one(
+        "ir.attachment",
+        string="Pièce jointe mandat signé",
+        copy=False,
+        readonly=True,
+    )
+    signed_mandate_uploaded = fields.Boolean(
+        string="Mandat signé uploadé",
+        compute="_compute_signed_mandate_uploaded",
+        store=True,
+    )
+    signed_mandate_upload_date = fields.Datetime(
+        string="Date de téléversement du mandat signé",
+        copy=False,
+        readonly=True,
+    )
+    signed_mandate_filename = fields.Char(
+        string="Nom du fichier signé",
+        copy=False,
+        readonly=True,
     )
 
     deposit_type = fields.Selection(
@@ -665,6 +694,13 @@ class PropertyMandate(models.Model):
         for rec in self:
             rec.property_count = len(rec.property_ids)
 
+    @api.depends("signed_mandate_document_id", "signed_mandate_attachment_id")
+    def _compute_signed_mandate_uploaded(self):
+        for rec in self:
+            rec.signed_mandate_uploaded = bool(
+                rec.signed_mandate_document_id and rec.signed_mandate_attachment_id
+            )
+
     @api.depends("mandate_type")
     def _compute_exclusive_flags(self):
         for rec in self:
@@ -750,12 +786,6 @@ class PropertyMandate(models.Model):
             rec.write({"state": "approved"})
 
             rec.message_post(body=_("Mandat approuvé."))
-
-    def action_activate(self):
-        for rec in self:
-            rec.write({"state": "active"})
-
-            rec.message_post(body=_("Mandat activé."))
 
     def action_expire(self):
         for rec in self:
@@ -951,6 +981,9 @@ class PropertyMandate(models.Model):
                 report.report_name, [rec.id]
             )
 
+            # Quick print-to-chatter copy: not the archived reference document
+            # (the signed upload is), so it must not create a second entry in
+            # the GED alongside the signed mandat.
             attachment = self.env["ir.attachment"].create(
                 {
                     "name": "%s.pdf" % (rec.name or "Mandat"),
@@ -960,6 +993,7 @@ class PropertyMandate(models.Model):
                     "res_id": rec.id,
                     "mimetype": "application/pdf",
                     "company_id": rec.company_id.id,
+                    "packimmo_ged_skip": True,
                 }
             )
 
@@ -1126,9 +1160,11 @@ class PropertyMandate(models.Model):
 
     def action_activate(self):
         for rec in self:
-            rec.write({"state": "active"})
-
             draft_properties = rec.property_ids.filtered(lambda p: p.stage == "draft")
+            if draft_properties:
+                rec._check_signed_mandate_before_availability()
+
+            rec.write({"state": "active"})
 
             for property_rec in draft_properties:
                 if hasattr(property_rec, "action_in_available"):
@@ -1139,6 +1175,80 @@ class PropertyMandate(models.Model):
             rec.message_post(
                 body=_("Mandat activé. Les biens liés au mandat ont été rendus disponibles.")
             )
+
+    def action_open_signed_mandate_upload_wizard(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Téléverser mandat signé"),
+            "res_model": "property.mandate.signed.upload.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_mandate_id": self.id,
+            },
+        }
+
+    def action_open_signed_mandate_document(self):
+        self.ensure_one()
+        if not self.signed_mandate_document_id:
+            raise UserError(_("Aucun document GED de mandat signé n'est lié."))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Document GED du mandat signé"),
+            "res_model": "document.file",
+            "view_mode": "form",
+            "res_id": self.signed_mandate_document_id.id,
+            "target": "current",
+        }
+
+    def _check_signed_mandate_before_availability(self):
+        missing = self.filtered(lambda mandate: not mandate._has_signed_mandate_ready_for_availability())
+        if missing:
+            raise UserError(
+                _("Veuillez d’abord téléverser le mandat signé avant de rendre le bien disponible.")
+            )
+        return True
+
+    def _has_signed_mandate_ready_for_availability(self):
+        self.ensure_one()
+        if not self.signed_mandate_uploaded or not self.signed_mandate_document_id:
+            return False
+        service = self.env["packimmo.google.drive.service"].sudo().with_company(
+            self.company_id or self.env.company
+        )
+        if not service.is_enabled():
+            return True
+        document = self.signed_mandate_document_id.sudo()
+        if document.google_drive_sync_state == "synced":
+            return True
+        return bool(
+            self.env["packimmo.google.drive.sync.queue"].sudo().search_count(
+                [
+                    ("document_id", "=", document.id),
+                    ("company_id", "=", (self.company_id or self.env.company).id),
+                    ("state", "in", ["pending", "running", "done"]),
+                ]
+            )
+        )
+
+    def _get_signed_mandate_flow(self):
+        self.ensure_one()
+        property_rec = self.property_ids[:1]
+        if self.operation_type == "rent" or (
+            property_rec and property_rec.sale_lease == "for_tenancy"
+        ):
+            return "location"
+        return "vente"
+
+    def _get_signed_mandate_classification_date(self):
+        self.ensure_one()
+        return fields.Date.to_date(
+            self.start_date or self.signed_mandate_upload_date or fields.Date.context_today(self)
+        )
+
+    def _signed_mandate_checksum(self, content_b64):
+        return hashlib.sha256(base64.b64decode(content_b64)).hexdigest()
     
     def action_done_and_invoice(self):
         for rec in self:
@@ -1317,6 +1427,8 @@ class PropertyMandate(models.Model):
                 [rec.id],
             )
 
+            # Same as the mandat PDF: this is a printed copy, not the signed
+            # reference document, so it stays out of the GED.
             attachment = self.env["ir.attachment"].create({
                 "name": "%s_%s.pdf"
                 % (report.name.replace(" ", "_"), rec.name or "Mandat"),
@@ -1326,6 +1438,7 @@ class PropertyMandate(models.Model):
                 "res_id": rec.id,
                 "mimetype": "application/pdf",
                 "company_id": rec.company_id.id,
+                "packimmo_ged_skip": True,
             })
 
             rec.message_post(
@@ -1428,8 +1541,21 @@ class PropertyMandate(models.Model):
             if rec.mandate_type == "exclusive":
                 rec._get_or_create_exclusive_contract()
 
+        if {"operation_type", "property_ids"}.intersection(vals.keys()):
+            self._sync_signed_mandate_document_classification()
+
         return res
-    
+
+    def _sync_signed_mandate_document_classification(self):
+        # The signed mandate's GED folder is derived from operation_type
+        # (and property sale_lease) at upload time. If that changes later
+        # (e.g. a data-entry correction), the already-filed document must
+        # follow, otherwise it stays stuck under the old workflow forever.
+        for rec in self:
+            document = rec.signed_mandate_document_id
+            if document and document.exists():
+                document.sudo().action_packimmo_reclassify()
+
     @api.onchange("contract_start_date", "contract_duration_months")
     def _onchange_contract_dates_on_mandate(self):
         for rec in self:

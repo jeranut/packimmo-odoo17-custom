@@ -35,16 +35,20 @@ Ce guide se base sur les modules `rental_management`, `packimmo_property_mandate
 2. Créer le bien avec Property For = Rent.
 3. Renseigner le loyer, l'unité de loyer, le type, le sous-type, la surface, l'adresse et les images.
 4. Créer un mandat de location si le bien appartient à un propriétaire externe.
-5. Soumettre, approuver puis activer le mandat.
-6. Passer le bien en Available.
-7. Publier le bien sur le site si les informations web sont renseignées.
-8. Recevoir ou créer un prospect lié au bien.
-9. Planifier une visite depuis le projet LOCATION.
-10. Valider la visite et compléter le mandat avec le locataire retenu.
-11. Créer le contrat de location depuis l'assistant de contrat.
-12. Activer le contrat pour générer la première facture.
-13. Suivre les factures, bills, pénalités et maintenances.
-14. Renouveler, clôturer ou annuler le contrat.
+5. Imprimer le mandat.
+6. Faire signer le mandat par le propriétaire.
+7. Téléverser le mandat signé depuis le bouton du mandat.
+8. Vérifier que le document signé est classé automatiquement dans la GED Location / année / mois / Mandats et que la synchronisation Google Drive est en attente ou effectuée.
+9. Soumettre, approuver puis activer le mandat.
+10. Passer le bien en Available.
+11. Publier le bien sur le site si les informations web sont renseignées.
+12. Recevoir ou créer un prospect lié au bien.
+13. Planifier une visite depuis le projet LOCATION.
+14. Valider la visite et compléter le mandat avec le locataire retenu.
+15. Créer le contrat de location depuis l'assistant de contrat.
+16. Activer le contrat pour générer la première facture.
+17. Suivre les factures, bills, pénalités et maintenances.
+18. Renouveler, clôturer ou annuler le contrat.
 
 ## 5. Champs importants
 
@@ -76,6 +80,9 @@ Sur le mandat :
 - Locataire trouvé
 - Type de caution et montant calculé
 - Compte bancaire de réception du loyer
+- Mandat signé uploadé
+- Document GED du mandat signé
+- Nom et date de téléversement du fichier signé
 
 Sur le contrat :
 
@@ -95,7 +102,7 @@ Sur le contrat :
 ## 6. Boutons et actions
 
 - Sur le bien : passer en Draft, Available, créer contrat, créer maintenance, ouvrir mandat.
-- Sur le mandat : Soumettre, Approuver, Activer, Expirer, Annuler, Imprimer le mandat, Terminer et facturer.
+- Sur le mandat : Soumettre, Approuver, Activer, Expirer, Annuler, Imprimer le mandat, Téléverser mandat signé, Ouvrir document GED, Terminer et facturer.
 - Sur le contrat : Active, Create Invoice, Ajouter un frais, Extend Contract, Maintenance Request, Close Contract, Cancel.
 - Sur les lignes d'échéance : Create Invoice.
 - Dans LOCATION : Planifier une visite, Valider visite, Annuler visite, passer vers contrat ou état des lieux selon les règles.
@@ -106,6 +113,9 @@ Sur le contrat :
 - Les biens peuvent être Draft, Available, In Booking, On Rent, In Sale ou Sold.
 - Le contrat de location est créé sur `tenancy.details`.
 - Un contrat actif passe le bien en On Rent.
+- Un bien externe ne peut pas passer en Available tant que le mandat de location actif n'a pas de mandat signé téléversé.
+- Le mandat signé téléversé crée automatiquement une pièce jointe, un `document.file` GED et une entrée de synchronisation Google Drive si le connecteur est activé.
+- Le document GED du mandat signé est classé dans Location / année / mois / Mandats.
 - Le paiement peut être mensuel, trimestriel, semestriel, annuel, quotidien ou en paiement complet.
 - Les services et maintenances peuvent être fusionnés avec les échéances ou facturés séparément.
 - Les pénalités sont créées par planificateur si la configuration les active.
@@ -119,6 +129,10 @@ Sur le contrat :
 - Un contrat Running ou Expired ne peut pas être supprimé directement ; il faut le clôturer ou l'annuler.
 - La clôture est bloquée si des loyers restent impayés.
 - Pour un bien externe, le module mandat impose un mandat actif avant disponibilité.
+- La disponibilité est aussi bloquée si le mandat actif n'a pas de document signé lié dans la GED.
+- Si Google Drive est activé, la disponibilité exige que le document signé soit déjà synchronisé ou présent dans la queue `packimmo.google.drive.sync.queue`.
+- Le message affiché est : "Veuillez d’abord téléverser le mandat signé avant de rendre le bien disponible."
+- Le blocage s'applique aussi si l'utilisateur modifie directement le statut du bien vers Available.
 - Le workflow LOCATION bloque les retours arrière manuels entre les étapes sensibles.
 - Depuis CONTRAT vers ETAT DES LIEUX, un contrat actif lié au bien est obligatoire.
 
@@ -187,14 +201,18 @@ Le dashboard immobilier affiche des indicateurs sur les biens, contrats, ventes,
 1. Créer le propriétaire.
 2. Créer le bien en Rent.
 3. Ajouter l'adresse, le type, le loyer et les images.
-4. Créer et activer le mandat.
-5. Passer le bien Available.
-6. Publier le bien.
-7. Créer le prospect.
-8. Planifier puis valider la visite.
-9. Créer le contrat.
-10. Activer le contrat.
-11. Vérifier la première facture.
+4. Créer le mandat.
+5. Imprimer le mandat et le faire signer.
+6. Téléverser le mandat signé.
+7. Vérifier le statut "Mandat signé uploadé" et le document GED.
+8. Activer le mandat.
+9. Passer le bien Available.
+10. Publier le bien.
+11. Créer le prospect.
+12. Planifier puis valider la visite.
+13. Créer le contrat.
+14. Activer le contrat.
+15. Vérifier la première facture.
 
 ### Renouveler un bail
 
@@ -214,6 +232,7 @@ Le dashboard immobilier affiche des indicateurs sur les biens, contrats, ventes,
 ## 14. Erreurs fréquentes
 
 - Impossible de rendre le bien disponible : mandat actif manquant.
+- Impossible de rendre le bien disponible : mandat signé non téléversé ou document GED/queue Drive manquant.
 - Contrat impossible : période déjà couverte par un contrat actif.
 - Clôture impossible : factures de loyer non soldées.
 - Payment Term refusé : l'unité de loyer ne correspond pas au terme choisi.
@@ -222,7 +241,8 @@ Le dashboard immobilier affiche des indicateurs sur les biens, contrats, ventes,
 ## 15. Bonnes pratiques
 
 - Toujours vérifier propriétaire, téléphone, email et société.
-- Créer le mandat avant la publication.
+- Créer, imprimer, faire signer et téléverser le mandat avant la publication.
+- Contrôler le bouton "Ouvrir document GED" avant de passer le bien Available.
 - Ajouter au moins une image claire.
 - Lier les prospects au bien.
 - Utiliser les boutons du workflow au lieu de déplacer les tâches manuellement.

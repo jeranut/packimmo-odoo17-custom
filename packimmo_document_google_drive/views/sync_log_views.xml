@@ -9,6 +9,7 @@
                 <field name="name"/>
                 <field name="document_model"/>
                 <field name="document_res_id"/>
+                <field name="company_id"/>
                 <field name="state" widget="badge"/>
                 <field name="google_drive_url" widget="url"/>
                 <field name="message"/>

@@ -1,3 +1,12 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_packimmo_google_drive_sync_log_user,packimmo.google.drive.sync.log.user,model_packimmo_google_drive_sync_log,base.group_user,1,0,0,0
 access_packimmo_google_drive_sync_log_admin,packimmo.google.drive.sync.log.admin,model_packimmo_google_drive_sync_log,base.group_system,1,1,1,1
+access_packimmo_google_drive_folder_cache_user,packimmo.google.drive.folder.cache.user,model_packimmo_google_drive_folder_cache,base.group_user,1,0,0,0
+access_packimmo_google_drive_folder_cache_admin,packimmo.google.drive.folder.cache.admin,model_packimmo_google_drive_folder_cache,base.group_system,1,1,1,1
+access_packimmo_google_drive_sync_queue_user,packimmo.google.drive.sync.queue.user,model_packimmo_google_drive_sync_queue,base.group_user,1,0,0,0
+access_packimmo_google_drive_sync_queue_admin,packimmo.google.drive.sync.queue.admin,model_packimmo_google_drive_sync_queue,base.group_system,1,1,1,1
+access_document_folder_user,document.folder.user,model_document_folder,base.group_user,1,0,0,0
+access_document_folder_admin,document.folder.admin,model_document_folder,base.group_system,1,1,1,1
+access_document_folder_document_user,document.folder.document.user,model_document_folder,enhanced_document_management.view_own_document,1,0,0,0
+access_document_folder_document_manager,document.folder.document.manager,model_document_folder,enhanced_document_management.view_all_document,1,1,1,1
+access_document_folder_packimmo_user,document.folder.packimmo.user,model_document_folder,packimmo_access_roles.group_packimmo_user,1,0,0,0

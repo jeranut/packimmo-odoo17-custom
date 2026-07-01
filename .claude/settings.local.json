@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"_tag_function\\\\|def _tag_function\" -A 60 /opt/odoo17/odoo/tools/convert.py | head -90)",
+      "Read(//opt/odoo17/odoo/tools/**)",
+      "Bash(grep -n \"def call_kw\" -A 40 /opt/odoo17/odoo/api.py | head -60)",
+      "Read(//opt/odoo17/odoo/**)",
+      "Bash(python3 -c \"import xml.dom.minidom as m; m.parse\\('data/ged_structure.xml'\\); print\\('xml ok'\\)\")",
+      "Bash(python3 -m py_compile hooks.py)",
+      "Read(//etc/**)",
+      "Read(//opt/odoo17/**)"
+    ]
+  }
+}

@@ -53,7 +53,13 @@
                         statusbar_visible="draft,submitted,approved,active" />
                     <button name="action_generate_mandate_pdf_to_chatter" type="object"
                         string="Imprimer le mandat" class="btn-primary" icon="fa-file-pdf-o"
-                        invisible="state != 'active'" />
+                        invisible="state in ('cancelled', 'expired')" />
+                    <button name="action_open_signed_mandate_upload_wizard" type="object"
+                        string="Téléverser mandat signé" class="btn-secondary" icon="fa-upload"
+                        invisible="state in ('cancelled', 'expired')" />
+                    <button name="action_open_signed_mandate_document" type="object"
+                        string="Ouvrir document GED" class="btn-secondary" icon="fa-folder-open"
+                        invisible="not signed_mandate_uploaded" />
                     <button name="action_print_exclusive_contract"
                         type="object"
                         string="Imprimer contrat"
@@ -104,6 +110,12 @@
                             <field name="name" readonly="1" />
                         </h1>
                     </div>
+                    <div class="alert alert-success" role="status" invisible="not signed_mandate_uploaded">
+                        Mandat signé uploadé
+                    </div>
+                    <div class="alert alert-warning" role="status" invisible="signed_mandate_uploaded">
+                        Mandat signé manquant
+                    </div>
                     <group>
                         <group string="Informations générales">
                             <field name="company_id"
@@ -112,6 +124,15 @@
                             <field name="owner_id" readonly="1" />
                             <field name="mandate_type" readonly="state != 'draft'" />
                             <field name="operation_type" />
+                            <field name="signed_mandate_uploaded" readonly="1" />
+                            <field name="signed_mandate_filename" readonly="1"
+                                invisible="not signed_mandate_uploaded" />
+                            <field name="signed_mandate_upload_date" readonly="1"
+                                invisible="not signed_mandate_uploaded" />
+                            <field name="signed_mandate_document_id" readonly="1"
+                                invisible="not signed_mandate_uploaded" />
+                            <field name="signed_mandate_attachment_id" readonly="1"
+                                invisible="1" />
 
                             <field name="deposit_type" invisible="operation_type != 'rent'" />
 

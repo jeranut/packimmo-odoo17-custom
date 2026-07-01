@@ -15,6 +15,8 @@ Classement automatique par métier : Vente, Location, Morcellement, Factures, Co
         'mail',
         'account',
         'enhanced_document_management',
+        'packimmo_access_roles',
+        'rental_management',
     ],
     'external_dependencies': {
         'python': [
@@ -27,11 +29,17 @@ Classement automatique par métier : Vente, Location, Morcellement, Factures, Co
     },
     'data': [
         'security/ir.model.access.csv',
+        'security/document_folder_security.xml',
+        'data/ged_structure.xml',
         'data/ir_cron.xml',
-        'views/res_config_settings_views.xml',
+        'views/document_folder_views.xml',
         'views/document_file_views.xml',
+        'views/res_config_settings_views.xml',
         'views/sync_log_views.xml',
+        'views/sync_queue_views.xml',
+        'views/folder_cache_views.xml',
     ],
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,
 }

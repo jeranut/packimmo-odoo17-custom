@@ -28,11 +28,27 @@ class PackimmoGoogleDriveService(models.AbstractModel):
     _name = 'packimmo.google.drive.service'
     _description = 'PACKIMMO Google Drive Service'
 
-    def _get_param(self, key, default=False):
-        return self.env['ir.config_parameter'].sudo().get_param(key, default)
+    def _company_param_key(self, key, company=False):
+        company = company or self.env.company
+        return '%s.company_%s' % (key, company.id)
 
-    def _set_param(self, key, value):
-        return self.env['ir.config_parameter'].sudo().set_param(key, value or '')
+    def _get_param(self, key, default=False, company=False):
+        param = self.env['ir.config_parameter'].sudo()
+        company_key = self._company_param_key(key, company=company)
+        company_value = param.get_param(company_key, default=False)
+        if company_value not in (False, None):
+            return company_value
+        if key.startswith('packimmo_google_drive.'):
+            return default
+        return param.get_param(key, default)
+
+    def _set_param(self, key, value, company=False):
+        if isinstance(value, bool):
+            value = 'True' if value else 'False'
+        return self.env['ir.config_parameter'].sudo().set_param(
+            self._company_param_key(key, company=company),
+            value if value not in (None, False) else '',
+        )
 
     def is_enabled(self):
         return self._get_param('packimmo_google_drive.enabled') == 'True'
@@ -88,6 +104,17 @@ class PackimmoGoogleDriveService(models.AbstractModel):
         files = result.get('files') or []
         return files[0]['id'] if files else False
 
+    def _folder_exists(self, drive, folder_id):
+        if not folder_id:
+            return False
+        try:
+            folder = drive.files().get(fileId=folder_id, fields='id, trashed').execute()
+            return bool(folder.get('id')) and not folder.get('trashed')
+        except Exception as exc:
+            if self.is_not_found_error(exc):
+                return False
+            raise
+
     def _create_folder(self, drive, name, parent_id=False):
         metadata = {'name': name, 'mimeType': 'application/vnd.google-apps.folder'}
         if parent_id:
@@ -96,14 +123,62 @@ class PackimmoGoogleDriveService(models.AbstractModel):
         return folder['id']
 
     def ensure_folder_path(self, folder_names):
+        folder_names = [n for n in folder_names if n]
+        if not folder_names:
+            return self._get_param('packimmo_google_drive.root_folder_id') or False
         drive = self._get_drive()
         parent_id = self._get_param('packimmo_google_drive.root_folder_id') or False
-        for name in [n for n in folder_names if n]:
-            folder_id = self._folder_search(drive, name, parent_id)
+        full_path = []
+        for name in folder_names:
+            full_path.append(name)
+            cache = self._get_folder_cache('/'.join(full_path))
+            folder_id = cache.google_drive_folder_id if cache and cache.google_drive_parent_id == (parent_id or False) else False
+            if folder_id and not self._folder_exists(drive, folder_id):
+                _logger.warning('Google Drive folder missing, recreating path %s (old id %s)', '/'.join(full_path), folder_id)
+                cache.write({'active': False, 'last_checked': fields.Datetime.now()})
+                folder_id = False
+            if not folder_id:
+                folder_id = self._folder_search(drive, name, parent_id)
             if not folder_id:
                 folder_id = self._create_folder(drive, name, parent_id)
+                _logger.info('Created Google Drive folder %s under %s', name, parent_id or 'root')
+            self._set_folder_cache(full_path, folder_id, parent_id)
             parent_id = folder_id
         return parent_id
+
+    def _get_folder_cache(self, google_drive_path):
+        return self.env['packimmo.google.drive.folder.cache'].sudo().search([
+            ('company_id', '=', self.env.company.id),
+            ('google_drive_path', '=', google_drive_path),
+            ('active', '=', True),
+        ], limit=1)
+
+    def _set_folder_cache(self, path_parts, folder_id, parent_id=False):
+        Cache = self.env['packimmo.google.drive.folder.cache'].sudo()
+        google_drive_path = '/'.join(path_parts)
+        values = self._folder_cache_values(path_parts, folder_id, parent_id)
+        cache = self._get_folder_cache(google_drive_path)
+        if cache:
+            cache.write(values)
+        else:
+            Cache.create(values)
+        return True
+
+    def _folder_cache_values(self, path_parts, folder_id, parent_id=False):
+        path_parts = list(path_parts)
+        return {
+            'name': path_parts[-1],
+            'workflow': path_parts[1] if len(path_parts) > 1 else False,
+            'year': int(path_parts[2]) if len(path_parts) > 2 and str(path_parts[2]).isdigit() else 0,
+            'month': path_parts[3] if len(path_parts) > 3 else False,
+            'document_type': path_parts[4] if len(path_parts) > 4 else False,
+            'google_drive_folder_id': folder_id,
+            'google_drive_parent_id': parent_id or False,
+            'google_drive_path': '/'.join(path_parts),
+            'active': True,
+            'last_checked': fields.Datetime.now(),
+            'company_id': self.env.company.id,
+        }
 
     def test_connection(self):
         about = self._get_drive().about().get(fields='user, storageQuota').execute()
@@ -131,18 +206,10 @@ class PackimmoGoogleDriveService(models.AbstractModel):
         }
 
     def get_drive_structure(self):
-        return {
-            'Vente': ['Mandats', 'Contrats', 'Factures', 'Actes', 'Pièces clients', 'Divers'],
-            'Location': ['Mandats', 'Baux', 'États des lieux', 'Quittances', 'Factures loyers', 'Pièces locataires', 'Divers'],
-            'Morcellement': ['Plans', 'Titres', 'Contrats', 'Factures', 'Bornage', 'Documents techniques', 'Divers'],
-            'Comptabilité': ['Factures proforma', 'Factures fournisseurs', 'Factures clients', 'Pièces de caisse', 'Bons de caisse', 'Reçus', 'Dépenses', 'Avances', 'Achats divers', 'Justificatifs', 'Divers'],
-            'Syndic': ['Documents syndic', 'Factures', 'Comptes rendus', 'Divers'],
-            'Technique': ['Plans', 'Documents techniques', 'Rapports', 'Divers'],
-            'Ressources Humaines': ['Notes de frais', 'Contrats', 'Justificatifs', 'Divers'],
-            'Archives': ['Divers'],
-        }
+        return self.env['packimmo.document.classification.service'].sudo().get_drive_structure()
 
     def create_standard_structure(self):
+        self.env['packimmo.document.classification.service'].sudo().ensure_document_taxonomy()
         today = fields.Date.context_today(self)
         month = {
             1: '01 - Janvier', 2: '02 - Février', 3: '03 - Mars', 4: '04 - Avril',
@@ -172,8 +239,12 @@ class PackimmoGoogleDriveService(models.AbstractModel):
         if existing_file_id:
             old_parents = []
             if folder_id:
-                current = drive.files().get(fileId=existing_file_id, fields='parents').execute()
-                old_parents = current.get('parents') or []
+                current = drive.files().get(fileId=existing_file_id, fields='parents, trashed').execute()
+                if current.get('trashed'):
+                    existing_file_id = False
+                else:
+                    old_parents = current.get('parents') or []
+        if existing_file_id:
             update_kwargs = {
                 'fileId': existing_file_id,
                 'body': {'name': body['name']},
@@ -196,19 +267,36 @@ class PackimmoGoogleDriveService(models.AbstractModel):
         }
 
     def cron_sync_pending(self):
-        if not self.is_enabled():
-            return False
-        documents = self.env['document.file'].sudo().search([
-            ('google_drive_sync_state', 'in', ['not_synced', 'error']),
-            '|', ('attachment', '!=', False), ('attachment_id', '!=', False),
-        ], limit=50)
-        documents.action_sync_google_drive()
-
-        if self._get_param('packimmo_google_drive.sync_attachments', 'True') == 'True':
-            attachments = self.env['ir.attachment'].sudo().search([
-                ('packimmo_google_drive_sync_state', 'in', ['not_synced', 'error']),
-                ('type', '=', 'binary'),
-                ('datas', '!=', False),
-            ], limit=50)
-            attachments._packimmo_sync_generated_attachment_safe()
+        for company in self.env['res.company'].sudo().search([]):
+            service = self.with_company(company).sudo()
+            self.env['ir.attachment'].sudo().with_company(company).cron_import_packimmo_attachments(
+                limit=int(service._get_param('packimmo_google_drive.import_limit', 200) or 200)
+            )
+            if not service.is_enabled():
+                continue
+            queue = self.env['packimmo.google.drive.sync.queue'].sudo().with_company(company)
+            documents = self.env['document.file'].sudo().with_company(company).search([
+                ('company_id', '=', company.id),
+                ('google_drive_sync_state', 'in', ['not_synced', 'error']),
+                '|', ('attachment', '!=', False), ('attachment_id', '!=', False),
+            ], limit=int(service._get_param('packimmo_google_drive.batch_limit', 50) or 50))
+            for document in documents:
+                queue.enqueue_document(document, operation='upload', priority=10)
+            queue.cron_process_queue()
         return True
+
+    def get_retry_delay_minutes(self, retry_count):
+        delays = [5, 15, 30, 60, 120, 240]
+        return delays[min(max(retry_count - 1, 0), len(delays) - 1)]
+
+    def is_not_found_error(self, exc):
+        status = getattr(getattr(exc, 'resp', None), 'status', None)
+        return status == 404
+
+    def is_retryable_error(self, exc):
+        status = getattr(getattr(exc, 'resp', None), 'status', None)
+        if status in (429, 500, 502, 503, 504):
+            return True
+        text = str(exc).lower()
+        retry_words = ['rate limit', 'quota', 'backend error', 'temporarily unavailable', 'timeout', 'connection']
+        return any(word in text for word in retry_words)

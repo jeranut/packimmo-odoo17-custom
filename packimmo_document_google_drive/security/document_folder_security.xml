@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="document_folder_multi_company_rule" model="ir.rule">
+        <field name="name">Dossiers GED multi-entreprise</field>
+        <field name="model_id" ref="model_document_folder"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="folder_cache_multi_company_rule" model="ir.rule">
+        <field name="name">Cache dossiers Drive multi-entreprise</field>
+        <field name="model_id" ref="model_packimmo_google_drive_folder_cache"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="sync_queue_multi_company_rule" model="ir.rule">
+        <field name="name">Queue Drive multi-entreprise</field>
+        <field name="model_id" ref="model_packimmo_google_drive_sync_queue"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="sync_log_multi_company_rule" model="ir.rule">
+        <field name="name">Journal Drive multi-entreprise</field>
+        <field name="model_id" ref="model_packimmo_google_drive_sync_log"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

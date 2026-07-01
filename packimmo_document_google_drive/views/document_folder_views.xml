@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="document_folder_view_search" model="ir.ui.view">
+        <field name="name">document.folder.search</field>
+        <field name="model">document.folder</field>
+        <field name="arch" type="xml">
+            <search string="Dossiers GED">
+                <field name="name"/>
+                <field name="complete_name"/>
+                <field name="workspace_id"/>
+                <field name="workflow"/>
+                <field name="year"/>
+                <field name="month"/>
+                <field name="document_type"/>
+                <filter name="active" string="Actifs" domain="[('active', '=', True)]"/>
+                <filter name="archived" string="Archivés" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_workspace" string="Workspace" context="{'group_by': 'workspace_id'}"/>
+                    <filter name="group_workflow" string="Workflow" context="{'group_by': 'workflow'}"/>
+                    <filter name="group_year" string="Année" context="{'group_by': 'year'}"/>
+                    <filter name="group_month" string="Mois" context="{'group_by': 'month'}"/>
+                    <filter name="group_document_type" string="Type" context="{'group_by': 'document_type'}"/>
+                    <filter name="group_company" string="Société" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="document_folder_action" model="ir.actions.act_window">
+        <field name="name">Dossiers GED</field>
+        <field name="res_model">document.folder</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="document_folder_view_search"/>
+    </record>
+
+    <record id="document_folder_view_tree" model="ir.ui.view">
+        <field name="name">document.folder.tree</field>
+        <field name="model">document.folder</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="complete_name"/>
+                <field name="sequence"/>
+                <field name="workspace_id"/>
+                <field name="workflow"/>
+                <field name="year"/>
+                <field name="month"/>
+                <field name="document_type"/>
+                <field name="document_count"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="document_folder_view_form" model="ir.ui.view">
+        <field name="name">document.folder.form</field>
+        <field name="model">document.folder</field>
+        <field name="arch" type="xml">
+            <form string="Dossier GED">
+                <sheet>
+                    <div name="button_box" class="oe_button_box">
+                        <button name="button_view_document" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                            <field name="document_count" string="Documents" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="parent_id"/>
+                            <field name="workspace_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="company_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Classement GED">
+                        <field name="workflow"/>
+                        <field name="year"/>
+                        <field name="month"/>
+                        <field name="document_type"/>
+                        <field name="google_drive_path" readonly="1"/>
+                        <field name="google_drive_folder_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="document_folder_menu" name="Dossiers GED" parent="enhanced_document_management.enhanced_document_management_config_menu" action="document_folder_action" sequence="2"/>
+</odoo>

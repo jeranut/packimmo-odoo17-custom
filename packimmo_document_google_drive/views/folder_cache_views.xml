@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="packimmo_google_drive_folder_cache_view_tree" model="ir.ui.view">
+        <field name="name">packimmo.google.drive.folder.cache.tree</field>
+        <field name="model">packimmo.google.drive.folder.cache</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="google_drive_path"/>
+                <field name="google_drive_folder_id"/>
+                <field name="google_drive_parent_id"/>
+                <field name="last_checked"/>
+                <field name="active"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="packimmo_google_drive_folder_cache_action" model="ir.actions.act_window">
+        <field name="name">Cache dossiers Drive</field>
+        <field name="res_model">packimmo.google.drive.folder.cache</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="packimmo_google_drive_menu_folder_cache" name="Cache dossiers" parent="packimmo_google_drive_menu_root" action="packimmo_google_drive_folder_cache_action" sequence="30" groups="base.group_system"/>
+</odoo>
